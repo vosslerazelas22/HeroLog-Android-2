@@ -7,6 +7,7 @@ import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.model.ChecklistItem
 import com.iurispraecepta.herolog.model.Daily
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Habit
@@ -1582,6 +1583,424 @@ class HeroLogViewModelTest {
         val completedTodo = completedState?.todos?.find { it.id == "t1" }
         assertTrue(completedTodo?.completed == true)
         assertNotNull(completedTodo?.completedAt)
+
+        db.close()
+    }
+
+    @Test
+    fun addHabit_addsNewHabitWithGeneratedIdAndDefaults() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val state = createBaseState().copy(habits = emptyList())
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.addHabit(
+            title = "Read Books",
+            notes = "1 chapter per day",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            tags = listOf("learning")
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertNotNull(updatedState)
+        assertEquals(1, updatedState?.habits?.size)
+        val addedHabit = updatedState?.habits?.first()
+        assertNotNull(addedHabit)
+        assertEquals("Read Books", addedHabit?.title)
+        assertEquals("1 chapter per day", addedHabit?.notes)
+        assertTrue(addedHabit?.up == true)
+        assertFalse(addedHabit?.down == true)
+        assertEquals(Difficulty.Easy, addedHabit?.difficulty)
+        assertEquals(0, addedHabit?.upCount)
+        assertEquals(0, addedHabit?.downCount)
+        assertEquals(0, addedHabit?.streak)
+        assertEquals(listOf("learning"), addedHabit?.tags)
+        assertNull(addedHabit?.lastTriggeredDate)
+
+        db.close()
+    }
+
+    @Test
+    fun editHabit_updatesExistingHabit() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Old Title",
+            notes = "Old Notes",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 5,
+            downCount = 1,
+            streak = 4,
+            tags = listOf("tag1"),
+            lastTriggeredDate = "2026-08-01"
+        )
+        val state = createBaseState().copy(habits = listOf(habit))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val editedHabit = habit.copy(
+            title = "New Title",
+            notes = "New Notes",
+            difficulty = Difficulty.Hard,
+            tags = listOf("tag1", "tag2")
+        )
+        viewModel.editHabit(editedHabit)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        val updatedHabit = updatedState?.habits?.find { it.id == "h1" }
+        assertNotNull(updatedHabit)
+        assertEquals("New Title", updatedHabit?.title)
+        assertEquals("New Notes", updatedHabit?.notes)
+        assertEquals(Difficulty.Hard, updatedHabit?.difficulty)
+        assertEquals(5, updatedHabit?.upCount)
+        assertEquals(listOf("tag1", "tag2"), updatedHabit?.tags)
+
+        db.close()
+    }
+
+    @Test
+    fun deleteHabit_removesHabit() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit1 = Habit(id = "h1", title = "H1", notes = "", up = true, down = false, difficulty = Difficulty.Easy, upCount = 0, downCount = 0, streak = 0, tags = emptyList())
+        val habit2 = Habit(id = "h2", title = "H2", notes = "", up = true, down = false, difficulty = Difficulty.Easy, upCount = 0, downCount = 0, streak = 0, tags = emptyList())
+        val state = createBaseState().copy(habits = listOf(habit1, habit2))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.deleteHabit("h1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertEquals(1, updatedState?.habits?.size)
+        assertEquals("h2", updatedState?.habits?.first()?.id)
+
+        db.close()
+    }
+
+    @Test
+    fun addDaily_addsNewDailyWithChecklistAndInitialStreak() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val state = createBaseState().copy(dailies = emptyList())
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.addDaily(
+            title = "Morning Routine",
+            notes = "All tasks",
+            difficulty = Difficulty.Medium,
+            streak = 3,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = listOf("morning"),
+            checklistTexts = listOf("Drink water", "Stretch")
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertNotNull(updatedState)
+        assertEquals(1, updatedState?.dailies?.size)
+        val addedDaily = updatedState?.dailies?.first()
+        assertNotNull(addedDaily)
+        assertEquals("Morning Routine", addedDaily?.title)
+        assertEquals("All tasks", addedDaily?.notes)
+        assertEquals(Difficulty.Medium, addedDaily?.difficulty)
+        assertFalse(addedDaily?.completed == true)
+        assertEquals(3, addedDaily?.streak)
+        assertEquals(RepeatInterval.Daily, addedDaily?.repeats)
+        assertEquals(1, addedDaily?.every)
+        assertEquals(listOf("morning"), addedDaily?.tags)
+        assertEquals(0, addedDaily?.value)
+        assertEquals(2, addedDaily?.checklist?.size)
+        assertEquals("Drink water", addedDaily?.checklist?.get(0)?.text)
+        assertFalse(addedDaily?.checklist?.get(0)?.completed == true)
+        assertEquals("Stretch", addedDaily?.checklist?.get(1)?.text)
+        assertFalse(addedDaily?.checklist?.get(1)?.completed == true)
+        assertNotNull(addedDaily?.createdAt)
+
+        db.close()
+    }
+
+    @Test
+    fun editDaily_updatesExistingDaily() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val daily = Daily(
+            id = "d1",
+            title = "Old Daily",
+            notes = "Old Notes",
+            difficulty = Difficulty.Easy,
+            completed = false,
+            streak = 5,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = listOf("tag1"),
+            checklist = emptyList(),
+            value = 5,
+            createdAt = "2026-08-01"
+        )
+        val state = createBaseState().copy(dailies = listOf(daily))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val editedDaily = daily.copy(
+            title = "Updated Daily",
+            notes = "Updated Notes",
+            difficulty = Difficulty.Hard,
+            streak = 10,
+            tags = listOf("tag1", "tag2")
+        )
+        viewModel.editDaily(editedDaily)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        val updatedDaily = updatedState?.dailies?.find { it.id == "d1" }
+        assertNotNull(updatedDaily)
+        assertEquals("Updated Daily", updatedDaily?.title)
+        assertEquals("Updated Notes", updatedDaily?.notes)
+        assertEquals(Difficulty.Hard, updatedDaily?.difficulty)
+        assertEquals(10, updatedDaily?.streak)
+        assertEquals(listOf("tag1", "tag2"), updatedDaily?.tags)
+
+        db.close()
+    }
+
+    @Test
+    fun deleteDaily_removesDaily() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val daily1 = Daily(id = "d1", title = "D1", notes = "", difficulty = Difficulty.Easy, completed = false, streak = 0, repeats = RepeatInterval.Daily, every = 1, tags = emptyList(), checklist = emptyList())
+        val daily2 = Daily(id = "d2", title = "D2", notes = "", difficulty = Difficulty.Easy, completed = false, streak = 0, repeats = RepeatInterval.Daily, every = 1, tags = emptyList(), checklist = emptyList())
+        val state = createBaseState().copy(dailies = listOf(daily1, daily2))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.deleteDaily("d1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertEquals(1, updatedState?.dailies?.size)
+        assertEquals("d2", updatedState?.dailies?.first()?.id)
+
+        db.close()
+    }
+
+    @Test
+    fun toggleDailyChecklistItem_flipsCompletedState() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val item1 = ChecklistItem(id = "c1", text = "Subtask 1", completed = false)
+        val item2 = ChecklistItem(id = "c2", text = "Subtask 2", completed = true)
+        val daily = Daily(
+            id = "d1",
+            title = "Daily With Checklist",
+            notes = "",
+            difficulty = Difficulty.Easy,
+            completed = false,
+            streak = 0,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = emptyList(),
+            checklist = listOf(item1, item2)
+        )
+        val state = createBaseState().copy(dailies = listOf(daily))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Flip c1 from false to true
+        viewModel.toggleDailyChecklistItem("d1", "c1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        val updatedDaily = updatedState?.dailies?.find { it.id == "d1" }
+        assertTrue(updatedDaily?.checklist?.find { it.id == "c1" }?.completed == true)
+        assertTrue(updatedDaily?.checklist?.find { it.id == "c2" }?.completed == true)
+
+        // Flip c2 from true to false
+        viewModel.toggleDailyChecklistItem("d1", "c2")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState2 = viewModel.characterState.value
+        val updatedDaily2 = updatedState2?.dailies?.find { it.id == "d1" }
+        assertFalse(updatedDaily2?.checklist?.find { it.id == "c2" }?.completed == true)
+
+        db.close()
+    }
+
+    @Test
+    fun addTodo_addsNewTodoWithChecklist() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val state = createBaseState().copy(todos = emptyList())
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.addTodo(
+            title = "File Taxes",
+            notes = "Before deadline",
+            difficulty = Difficulty.Hard,
+            tags = listOf("finance"),
+            checklistTexts = listOf("Gather receipts", "Fill form")
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertNotNull(updatedState)
+        assertEquals(1, updatedState?.todos?.size)
+        val addedTodo = updatedState?.todos?.first()
+        assertNotNull(addedTodo)
+        assertEquals("File Taxes", addedTodo?.title)
+        assertEquals("Before deadline", addedTodo?.notes)
+        assertEquals(Difficulty.Hard, addedTodo?.difficulty)
+        assertFalse(addedTodo?.completed == true)
+        assertEquals(listOf("finance"), addedTodo?.tags)
+        assertEquals(2, addedTodo?.checklist?.size)
+        assertEquals("Gather receipts", addedTodo?.checklist?.get(0)?.text)
+        assertFalse(addedTodo?.checklist?.get(0)?.completed == true)
+        assertEquals("Fill form", addedTodo?.checklist?.get(1)?.text)
+        assertFalse(addedTodo?.checklist?.get(1)?.completed == true)
+        assertNotNull(addedTodo?.createdAt)
+        assertNull(addedTodo?.completedAt)
+
+        db.close()
+    }
+
+    @Test
+    fun editTodo_updatesExistingTodo() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val todo = Todo(
+            id = "t1",
+            title = "Old Todo",
+            notes = "Old Notes",
+            difficulty = Difficulty.Easy,
+            completed = false,
+            tags = listOf("tag1"),
+            checklist = emptyList(),
+            createdAt = "2026-08-01",
+            completedAt = null
+        )
+        val state = createBaseState().copy(todos = listOf(todo))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val editedTodo = todo.copy(
+            title = "Updated Todo",
+            notes = "Updated Notes",
+            difficulty = Difficulty.Medium,
+            tags = listOf("tag1", "tag3")
+        )
+        viewModel.editTodo(editedTodo)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        val updatedTodo = updatedState?.todos?.find { it.id == "t1" }
+        assertNotNull(updatedTodo)
+        assertEquals("Updated Todo", updatedTodo?.title)
+        assertEquals("Updated Notes", updatedTodo?.notes)
+        assertEquals(Difficulty.Medium, updatedTodo?.difficulty)
+        assertEquals(listOf("tag1", "tag3"), updatedTodo?.tags)
+
+        db.close()
+    }
+
+    @Test
+    fun deleteTodo_removesTodo() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val todo1 = Todo(id = "t1", title = "T1", notes = "", difficulty = Difficulty.Easy, completed = false, tags = emptyList(), checklist = emptyList())
+        val todo2 = Todo(id = "t2", title = "T2", notes = "", difficulty = Difficulty.Easy, completed = false, tags = emptyList(), checklist = emptyList())
+        val state = createBaseState().copy(todos = listOf(todo1, todo2))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.deleteTodo("t1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertEquals(1, updatedState?.todos?.size)
+        assertEquals("t2", updatedState?.todos?.first()?.id)
+
+        db.close()
+    }
+
+    @Test
+    fun toggleTodoChecklistItem_flipsCompletedState() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val item1 = ChecklistItem(id = "c1", text = "Subtask A", completed = false)
+        val item2 = ChecklistItem(id = "c2", text = "Subtask B", completed = true)
+        val todo = Todo(
+            id = "t1",
+            title = "Todo With Checklist",
+            notes = "",
+            difficulty = Difficulty.Easy,
+            completed = false,
+            tags = emptyList(),
+            checklist = listOf(item1, item2)
+        )
+        val state = createBaseState().copy(todos = listOf(todo))
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Flip c1 from false to true
+        viewModel.toggleTodoChecklistItem("t1", "c1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        val updatedTodo = updatedState?.todos?.find { it.id == "t1" }
+        assertTrue(updatedTodo?.checklist?.find { it.id == "c1" }?.completed == true)
+        assertTrue(updatedTodo?.checklist?.find { it.id == "c2" }?.completed == true)
+
+        // Flip c2 from true to false
+        viewModel.toggleTodoChecklistItem("t1", "c2")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState2 = viewModel.characterState.value
+        val updatedTodo2 = updatedState2?.todos?.find { it.id == "t1" }
+        assertFalse(updatedTodo2?.checklist?.find { it.id == "c2" }?.completed == true)
 
         db.close()
     }

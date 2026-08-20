@@ -12,7 +12,13 @@ import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.logic.SkillError
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
+import com.iurispraecepta.herolog.model.ChecklistItem
+import com.iurispraecepta.herolog.model.Daily
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.Habit
+import com.iurispraecepta.herolog.model.RepeatInterval
 import com.iurispraecepta.herolog.model.Skill
+import com.iurispraecepta.herolog.model.Todo
 import com.iurispraecepta.herolog.logic.quests.DailyLogic
 import com.iurispraecepta.herolog.logic.quests.HabitLogic
 import com.iurispraecepta.herolog.logic.quests.RolloverLogic
@@ -217,6 +223,90 @@ class HeroLogViewModel(
         val result = TodoLogic.toggle(todo, current)
         val updatedTodos = current.todos.map { if (it.id == todoId) result.updatedTodo else it }
         saveCharacterState(result.updatedState.copy(todos = updatedTodos))
+    }
+
+    fun addHabit(title: String, notes: String, up: Boolean, down: Boolean, difficulty: Difficulty, tags: List<String>) {
+        val current = _characterState.value ?: return
+        val newHabit = Habit(
+            id = java.util.UUID.randomUUID().toString(),
+            title = title, notes = notes, up = up, down = down, difficulty = difficulty,
+            upCount = 0, downCount = 0, streak = 0, tags = tags
+        )
+        saveCharacterState(current.copy(habits = current.habits + newHabit))
+    }
+
+    fun editHabit(edited: Habit) {
+        val current = _characterState.value ?: return
+        val updated = current.habits.map { if (it.id == edited.id) edited else it }
+        saveCharacterState(current.copy(habits = updated))
+    }
+
+    fun deleteHabit(habitId: String) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(habits = current.habits.filter { it.id != habitId }))
+    }
+
+    fun addDaily(title: String, notes: String, difficulty: Difficulty, streak: Int, repeats: RepeatInterval, every: Int, tags: List<String>, checklistTexts: List<String>) {
+        val current = _characterState.value ?: return
+        val checklist = checklistTexts.map { ChecklistItem(id = java.util.UUID.randomUUID().toString(), text = it, completed = false) }
+        val newDaily = Daily(
+            id = java.util.UUID.randomUUID().toString(),
+            title = title, notes = notes, difficulty = difficulty, completed = false,
+            streak = streak, repeats = repeats, every = every, tags = tags, checklist = checklist,
+            value = 0, createdAt = java.time.Instant.now().toString()
+        )
+        saveCharacterState(current.copy(dailies = current.dailies + newDaily))
+    }
+
+    fun editDaily(edited: Daily) {
+        val current = _characterState.value ?: return
+        val updated = current.dailies.map { if (it.id == edited.id) edited else it }
+        saveCharacterState(current.copy(dailies = updated))
+    }
+
+    fun deleteDaily(dailyId: String) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(dailies = current.dailies.filter { it.id != dailyId }))
+    }
+
+    fun toggleDailyChecklistItem(dailyId: String, itemId: String) {
+        val current = _characterState.value ?: return
+        val updated = current.dailies.map { d ->
+            if (d.id == dailyId) d.copy(checklist = d.checklist.map { if (it.id == itemId) it.copy(completed = !it.completed) else it })
+            else d
+        }
+        saveCharacterState(current.copy(dailies = updated))
+    }
+
+    fun addTodo(title: String, notes: String, difficulty: Difficulty, tags: List<String>, checklistTexts: List<String>) {
+        val current = _characterState.value ?: return
+        val checklist = checklistTexts.map { ChecklistItem(id = java.util.UUID.randomUUID().toString(), text = it, completed = false) }
+        val newTodo = Todo(
+            id = java.util.UUID.randomUUID().toString(),
+            title = title, notes = notes, difficulty = difficulty, completed = false,
+            tags = tags, checklist = checklist, createdAt = java.time.Instant.now().toString()
+        )
+        saveCharacterState(current.copy(todos = current.todos + newTodo))
+    }
+
+    fun editTodo(edited: Todo) {
+        val current = _characterState.value ?: return
+        val updated = current.todos.map { if (it.id == edited.id) edited else it }
+        saveCharacterState(current.copy(todos = updated))
+    }
+
+    fun deleteTodo(todoId: String) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(todos = current.todos.filter { it.id != todoId }))
+    }
+
+    fun toggleTodoChecklistItem(todoId: String, itemId: String) {
+        val current = _characterState.value ?: return
+        val updated = current.todos.map { t ->
+            if (t.id == todoId) t.copy(checklist = t.checklist.map { if (it.id == itemId) it.copy(completed = !it.completed) else it })
+            else t
+        }
+        saveCharacterState(current.copy(todos = updated))
     }
 
     fun equipTitle(titleId: String?) {
