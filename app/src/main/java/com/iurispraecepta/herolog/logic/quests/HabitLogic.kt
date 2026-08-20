@@ -1,8 +1,10 @@
 package com.iurispraecepta.herolog.logic.quests
 
 import com.iurispraecepta.herolog.logic.CombatLogic
-import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.CharClass
+import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.Habit
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

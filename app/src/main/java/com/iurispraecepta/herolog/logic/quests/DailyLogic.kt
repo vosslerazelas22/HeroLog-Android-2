@@ -1,8 +1,11 @@
 package com.iurispraecepta.herolog.logic.quests
 
 import com.iurispraecepta.herolog.logic.CombatLogic
-import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.CharClass
+import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.model.ChecklistItem
+import com.iurispraecepta.herolog.model.Daily
+import com.iurispraecepta.herolog.model.Difficulty
 import kotlin.math.floor
 import kotlin.math.max
 

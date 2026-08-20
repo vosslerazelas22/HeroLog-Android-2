@@ -1,12 +1,12 @@
 package com.iurispraecepta.herolog
 
 import com.iurispraecepta.herolog.data.createInitialCharacterState
-import com.iurispraecepta.herolog.logic.quests.ChecklistItem
-import com.iurispraecepta.herolog.logic.quests.Daily
 import com.iurispraecepta.herolog.logic.quests.DailyLogic
-import com.iurispraecepta.herolog.logic.quests.Difficulty
-import com.iurispraecepta.herolog.logic.quests.RepeatFrequency
 import com.iurispraecepta.herolog.model.CharClass
+import com.iurispraecepta.herolog.model.ChecklistItem
+import com.iurispraecepta.herolog.model.Daily
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.RepeatInterval
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,7 +18,7 @@ class DailyLogicTest {
     private val testDate = Date()
 
     private fun sampleDaily(
-        difficulty: Difficulty = Difficulty.MEDIUM,
+        difficulty: Difficulty = Difficulty.Medium,
         completed: Boolean = false,
         streak: Int = 0,
         value: Int? = null,
@@ -30,8 +30,9 @@ class DailyLogicTest {
         difficulty = difficulty,
         completed = completed,
         streak = streak,
-        repeats = RepeatFrequency.DAILY,
+        repeats = RepeatInterval.Daily,
         every = 1,
+        tags = emptyList(),
         checklist = checklist,
         value = value
     )
@@ -91,7 +92,7 @@ class DailyLogicTest {
             combatLevel = 1,
             combatXP = 0
         )
-        val daily = sampleDaily(difficulty = Difficulty.MEDIUM, completed = false)
+        val daily = sampleDaily(difficulty = Difficulty.Medium, completed = false)
 
         val result = DailyLogic.toggle(daily, state)
 
@@ -111,7 +112,7 @@ class DailyLogicTest {
             combatLevel = 1,
             combatXP = 0
         )
-        val daily = sampleDaily(difficulty = Difficulty.MEDIUM, completed = false)
+        val daily = sampleDaily(difficulty = Difficulty.Medium, completed = false)
 
         val result = DailyLogic.toggle(daily, state)
 
@@ -132,7 +133,7 @@ class DailyLogicTest {
             hp = 10,
             maxHp = 50
         )
-        val daily = sampleDaily(difficulty = Difficulty.HARD, completed = false)
+        val daily = sampleDaily(difficulty = Difficulty.Hard, completed = false)
 
         val result = DailyLogic.toggle(daily, state)
 
@@ -153,7 +154,7 @@ class DailyLogicTest {
             hp = 25,
             maxHp = 50
         )
-        val daily = sampleDaily(difficulty = Difficulty.MEDIUM, completed = true)
+        val daily = sampleDaily(difficulty = Difficulty.Medium, completed = true)
 
         val result = DailyLogic.toggle(daily, state)
 
@@ -172,7 +173,7 @@ class DailyLogicTest {
             combatLevel = 1,
             combatXP = 5
         )
-        val daily = sampleDaily(difficulty = Difficulty.HARD, completed = true) // Hard: XP 60, Gold 25
+        val daily = sampleDaily(difficulty = Difficulty.Hard, completed = true) // Hard: XP 60, Gold 25
 
         val result = DailyLogic.toggle(daily, state)
 
@@ -190,7 +191,7 @@ class DailyLogicTest {
             combatLevel = 1,
             combatXP = 0
         )
-        val daily = sampleDaily(difficulty = Difficulty.MEDIUM, completed = false) // Medium: XP 28
+        val daily = sampleDaily(difficulty = Difficulty.Medium, completed = false) // Medium: XP 28
 
         val result = DailyLogic.toggle(daily, state)
 
