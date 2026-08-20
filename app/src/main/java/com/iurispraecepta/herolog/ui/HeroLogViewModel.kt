@@ -13,7 +13,10 @@ import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.logic.SkillError
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
 import com.iurispraecepta.herolog.model.Skill
+import com.iurispraecepta.herolog.logic.quests.DailyLogic
+import com.iurispraecepta.herolog.logic.quests.HabitLogic
 import com.iurispraecepta.herolog.logic.quests.RolloverLogic
+import com.iurispraecepta.herolog.logic.quests.TodoLogic
 import com.iurispraecepta.herolog.logic.focus.BreakTimerState
 import com.iurispraecepta.herolog.logic.focus.FocusApplyLogic
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsLogic
@@ -190,6 +193,30 @@ class HeroLogViewModel(
         val current = _characterState.value ?: return
         val updatedInventory = InventoryLogic.discardItem(current.inventory, item)
         saveCharacterState(current.copy(inventory = updatedInventory))
+    }
+
+    fun triggerHabit(habitId: String, isUp: Boolean) {
+        val current = _characterState.value ?: return
+        val habit = current.habits.find { it.id == habitId } ?: return
+        val result = HabitLogic.trigger(habit, current, isUp)
+        val updatedHabits = current.habits.map { if (it.id == habitId) result.updatedHabit else it }
+        saveCharacterState(result.updatedState.copy(habits = updatedHabits))
+    }
+
+    fun toggleDaily(dailyId: String) {
+        val current = _characterState.value ?: return
+        val daily = current.dailies.find { it.id == dailyId } ?: return
+        val result = DailyLogic.toggle(daily, current)
+        val updatedDailies = current.dailies.map { if (it.id == dailyId) result.updatedDaily else it }
+        saveCharacterState(result.updatedState.copy(dailies = updatedDailies))
+    }
+
+    fun toggleTodo(todoId: String) {
+        val current = _characterState.value ?: return
+        val todo = current.todos.find { it.id == todoId } ?: return
+        val result = TodoLogic.toggle(todo, current)
+        val updatedTodos = current.todos.map { if (it.id == todoId) result.updatedTodo else it }
+        saveCharacterState(result.updatedState.copy(todos = updatedTodos))
     }
 
     fun equipTitle(titleId: String?) {

@@ -7,7 +7,12 @@ import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.model.Daily
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.Habit
 import com.iurispraecepta.herolog.model.PomodoroSettings
+import com.iurispraecepta.herolog.model.RepeatInterval
+import com.iurispraecepta.herolog.model.Todo
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.logic.SkillError
@@ -19,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -1332,6 +1338,250 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.advanceTimeBy(150)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.characterState.value?.isPlayerDead == true)
+
+        db.close()
+    }
+
+    @Test
+    fun triggerHabit_up_appliesRewardsAndUpdatesHabit() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Drink Water",
+            notes = "",
+            up = true,
+            down = true,
+            difficulty = Difficulty.Medium, // XP: 28, Gold: 14 (Warrior class: gold * 1.2 = 16)
+            upCount = 0,
+            downCount = 0,
+            streak = 0,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        val state = createBaseState().copy(
+            charClass = CharClass.Warrior,
+            gold = 100,
+            totalGoldEarned = 100,
+            totalXP = 0,
+            combatLevel = 1,
+            combatXP = 0,
+            habits = listOf(habit)
+        )
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertNotNull(updatedState)
+        assertEquals(116, updatedState?.gold)
+        assertEquals(116, updatedState?.totalGoldEarned)
+        assertEquals(28, updatedState?.totalXP)
+        assertEquals(28, updatedState?.combatXP)
+        val updatedHabit = updatedState?.habits?.find { it.id == "h1" }
+        assertNotNull(updatedHabit)
+        assertEquals(1, updatedHabit?.upCount)
+        assertEquals(1, updatedHabit?.streak)
+        assertNotNull(updatedHabit?.lastTriggeredDate)
+
+        db.close()
+    }
+
+    @Test
+    fun triggerHabit_down_appliesDamageAndUpdatesHabit() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Junk Food",
+            notes = "",
+            up = true,
+            down = true,
+            difficulty = Difficulty.Medium, // Damage: 7
+            upCount = 0,
+            downCount = 2,
+            streak = 5,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        val state = createBaseState().copy(
+            charClass = CharClass.Warrior,
+            hp = 50,
+            maxHp = 50,
+            habits = listOf(habit)
+        )
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = false)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertNotNull(updatedState)
+        assertEquals(43, updatedState?.hp)
+        val updatedHabit = updatedState?.habits?.find { it.id == "h1" }
+        assertNotNull(updatedHabit)
+        assertEquals(3, updatedHabit?.downCount)
+        assertEquals(4, updatedHabit?.streak)
+
+        db.close()
+    }
+
+    @Test
+    fun triggerHabit_unknownId_noOp() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Drink Water",
+            notes = "",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 0,
+            downCount = 0,
+            streak = 0,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        val state = createBaseState().copy(
+            gold = 100,
+            hp = 50,
+            habits = listOf(habit)
+        )
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("unknown_id", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val updatedState = viewModel.characterState.value
+        assertEquals(100, updatedState?.gold)
+        assertEquals(50, updatedState?.hp)
+        assertEquals(0, updatedState?.habits?.find { it.id == "h1" }?.upCount)
+
+        db.close()
+    }
+
+    @Test
+    fun toggleDaily_completesAndUncompletes_symmetric() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val daily = Daily(
+            id = "d1",
+            title = "Morning Workout",
+            notes = "",
+            difficulty = Difficulty.Medium, // XP: 28, Gold: 14 (Warrior class: gold * 1.2 = 16)
+            completed = false,
+            streak = 2,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = emptyList(),
+            checklist = emptyList(),
+            value = 2,
+            createdAt = "2026-08-01"
+        )
+        val state = createBaseState().copy(
+            charClass = CharClass.Warrior,
+            gold = 100,
+            totalGoldEarned = 100,
+            totalXP = 0,
+            combatLevel = 1,
+            combatXP = 0,
+            dailies = listOf(daily)
+        )
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Toggle to completed
+        viewModel.toggleDaily("d1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val completedState = viewModel.characterState.value
+        assertNotNull(completedState)
+        assertEquals(116, completedState?.gold)
+        assertEquals(116, completedState?.totalGoldEarned)
+        assertEquals(28, completedState?.totalXP)
+        assertEquals(28, completedState?.combatXP)
+        val completedDaily = completedState?.dailies?.find { it.id == "d1" }
+        assertTrue(completedDaily?.completed == true)
+        assertEquals(3, completedDaily?.streak)
+        assertEquals(3, completedDaily?.value)
+
+        // Toggle back to uncompleted
+        viewModel.toggleDaily("d1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val revertedState = viewModel.characterState.value
+        assertNotNull(revertedState)
+        assertEquals(100, revertedState?.gold)
+        assertEquals(100, revertedState?.totalGoldEarned)
+        assertEquals(0, revertedState?.totalXP)
+        assertEquals(0, revertedState?.combatXP)
+        val revertedDaily = revertedState?.dailies?.find { it.id == "d1" }
+        assertFalse(revertedDaily?.completed == true)
+        assertEquals(2, revertedDaily?.streak)
+        assertEquals(2, revertedDaily?.value)
+
+        db.close()
+    }
+
+    @Test
+    fun toggleTodo_completesAndSetsCompletedAt() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val todo = Todo(
+            id = "t1",
+            title = "Pay Taxes",
+            notes = "",
+            difficulty = Difficulty.Hard, // Hard: XP 60, Gold 25 (Warrior class: gold * 1.2 = 30)
+            completed = false,
+            tags = emptyList(),
+            checklist = emptyList(),
+            createdAt = "2026-08-01",
+            completedAt = null
+        )
+        val state = createBaseState().copy(
+            charClass = CharClass.Warrior,
+            gold = 100,
+            totalGoldEarned = 100,
+            totalXP = 0,
+            combatLevel = 1,
+            combatXP = 0,
+            todos = listOf(todo)
+        )
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.toggleTodo("t1")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val completedState = viewModel.characterState.value
+        assertNotNull(completedState)
+        assertEquals(130, completedState?.gold)
+        assertEquals(130, completedState?.totalGoldEarned)
+        assertEquals(60, completedState?.totalXP)
+        assertEquals(60, completedState?.combatXP)
+        val completedTodo = completedState?.todos?.find { it.id == "t1" }
+        assertTrue(completedTodo?.completed == true)
+        assertNotNull(completedTodo?.completedAt)
 
         db.close()
     }
