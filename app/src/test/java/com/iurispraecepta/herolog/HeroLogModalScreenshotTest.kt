@@ -1,6 +1,9 @@
 package com.iurispraecepta.herolog
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -46,7 +49,7 @@ class HeroLogModalScreenshotTest {
     fun heroLogModal_closed_screenshot() {
         composeTestRule.setContent {
             HeroLogTheme {
-                androidx.compose.foundation.layout.Box {
+                Box(modifier = Modifier.fillMaxSize()) {
                     HeroLogModal(
                         isOpen = false,
                         onClose = {},
