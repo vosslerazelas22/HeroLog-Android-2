@@ -31,10 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -83,6 +79,13 @@ import com.iurispraecepta.herolog.ui.focus.toLegacyFlags
 import com.iurispraecepta.herolog.ui.inventory.InventoryScreen
 import com.iurispraecepta.herolog.ui.skills.SkillSelectorModal
 import com.iurispraecepta.herolog.ui.skills.SkillsScreen
+import com.iurispraecepta.herolog.ui.habits.HabitsScreen
+import com.iurispraecepta.herolog.ui.dailies.DailiesScreen
+import com.iurispraecepta.herolog.ui.todos.TodosScreen
+import com.iurispraecepta.herolog.ui.navigation.HeroLogBottomNav
+import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
+import com.iurispraecepta.herolog.ui.navigation.getActiveModule
+import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
@@ -109,7 +112,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HeroLogTheme {
-                var selectedTab by remember { mutableStateOf(0) }
+                // Estado de navegação em string, fiel ao `activeTab` da fonte React (`useState<string>('focus')`).
+                var activeTab by remember { mutableStateOf("focus") }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
@@ -133,82 +137,29 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        Column {
-                            TopAppBar(
-                                title = {
-                                    Text(
-                                        text = when (selectedTab) {
-                                            0 -> "HeroLog — Habilidades"
-                                            1 -> "HeroLog — Personagem"
-                                            2 -> "HeroLog — Inventário"
-                                            else -> "HeroLog — Foco (Preview)"
-                                        },
-                                        color = Amber400
-                                    )
-                                },
-                                colors = TopAppBarDefaults.topAppBarColors(
-                                    containerColor = Stone900,
-                                    titleContentColor = Amber400
-                                )
-                            )
-                            TabRow(
-                                selectedTabIndex = selectedTab,
-                                containerColor = Stone900,
-                                contentColor = Amber400,
-                                indicator = { tabPositions ->
-                                    if (selectedTab < tabPositions.size) {
-                                        TabRowDefaults.SecondaryIndicator(
-                                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                                            color = Amber400
-                                        )
-                                    }
+                        TopAppBar(
+                            title = {
+                                val moduleTitle = MODULE_TITLES[getActiveModule(activeTab)] ?: when (activeTab) {
+                                    "focus" -> "Foco"
+                                    "skills" -> "Skills"
+                                    else -> "HeroLog"
                                 }
-                            ) {
-                                Tab(
-                                    selected = selectedTab == 0,
-                                    onClick = { selectedTab = 0 },
-                                    text = {
-                                        Text(
-                                            "Habilidades",
-                                            color = if (selectedTab == 0) Amber400 else Color.Gray
-                                        )
-                                    }
-                                )
-                                Tab(
-                                    selected = selectedTab == 1,
-                                    onClick = { selectedTab = 1 },
-                                    text = {
-                                        Text(
-                                            "Personagem",
-                                            color = if (selectedTab == 1) Amber400 else Color.Gray
-                                        )
-                                    }
-                                )
-                                Tab(
-                                    selected = selectedTab == 2,
-                                    onClick = { selectedTab = 2 },
-                                    text = {
-                                        Text(
-                                            "Inventário",
-                                            color = if (selectedTab == 2) Amber400 else Color.Gray
-                                        )
-                                    }
-                                )
-                                Tab(
-                                    selected = selectedTab == 3,
-                                    onClick = { selectedTab = 3 },
-                                    text = {
-                                        Text(
-                                            "Foco (Preview)",
-                                            color = if (selectedTab == 3) Amber400 else Color.Gray
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                                Text(text = "HeroLog — $moduleTitle", color = Amber400)
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Stone900,
+                                titleContentColor = Amber400
+                            )
+                        )
+                    },
+                    bottomBar = {
+                        HeroLogBottomNav(
+                            activeTab = activeTab,
+                            onChangeTab = { activeTab = it }
+                        )
                     },
                     floatingActionButton = {
-                        if (selectedTab == 0) {
+                        if (activeTab == "skills") {
                             FloatingActionButton(
                                 onClick = { isCreateModalOpen = true },
                                 containerColor = Amber400,
@@ -223,8 +174,8 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
-                        when (selectedTab) {
-                            0 -> {
+                        when (activeTab) {
+                            "skills" -> {
                                 val state = characterState
                                 if (state == null) {
                                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -273,7 +224,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            1 -> {
+                            "character" -> {
                                 val state = characterState
                                 if (state == null) {
                                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -290,7 +241,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            2 -> {
+                            "inventory" -> {
                                 val state = characterState
                                 if (state == null) {
                                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -317,12 +268,85 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            else -> {
+                            "habits" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando hábitos...", color = Amber400)
+                                    }
+                                } else {
+                                    HabitsScreen(
+                                        habits = state.habits,
+                                        onTriggerHabit = { habitId, isUp -> heroLogViewModel.triggerHabit(habitId, isUp) },
+                                        onAddHabit = { title, notes, up, down, difficulty, tags ->
+                                            heroLogViewModel.addHabit(title, notes, up, down, difficulty, tags)
+                                        },
+                                        onEditHabit = { habit -> heroLogViewModel.editHabit(habit) },
+                                        onDeleteHabit = { habitId -> heroLogViewModel.deleteHabit(habitId) }
+                                    )
+                                }
+                            }
+                            "dailies" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando tarefas diárias...", color = Amber400)
+                                    }
+                                } else {
+                                    DailiesScreen(
+                                        dailies = state.dailies,
+                                        onToggleDaily = { dailyId -> heroLogViewModel.toggleDaily(dailyId) },
+                                        onToggleChecklistItem = { dailyId, itemId ->
+                                            heroLogViewModel.toggleDailyChecklistItem(dailyId, itemId)
+                                        },
+                                        onAddDaily = { title, notes, difficulty, streak, repeats, every, tags, checklistTexts ->
+                                            heroLogViewModel.addDaily(title, notes, difficulty, streak, repeats, every, tags, checklistTexts)
+                                        },
+                                        onEditDaily = { daily -> heroLogViewModel.editDaily(daily) },
+                                        onDeleteDaily = { dailyId -> heroLogViewModel.deleteDaily(dailyId) }
+                                    )
+                                }
+                            }
+                            "todos" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando missões avulsas...", color = Amber400)
+                                    }
+                                } else {
+                                    TodosScreen(
+                                        todos = state.todos,
+                                        onToggleTodo = { todoId -> heroLogViewModel.toggleTodo(todoId) },
+                                        onToggleChecklistItem = { todoId, itemId ->
+                                            heroLogViewModel.toggleTodoChecklistItem(todoId, itemId)
+                                        },
+                                        onAddTodo = { title, notes, difficulty, tags, checklistTexts ->
+                                            heroLogViewModel.addTodo(title, notes, difficulty, tags, checklistTexts)
+                                        },
+                                        onEditTodo = { todo -> heroLogViewModel.editTodo(todo) },
+                                        onDeleteTodo = { todoId -> heroLogViewModel.deleteTodo(todoId) }
+                                    )
+                                }
+                            }
+                            "focus" -> {
                                 FocusOrbPreviewScreen(
                                     viewModel = heroLogViewModel,
                                     characterState = characterState
                                 )
                             }
+                            // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
+                            // (Bazar/Títulos/Heatmap/Estatísticas/Conquistas/Registros/Tutorial)
+                            // ainda não portados — placeholder até virarem blocos reais.
+                            "quests" -> PlaceholderScreen(title = "Contratos")
+                            "history" -> PlaceholderScreen(title = "Crônicas Diárias")
+                            "shop" -> PlaceholderScreen(title = "Bazar de Mystara")
+                            "titles" -> PlaceholderScreen(title = "Títulos")
+                            "heatmap" -> PlaceholderScreen(title = "Heatmap")
+                            "stats" -> PlaceholderScreen(title = "Estatísticas do Herói")
+                            "achievements" -> PlaceholderScreen(title = "Conquistas")
+                            "logs" -> PlaceholderScreen(title = "Registros")
+                            "guide" -> PlaceholderScreen(title = "Tutorial")
+                            else -> PlaceholderScreen(title = activeTab)
                         }
                     }
                 }

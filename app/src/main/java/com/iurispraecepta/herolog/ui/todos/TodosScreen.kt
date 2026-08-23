@@ -905,7 +905,7 @@ private fun TodoCardItem(
             .then(
                 if (todo.completed) {
                     Modifier
-                        .background(Color(0x0D047857)) // emerald sutil
+                        .background(Color(0x08022C22)) // emerald-950/[0.03], fiel à fonte React
                         .border(1.dp, Color(0x4D10B981), RoundedCornerShape(8.dp))
                 } else {
                     Modifier
