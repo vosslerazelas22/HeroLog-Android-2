@@ -82,6 +82,8 @@ import com.iurispraecepta.herolog.ui.skills.SkillsScreen
 import com.iurispraecepta.herolog.ui.habits.HabitsScreen
 import com.iurispraecepta.herolog.ui.dailies.DailiesScreen
 import com.iurispraecepta.herolog.ui.todos.TodosScreen
+import com.iurispraecepta.herolog.ui.quests.QuestsScreen
+import com.iurispraecepta.herolog.ui.history.HistoryScreen
 import com.iurispraecepta.herolog.ui.navigation.HeroLogBottomNav
 import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
 import com.iurispraecepta.herolog.ui.navigation.getActiveModule
@@ -114,6 +116,7 @@ class MainActivity : ComponentActivity() {
             HeroLogTheme {
                 // Estado de navegação em string, fiel ao `activeTab` da fonte React (`useState<string>('focus')`).
                 var activeTab by remember { mutableStateOf("focus") }
+                var questsSubTab by remember { mutableStateOf("daily") }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
@@ -337,8 +340,24 @@ class MainActivity : ComponentActivity() {
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
                             // (Bazar/Títulos/Heatmap/Estatísticas/Conquistas/Registros/Tutorial)
                             // ainda não portados — placeholder até virarem blocos reais.
-                            "quests" -> PlaceholderScreen(title = "Contratos")
-                            "history" -> PlaceholderScreen(title = "Crônicas Diárias")
+                            "quests" -> {
+                                val state = characterState
+                                if (state != null) {
+                                    QuestsScreen(
+                                        dailyQuests = heroLogViewModel.dailyQuests(state),
+                                        guildQuests = heroLogViewModel.guildQuestsProcessed(state),
+                                        activeSubTab = questsSubTab,
+                                        onSubTabChange = { questsSubTab = it },
+                                        onClaimQuestReward = heroLogViewModel::claimQuestReward
+                                    )
+                                }
+                            }
+                            "history" -> {
+                                val state = characterState
+                                if (state != null) {
+                                    HistoryScreen(history = state.history)
+                                }
+                            }
                             "shop" -> PlaceholderScreen(title = "Bazar de Mystara")
                             "titles" -> PlaceholderScreen(title = "Títulos")
                             "heatmap" -> PlaceholderScreen(title = "Heatmap")

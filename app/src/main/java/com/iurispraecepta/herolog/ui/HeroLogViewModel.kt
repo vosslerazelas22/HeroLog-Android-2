@@ -21,6 +21,9 @@ import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.model.Todo
 import com.iurispraecepta.herolog.logic.quests.DailyLogic
 import com.iurispraecepta.herolog.logic.quests.HabitLogic
+import com.iurispraecepta.herolog.logic.quests.QuestApplyLogic
+import com.iurispraecepta.herolog.logic.quests.QuestCatalog
+import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.quests.RolloverLogic
 import com.iurispraecepta.herolog.logic.quests.TodoLogic
 import com.iurispraecepta.herolog.logic.focus.BreakTimerState
@@ -47,6 +50,18 @@ import java.util.Date
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
+
+data class ProcessedQuest(
+    val id: String,
+    val name: String,
+    val desc: String,
+    val target: Int,
+    val rewardGold: Int,
+    val rewardXp: Int,
+    val progress: Int,
+    val isCompleted: Boolean,
+    val isClaimed: Boolean
+)
 
 class HeroLogViewModel(
     private val repository: CharacterRepository,
@@ -307,6 +322,46 @@ class HeroLogViewModel(
             else t
         }
         saveCharacterState(current.copy(todos = updated))
+    }
+
+    fun dailyQuests(state: CharacterState, referenceDate: Date = Date()): List<ProcessedQuest> {
+        return QuestLogic.getRotatingDailyQuests(3, referenceDate).map { quest ->
+            val progress = quest.getProgress(state)
+            ProcessedQuest(
+                id = quest.id,
+                name = quest.name,
+                desc = quest.desc,
+                target = quest.target,
+                rewardGold = quest.rewardGold,
+                rewardXp = quest.rewardXp,
+                progress = progress,
+                isCompleted = progress >= quest.target,
+                isClaimed = QuestLogic.isQuestClaimed(state, quest.id, referenceDate)
+            )
+        }
+    }
+
+    fun guildQuestsProcessed(state: CharacterState, referenceDate: Date = Date()): List<ProcessedQuest> {
+        return QuestCatalog.GUILD_QUESTS.map { quest ->
+            val progress = quest.getProgress(state)
+            ProcessedQuest(
+                id = quest.id,
+                name = quest.name,
+                desc = quest.desc,
+                target = quest.target,
+                rewardGold = quest.rewardGold,
+                rewardXp = quest.rewardXp,
+                progress = progress,
+                isCompleted = progress >= quest.target,
+                isClaimed = QuestLogic.isQuestClaimed(state, quest.id, referenceDate)
+            )
+        }
+    }
+
+    fun claimQuestReward(questId: String, goldReward: Int, xpReward: Int) {
+        val current = _characterState.value ?: return
+        val updated = QuestApplyLogic.claimQuestReward(current, questId, goldReward, xpReward)
+        saveCharacterState(updated)
     }
 
     fun equipTitle(titleId: String?) {
