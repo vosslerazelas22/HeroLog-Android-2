@@ -25,11 +25,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,31 +41,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.HistoryEntry
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Stone400
-import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
 private val Amber200 = Color(0xFFFDE68A)
 private val Amber300 = Color(0xFFFCD34D)
-private val Orange400 = Color(0xFFFB923C)
+private val Emerald400 = Color(0xFF34D399)
 private val Purple300 = Color(0xFFD8B4FE)
 private val Purple400 = Color(0xFFC084FC)
 private val Stone500 = Color(0xFF78716C)
-private val Stone600 = Color(0xFF57534E)
 private val Red400 = Color(0xFFF87171)
 
 @Composable
@@ -81,8 +82,6 @@ fun HistoryScreen(
         history.filter { it.notes.isNotBlank() }
     }
 
-    val displayedEntries = if (viewMode == "notes") notesEntries else history
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -91,56 +90,52 @@ fun HistoryScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ── Cabeçalho da Tela ───────────────────────────────────────────────
+        // ═══ CABEÇALHO DO PAINEL (vem do wrapper em App.tsx) ═══
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.History,
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                 contentDescription = null,
                 tint = Amber400,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Crônicas Diárias",
+                text = "CRÔNICAS DIÁRIAS",
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
+                fontSize = 13.sp,
+                letterSpacing = 0.12.em,
                 color = Amber400
             )
         }
 
-        Text(
-            text = "O registro imutável de seus esforços, provações e conquistas no reino de Mystara.",
-            color = Stone400,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
-        )
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // ── Estado Vazio vs Conteúdo ─────────────────────────────────────────
+        // ═══ ESTADO VAZIO GERAL vs CONTEÚDO COM TOGGLE ═══
         if (history.isEmpty()) {
-            EmptyHistoryState()
+            EmptyHistoryGeneralState()
         } else {
-            // ── Alternância de Modo (Todas as Sessões / Apenas Anotações) ────
+            // ── Seletor de Modo (Crônicas completas / Compilado de Notas) ──
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Stone900)
-                    .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(8.dp))
+                    .background(Stone950.copy(alpha = 0.4f))
+                    .border(1.dp, Color(0x1AF59E0B), RoundedCornerShape(8.dp))
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                FilterTabButton(
-                    title = "Todas as Sessões (${history.size})",
+                ViewModeButton(
+                    title = "Crônicas completas",
                     isSelected = viewMode == "all",
                     onClick = { viewMode = "all" },
                     modifier = Modifier.weight(1f)
                 )
-                FilterTabButton(
-                    title = "Anotações (${notesEntries.size})",
+                ViewModeButton(
+                    title = "Compilado de Notas",
                     isSelected = viewMode == "notes",
                     onClick = { viewMode = "notes" },
                     modifier = Modifier.weight(1f)
@@ -149,31 +144,36 @@ fun HistoryScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            if (displayedEntries.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Nenhuma anotação registrada até o momento.",
-                        color = Stone500,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center
-                    )
+            if (viewMode == "notes") {
+                // ═══ MODO NOTAS ═══
+                if (notesEntries.isEmpty()) {
+                    EmptyNotesState()
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 80.dp)
+                    ) {
+                        items(
+                            items = notesEntries,
+                            key = { "note_${it.id}" }
+                        ) { entry ->
+                            NotesHistoryCard(entry = entry)
+                        }
+                    }
                 }
             } else {
+                // ═══ MODO ALL (CRÔNICAS COMPLETAS) ═══
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = 80.dp)
                 ) {
                     items(
-                        items = displayedEntries,
-                        key = { it.id }
+                        items = history,
+                        key = { "all_${it.id}" }
                     ) { entry ->
-                        HistoryCard(
+                        FullHistoryCard(
                             entry = entry,
                             isExpanded = expandedChronicleId == entry.id,
                             onToggleExpand = {
@@ -188,23 +188,23 @@ fun HistoryScreen(
 }
 
 @Composable
-private fun FilterTabButton(
+private fun ViewModeButton(
     title: String,
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) Amber500.copy(alpha = 0.2f) else Color.Transparent,
-        label = "history_tab_bg"
+        targetValue = if (isSelected) Amber500.copy(alpha = 0.1f) else Color.Transparent,
+        label = "view_mode_bg"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) Amber400 else Color.Transparent,
-        label = "history_tab_border"
+        targetValue = if (isSelected) Amber500.copy(alpha = 0.2f) else Color.Transparent,
+        label = "view_mode_border"
     )
     val textColor by animateColorAsState(
-        targetValue = if (isSelected) Amber300 else Amber100.copy(alpha = 0.5f),
-        label = "history_tab_text"
+        targetValue = if (isSelected) Amber300 else Stone500,
+        label = "view_mode_text"
     )
 
     Box(
@@ -217,9 +217,10 @@ private fun FilterTabButton(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = title,
-            fontSize = 12.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            text = title.uppercase(),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.08.em,
             color = textColor,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -228,8 +229,11 @@ private fun FilterTabButton(
     }
 }
 
+/**
+ * Card do modo "all" (Crônicas completas)
+ */
 @Composable
-private fun HistoryCard(
+private fun FullHistoryCard(
     entry: HistoryEntry,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
@@ -243,151 +247,77 @@ private fun HistoryCard(
             .clip(RoundedCornerShape(8.dp))
             .background(Stone900)
             .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(8.dp))
-            .then(
-                if (hasChronicle) {
-                    Modifier.clickable(onClick = onToggleExpand)
-                } else {
-                    Modifier
-                }
-            )
             .padding(14.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // ── Linha Superior: Nome da Skill, Tags e Data ───────────────────
+            // ── Cabeçalho: Skill + Badge Wilderness + Data à esquerda; XP e GP à direita ──
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f, fill = false)
-                ) {
-                    Text(
-                        text = entry.skillName,
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Amber300,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                // Esquerda: Nome + Badge + Data
+                Column(modifier = Modifier.weight(1f, fill = false)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = entry.skillName,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = Amber200,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                    if (!entry.subskillTag.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Amber500.copy(alpha = 0.1f))
-                                .border(1.dp, Amber500.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 6.dp, vertical = 1.dp)
-                        ) {
-                            Text(
-                                text = entry.subskillTag,
-                                fontSize = 10.sp,
-                                color = Amber200,
-                                maxLines = 1
-                            )
+                        if (entry.wilderness) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Red400.copy(alpha = 0.15f))
+                                    .border(1.dp, Red400.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 5.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "TERRA SELVAGEM",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.08.em,
+                                    color = Red400
+                                )
+                            }
                         }
                     }
 
-                    if (entry.wilderness) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Red400.copy(alpha = 0.15f))
-                                .border(1.dp, Red400.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 5.dp, vertical = 1.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalFireDepartment,
-                                contentDescription = null,
-                                tint = Red400,
-                                modifier = Modifier.size(10.dp)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text(
-                                text = "Wilderness",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Red400
-                            )
-                        }
-                    }
-                }
+                    Spacer(modifier = Modifier.height(2.dp))
 
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = entry.date,
                         fontSize = 11.sp,
                         fontFamily = FontFamily.Monospace,
                         color = Stone400
                     )
-
-                    if (hasChronicle) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
-                            contentDescription = if (isExpanded) "Recolher crônica" else "Expandir crônica",
-                            tint = Amber400,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-            // ── Métricas da Sessão (Duração, XP, Gold) ──────────────────────
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Duração
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // Direita: XP e GP empilhados
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "⏱",
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "${entry.duration} min",
+                        text = "⚡ +${entry.xp} XP",
                         fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Amber100
-                    )
-                }
-
-                // XP
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "⭐",
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "+${entry.xp} XP",
-                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Purple400
+                        color = Emerald400
                     )
-                }
-
-                // Gold
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.height(1.dp))
                     Text(
-                        text = "🪙",
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "+${entry.gold} Gold",
+                        text = "💎 +${entry.gold} GP",
                         fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
                         color = Amber400
                     )
@@ -400,30 +330,95 @@ private fun HistoryCard(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Stone950)
-                        .border(1.dp, Stone800, RoundedCornerShape(6.dp))
-                        .padding(10.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0x0DF59E0B))
+                        .drawBehind {
+                            drawLine(
+                                color = Amber500.copy(alpha = 0.4f),
+                                start = Offset(0f, 0f),
+                                end = Offset(0f, size.height),
+                                strokeWidth = 3.dp.toPx()
+                            )
+                        }
+                        .padding(start = 10.dp, top = 6.dp, bottom = 6.dp, end = 8.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = "Anotações:",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Stone500,
-                            modifier = Modifier.padding(bottom = 2.dp)
+                    Text(
+                        text = "“${entry.notes}”",
+                        fontFamily = FontFamily.Serif,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 12.sp,
+                        color = Amber100.copy(alpha = 0.85f),
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ── Rodapé: Duração à esquerda + Revelar Crônica / Mensagem à direita ──
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawBehind {
+                        drawLine(
+                            color = Color(0x1AF59E0B),
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx()
                         )
+                    }
+                    .padding(top = 10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Esquerda: Duração
+                    Text(
+                        text = "⏱ Duração: ${entry.duration}m",
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                        color = Stone400
+                    )
+
+                    // Direita: Botão ou texto
+                    if (hasChronicle) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable(onClick = onToggleExpand)
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null,
+                                tint = Purple400,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isExpanded) "OCULTAR CRÔNICA MÍSTICA" else "REVELAR CRÔNICA MÍSTICA",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.08.em,
+                                color = Purple400
+                            )
+                        }
+                    } else {
                         Text(
-                            text = entry.notes,
-                            fontSize = 12.sp,
-                            color = Amber100.copy(alpha = 0.85f),
-                            lineHeight = 16.sp
+                            text = "Nenhuma crônica antiga disponível",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Serif,
+                            fontStyle = FontStyle.Italic,
+                            color = Amber100.copy(alpha = 0.3f)
                         )
                     }
                 }
             }
 
-            // ── Crônica Gerada por IA (Estrutura de suporte à fonte) ─────────
+            // ── Painel Expansível da Crônica Mística ─────────────────────────
             if (hasChronicle) {
                 AnimatedVisibility(
                     visible = isExpanded,
@@ -435,8 +430,15 @@ private fun HistoryCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x1A8B5CF6))
-                                .border(1.dp, Color(0x338B5CF6), RoundedCornerShape(6.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            Amber500.copy(alpha = 0.08f),
+                                            Purple400.copy(alpha = 0.08f)
+                                        )
+                                    )
+                                )
+                                .border(1.dp, Amber400.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
                                 .padding(12.dp)
                         ) {
                             Column {
@@ -445,7 +447,7 @@ private fun HistoryCard(
                                     modifier = Modifier.padding(bottom = 4.dp)
                                 ) {
                                     Text(
-                                        text = "📜 Crônica do Bardo",
+                                        text = "📜 Crônica Mística",
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Purple300
@@ -455,7 +457,7 @@ private fun HistoryCard(
                                     text = entry.aiChronicle.orEmpty(),
                                     fontSize = 12.sp,
                                     color = Amber100.copy(alpha = 0.9f),
-                                    lineHeight = 17.sp,
+                                    lineHeight = 18.sp,
                                     fontFamily = FontFamily.Serif
                                 )
                             }
@@ -467,8 +469,110 @@ private fun HistoryCard(
     }
 }
 
+/**
+ * Card do modo "notes" (Compilado de Notas) - compacto e focado na citação
+ */
 @Composable
-private fun EmptyHistoryState(modifier: Modifier = Modifier) {
+private fun NotesHistoryCard(
+    entry: HistoryEntry,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Stone950.copy(alpha = 0.6f))
+            .border(1.dp, Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+            .padding(12.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // ── Linha Superior: Skill à esquerda, Data à direita ─────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = entry.skillName.uppercase(),
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    letterSpacing = 0.08.em,
+                    color = Amber400,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = entry.date,
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = Stone500
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // ── Linha divisória fina ────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0x1AF59E0B))
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Corpo: Nota entre aspas com borda esquerda tipo blockquote ──
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .drawBehind {
+                        drawLine(
+                            color = Amber400,
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, size.height),
+                            strokeWidth = 2.dp.toPx()
+                        )
+                    }
+                    .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
+            ) {
+                Text(
+                    text = "“${entry.notes}”",
+                    fontFamily = FontFamily.Serif,
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12.sp,
+                    color = Amber100,
+                    lineHeight = 16.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ── Rodapé: Duração alinhada à direita ───────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    text = "Duração do Estudo: ${entry.duration} min",
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = Stone500
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Estado vazio quando não há nenhuma entrada de histórico geral
+ */
+@Composable
+private fun EmptyHistoryGeneralState(modifier: Modifier = Modifier) {
     val borderColor = Color(0x33F59E0B)
     Box(
         modifier = modifier
@@ -492,26 +596,82 @@ private fun EmptyHistoryState(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.MenuBook,
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                 contentDescription = null,
-                tint = Amber400.copy(alpha = 0.5f),
+                tint = Amber400.copy(alpha = 0.4f),
                 modifier = Modifier.size(36.dp)
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Seu diário de jornada ainda está em branco.",
+                fontFamily = FontFamily.Serif,
+                fontStyle = FontStyle.Italic,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Normal,
                 color = Amber300,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Complete sua primeira sessão de foco para gravar sua lenda nas crônicas do reino.",
-                fontSize = 12.sp,
+                text = "Conclua sua primeira Missão de Foco para registrar novos feitos!",
+                fontSize = 11.sp,
                 color = Stone400,
                 textAlign = TextAlign.Center,
                 lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+/**
+ * Estado vazio quando o modo "notes" é selecionado mas não há notas
+ */
+@Composable
+private fun EmptyNotesState(modifier: Modifier = Modifier) {
+    val borderColor = Color(0x33F59E0B)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 28.dp)
+            .drawBehind {
+                drawRoundRect(
+                    color = borderColor,
+                    style = Stroke(
+                        width = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
+                    ),
+                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                )
+            }
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Description,
+                contentDescription = null,
+                tint = Amber400.copy(alpha = 0.4f),
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "Nenhuma Nota de Estudo registrada ainda.",
+                fontFamily = FontFamily.Serif,
+                fontStyle = FontStyle.Italic,
+                fontSize = 13.sp,
+                color = Amber300,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Digite notas de estudo no formulário de foco (\"Notas Teológicas\") antes de iniciar suas missões para compilar teus registros aqui!",
+                fontSize = 11.sp,
+                color = Stone500,
+                textAlign = TextAlign.Center,
+                lineHeight = 15.sp
             )
         }
     }
