@@ -88,6 +88,7 @@ import com.iurispraecepta.herolog.ui.navigation.HeroLogBottomNav
 import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
 import com.iurispraecepta.herolog.ui.navigation.getActiveModule
 import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
+import com.iurispraecepta.herolog.ui.kingdom.GuideScreen
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
@@ -364,7 +365,7 @@ class MainActivity : ComponentActivity() {
                             "stats" -> PlaceholderScreen(title = "Estatísticas do Herói")
                             "achievements" -> PlaceholderScreen(title = "Conquistas")
                             "logs" -> PlaceholderScreen(title = "Registros")
-                            "guide" -> PlaceholderScreen(title = "Tutorial")
+                            "guide" -> GuideScreen()
                             else -> PlaceholderScreen(title = activeTab)
                         }
                     }
