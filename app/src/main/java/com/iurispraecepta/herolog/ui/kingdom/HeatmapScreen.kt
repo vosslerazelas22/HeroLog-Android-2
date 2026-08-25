@@ -328,7 +328,6 @@ private fun HeatmapGridPanel(
                         selected = scope == HeatmapScope.THREE_MONTHS,
                         onClick = { onScopeChange(HeatmapScope.THREE_MONTHS) }
                     )
-                    // app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/HeatmapScreen.kt — PARTE 2/2 (continuação, colar logo após a parte 1)
                     ScopeToggleButton(
                         label = "6 MESES",
                         selected = scope == HeatmapScope.SIX_MONTHS,
