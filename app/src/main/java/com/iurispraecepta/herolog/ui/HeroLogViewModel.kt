@@ -210,6 +210,16 @@ class HeroLogViewModel(
         saveCharacterState(current.copy(inventory = updatedInventory, gold = current.gold + sellPrice))
     }
 
+    fun buyShopItem(catalogEntry: com.iurispraecepta.herolog.logic.kingdom.ShopCatalogEntry) {
+        val current = _characterState.value ?: return
+        val result = com.iurispraecepta.herolog.logic.kingdom.ShopLogic.buyItem(
+            gold = current.gold,
+            inventory = current.inventory,
+            catalogEntry = catalogEntry
+        ) ?: return
+        saveCharacterState(current.copy(gold = result.gold, inventory = result.inventory))
+    }
+
     fun discardItem(item: InventoryItem) {
         val current = _characterState.value ?: return
         val updatedInventory = InventoryLogic.discardItem(current.inventory, item)

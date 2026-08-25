@@ -89,6 +89,8 @@ import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
 import com.iurispraecepta.herolog.ui.navigation.getActiveModule
 import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
 import com.iurispraecepta.herolog.ui.kingdom.GuideScreen
+import com.iurispraecepta.herolog.ui.kingdom.HeatmapScreen
+import com.iurispraecepta.herolog.ui.kingdom.ShopScreen
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
@@ -359,9 +361,31 @@ class MainActivity : ComponentActivity() {
                                     HistoryScreen(history = state.history)
                                 }
                             }
-                            "shop" -> PlaceholderScreen(title = "Bazar de Mystara")
+                            "shop" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando bazar...", color = Amber400)
+                                    }
+                                } else {
+                                    ShopScreen(
+                                        gold = state.gold,
+                                        inventory = state.inventory,
+                                        onBuyItem = { entry -> heroLogViewModel.buyShopItem(entry) }
+                                    )
+                                }
+                            }
                             "titles" -> PlaceholderScreen(title = "Títulos")
-                            "heatmap" -> PlaceholderScreen(title = "Heatmap")
+                            "heatmap" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando heatmap...", color = Amber400)
+                                    }
+                                } else {
+                                    HeatmapScreen(history = state.history, streak = state.streak)
+                                }
+                            }
                             "stats" -> PlaceholderScreen(title = "Estatísticas do Herói")
                             "achievements" -> PlaceholderScreen(title = "Conquistas")
                             "logs" -> PlaceholderScreen(title = "Registros")
