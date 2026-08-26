@@ -91,6 +91,9 @@ import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
 import com.iurispraecepta.herolog.ui.kingdom.GuideScreen
 import com.iurispraecepta.herolog.ui.kingdom.HeatmapScreen
 import com.iurispraecepta.herolog.ui.kingdom.ShopScreen
+import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
+import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
+import com.iurispraecepta.herolog.ui.kingdom.TitleSelectorScreen
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
@@ -375,7 +378,20 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            "titles" -> PlaceholderScreen(title = "Títulos")
+                            "titles" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando títulos...", color = Amber400)
+                                    }
+                                } else {
+                                    TitleSelectorScreen(
+                                        ownedTitles = state.ownedTitles ?: emptyList(),
+                                        equippedTitle = state.equippedTitle,
+                                        onEquipTitle = { titleId -> heroLogViewModel.equipTitle(titleId) }
+                                    )
+                                }
+                            }
                             "heatmap" -> {
                                 val state = characterState
                                 if (state == null) {
@@ -386,8 +402,26 @@ class MainActivity : ComponentActivity() {
                                     HeatmapScreen(history = state.history, streak = state.streak)
                                 }
                             }
-                            "stats" -> PlaceholderScreen(title = "Estatísticas do Herói")
-                            "achievements" -> PlaceholderScreen(title = "Conquistas")
+                            "stats" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando estatísticas...", color = Amber400)
+                                    }
+                                } else {
+                                    StatsScreen(state = state)
+                                }
+                            }
+                            "achievements" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando conquistas...", color = Amber400)
+                                    }
+                                } else {
+                                    AchievementsScreen(state = state)
+                                }
+                            }
                             "logs" -> PlaceholderScreen(title = "Registros")
                             "guide" -> GuideScreen()
                             else -> PlaceholderScreen(title = activeTab)
