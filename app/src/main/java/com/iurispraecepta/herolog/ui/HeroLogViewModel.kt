@@ -8,6 +8,7 @@ import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.TitleLogic
+import com.iurispraecepta.herolog.logic.TitlePurchaseResult
 import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.logic.SkillError
@@ -380,6 +381,20 @@ class HeroLogViewModel(
             is EquipTitleResult.Success -> saveCharacterState(current.copy(equippedTitle = result.equippedTitle))
             EquipTitleResult.NotOwned -> { /* no-op: mesma regra da fonte, titulo nao possuido nao equipa */ }
         }
+    }
+
+    fun buyTitle(titleId: String, price: Int) {
+        val current = _characterState.value ?: return
+        when (val result = TitleLogic.buyTitle(current.gold, current.ownedTitles, titleId, price)) {
+            is TitlePurchaseResult.Success -> saveCharacterState(current.copy(gold = result.newGold, ownedTitles = result.newOwnedTitles))
+            TitlePurchaseResult.InsufficientGold -> { /* no-op: mesma regra da fonte */ }
+            TitlePurchaseResult.AlreadyOwned -> { /* no-op: bug já corrigido no Bloco 7 */ }
+        }
+    }
+
+    fun claimAchievementTitle(titleId: String) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(ownedTitles = TitleLogic.claimAchievementTitle(current.ownedTitles, titleId)))
     }
 
     fun addCustomSkill(nameInput: String, emoji: String): SkillOperationResult {

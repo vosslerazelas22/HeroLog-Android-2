@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.logic.kingdom.ShopCatalog
 import com.iurispraecepta.herolog.logic.kingdom.ShopCatalogEntry
 import com.iurispraecepta.herolog.model.BuffType
+import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Stone400
@@ -78,7 +79,10 @@ private val Amber100Half = Color(0xFFFEF3C7) // amber-100, usado com alpha p/ de
 fun ShopScreen(
     gold: Int,
     inventory: List<InventoryItem>,
+    state: CharacterState,
     onBuyItem: (ShopCatalogEntry) -> Unit,
+    onBuyTitle: (String, Int) -> Unit,
+    onClaimAchievementTitle: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var shopSubTab by remember { mutableStateOf("items") }
@@ -143,18 +147,11 @@ fun ShopScreen(
         if (shopSubTab == "items") {
             ShopItemList(gold = gold, inventory = inventory, onBuyItem = onBuyItem)
         } else {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Selos & Títulos Reais — em breve (Bloco C do módulo Reino)",
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.sp,
-                    color = Stone400,
-                    textAlign = TextAlign.Center
-                )
-            }
+            TitleShopScreen(
+                state = state,
+                onBuyTitle = onBuyTitle,
+                onClaimAchievementTitle = onClaimAchievementTitle
+            )
         }
     }
 }

@@ -374,7 +374,10 @@ class MainActivity : ComponentActivity() {
                                     ShopScreen(
                                         gold = state.gold,
                                         inventory = state.inventory,
-                                        onBuyItem = { entry -> heroLogViewModel.buyShopItem(entry) }
+                                        state = state,
+                                        onBuyItem = { entry -> heroLogViewModel.buyShopItem(entry) },
+                                        onBuyTitle = { id, price -> heroLogViewModel.buyTitle(id, price) },
+                                        onClaimAchievementTitle = { id -> heroLogViewModel.claimAchievementTitle(id) }
                                     )
                                 }
                             }
