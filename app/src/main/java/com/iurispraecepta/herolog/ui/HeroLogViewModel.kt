@@ -7,6 +7,9 @@ import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
+import com.iurispraecepta.herolog.logic.SaveImportOutcome
+import com.iurispraecepta.herolog.logic.SaveImportResult
+import com.iurispraecepta.herolog.logic.SaveMigrationLogic
 import com.iurispraecepta.herolog.logic.TitleLogic
 import com.iurispraecepta.herolog.logic.TitlePurchaseResult
 import com.iurispraecepta.herolog.logic.SkillLogic
@@ -395,6 +398,16 @@ class HeroLogViewModel(
     fun claimAchievementTitle(titleId: String) {
         val current = _characterState.value ?: return
         saveCharacterState(current.copy(ownedTitles = TitleLogic.claimAchievementTitle(current.ownedTitles, titleId)))
+    }
+
+    fun importSaveFromPastedText(rawJson: String): SaveImportOutcome {
+        return when (val result = SaveMigrationLogic.normalizeGameState(rawJson)) {
+            is SaveImportResult.Success -> {
+                saveCharacterState(result.characterState)
+                SaveImportOutcome.Restored(result.characterState.charName)
+            }
+            is SaveImportResult.InvalidJson -> SaveImportOutcome.Failed
+        }
     }
 
     fun addCustomSkill(nameInput: String, emoji: String): SkillOperationResult {

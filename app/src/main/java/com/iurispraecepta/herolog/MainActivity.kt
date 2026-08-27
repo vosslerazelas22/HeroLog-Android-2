@@ -24,10 +24,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -94,6 +96,9 @@ import com.iurispraecepta.herolog.ui.kingdom.ShopScreen
 import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
 import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
 import com.iurispraecepta.herolog.ui.kingdom.TitleSelectorScreen
+import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
+import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
+import com.iurispraecepta.herolog.logic.SaveImportOutcome
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
@@ -124,6 +129,8 @@ class MainActivity : ComponentActivity() {
                 var activeTab by remember { mutableStateOf("focus") }
                 var questsSubTab by remember { mutableStateOf("daily") }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
+                var isRestoreSaveOpen by remember { mutableStateOf(false) }
+                var saveImportOutcome by remember { mutableStateOf<SaveImportOutcome?>(null) }
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application))
@@ -154,6 +161,15 @@ class MainActivity : ComponentActivity() {
                                     else -> "HeroLog"
                                 }
                                 Text(text = "HeroLog — $moduleTitle", color = Amber400)
+                            },
+                            actions = {
+                                IconButton(onClick = { isRestoreSaveOpen = true }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Settings,
+                                        contentDescription = "Restaurar save",
+                                        tint = Amber400
+                                    )
+                                }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = Stone900,
@@ -430,6 +446,19 @@ class MainActivity : ComponentActivity() {
                             else -> PlaceholderScreen(title = activeTab)
                         }
                     }
+
+                    RestoreSaveDialog(
+                        isOpen = isRestoreSaveOpen,
+                        onDismiss = { isRestoreSaveOpen = false },
+                        onConfirm = { rawJson ->
+                            saveImportOutcome = heroLogViewModel.importSaveFromPastedText(rawJson)
+                        }
+                    )
+
+                    SaveImportResultDialog(
+                        result = saveImportOutcome,
+                        onDismiss = { saveImportOutcome = null }
+                    )
                 }
             }
         }
