@@ -61,6 +61,7 @@ import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
+import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.focus.BreakPrepScreen
 import com.iurispraecepta.herolog.ui.focus.FocusModeScreen
@@ -458,6 +459,14 @@ class MainActivity : ComponentActivity() {
                     SaveImportResultDialog(
                         result = saveImportOutcome,
                         onDismiss = { saveImportOutcome = null }
+                    )
+
+                    // Porte de `activeLevelUp` (useLevelUp.ts) -- popup global, visivel por cima de qualquer
+                    // aba, igual a fonte (renderizado no nivel do App.tsx, nao preso a nenhuma tela especifica).
+                    val levelUpQueue by heroLogViewModel.levelUpQueue.collectAsState()
+                    LevelUpOverlay(
+                        event = levelUpQueue.firstOrNull(),
+                        onDismiss = { heroLogViewModel.dismissCurrentLevelUp() }
                     )
                 }
             }

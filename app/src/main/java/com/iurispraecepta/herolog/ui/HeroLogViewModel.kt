@@ -7,6 +7,8 @@ import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
+import com.iurispraecepta.herolog.logic.character.LevelUpEvent
+import com.iurispraecepta.herolog.logic.character.LevelUpLogic
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
 import com.iurispraecepta.herolog.logic.SaveImportResult
 import com.iurispraecepta.herolog.logic.SaveMigrationLogic
@@ -84,6 +86,12 @@ class HeroLogViewModel(
 
     private val _breakTimerState = MutableStateFlow(BreakTimerState())
     val breakTimerState: StateFlow<BreakTimerState> = _breakTimerState.asStateFlow()
+
+    // Porte de `levelUpQueue` (useLevelUp.ts). `activeLevelUp`/`hasPendingLevelUps` da fonte sao
+    // apenas derivados dessa fila (queue[0] / queue.length > 1) -- nao precisam de StateFlow
+    // proprio, quem consome (Composable) deriva direto daqui, igual a fonte deriva do state.
+    private val _levelUpQueue = MutableStateFlow<List<LevelUpEvent>>(emptyList())
+    val levelUpQueue: StateFlow<List<LevelUpEvent>> = _levelUpQueue.asStateFlow()
 
     private var focusTickJob: Job? = null
     private var focusEndTimeMillis: Long = 0L
@@ -185,11 +193,34 @@ class HeroLogViewModel(
         }
     }
 
-    fun saveCharacterState(state: CharacterState) {
+    /**
+     * Funil único de mutação do personagem. Porte parcial de `useLevelUp.ts`: a cada transição de
+     * estado, compara o valor anterior com o novo e enfileira eventos de level up detectados
+     * (`LevelUpLogic.detectLevelUps`) -- equivalente ao `useEffect` que a fonte roda a cada
+     * mudança de `gameState.combatLevel`/`gameState.skills`.
+     *
+     * @param suppressLevelUpDetection porte de `isImportingRef.current = true` da fonte -- usado
+     *   quando o estado inteiro está sendo substituído por uma fonte externa (import de save) e
+     *   uma cascata de popups de "level up" comparando contra o personagem anterior seria
+     *   espúria/sem sentido pro jogador.
+     */
+    fun saveCharacterState(state: CharacterState, suppressLevelUpDetection: Boolean = false) {
+        val previous = _characterState.value
+        if (!suppressLevelUpDetection && previous != null) {
+            val newEvents = LevelUpLogic.detectLevelUps(previous, state)
+            if (newEvents.isNotEmpty()) {
+                _levelUpQueue.value = _levelUpQueue.value + newEvents
+            }
+        }
         viewModelScope.launch {
             repository.saveCharacterState(state)
             _characterState.value = state
         }
+    }
+
+    /** Porte de `dismissCurrentLevelUp` (useLevelUp.ts) -- remove o evento ativo (topo da fila). */
+    fun dismissCurrentLevelUp() {
+        _levelUpQueue.value = _levelUpQueue.value.drop(1)
     }
 
     fun unequipItem(slotIdx: Int) {
@@ -403,7 +434,7 @@ class HeroLogViewModel(
     fun importSaveFromPastedText(rawJson: String): SaveImportOutcome {
         return when (val result = SaveMigrationLogic.normalizeGameState(rawJson)) {
             is SaveImportResult.Success -> {
-                saveCharacterState(result.characterState)
+                saveCharacterState(result.characterState, suppressLevelUpDetection = true)
                 SaveImportOutcome.Restored(result.characterState.charName)
             }
             is SaveImportResult.InvalidJson -> SaveImportOutcome.Failed
