@@ -3,6 +3,7 @@ package com.iurispraecepta.herolog
 import android.app.Application
 import androidx.room.Room
 import com.iurispraecepta.herolog.data.database.HeroLogDatabase
+import com.iurispraecepta.herolog.data.database.MIGRATION_1_2
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 
@@ -12,7 +13,7 @@ class HeroLogApplication : Application() {
             applicationContext,
             HeroLogDatabase::class.java,
             "herolog.db"
-        ).fallbackToDestructiveMigration().build()
+        ).addMigrations(MIGRATION_1_2).build()
     }
 
     val characterRepository: CharacterRepository by lazy {
