@@ -30,6 +30,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import com.iurispraecepta.herolog.logic.focus.FocusSessionState
+import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -2136,6 +2137,83 @@ class HeroLogViewModelTest {
         assertNotNull(damageLog)
         assertTrue(damageLog!!.text.contains("💀 Dano Solar da Negligência: Deixaste 1 Diárias incompletas ontem! Perdeste -"))
         assertFalse(damageLog.highlighted)
+
+        db.close()
+    }
+
+    @Test
+    fun abandonSession_inDungeonMode_logsDungeonFailureAndResetsProgress() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val initialChar = createBaseState()
+        repository.saveCharacterState(initialChar)
+
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { 1000000L }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val config = FocusSessionConfig(
+            selectedSkillIdx = 0,
+            isWildernessChecked = false,
+            isDungeonMode = true,
+            dungeonSessions = 2
+        )
+        viewModel.startSession(config, durationMinutes = 25)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logsBefore = viewModel.systemLogs.value
+        assertEquals(0, logsBefore.count { it.text.contains("FRACASSO NA MASMORRA") })
+
+        viewModel.abandonSession()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logsAfter = viewModel.systemLogs.value
+        val dungeonFailureLog = logsAfter.find { it.text.contains("FRACASSO NA MASMORRA") }
+        assertNotNull(dungeonFailureLog)
+        assertTrue(dungeonFailureLog!!.highlighted)
+        assertTrue(dungeonFailureLog.text.contains("💀 FRACASSO NA MASMORRA: Ao abandonar, sua expedição na Masmorra colapsou"))
+        assertEquals(0, viewModel.dungeonSessionsProgress.value)
+        assertFalse(viewModel.focusSessionState.value.isRunning)
+
+        db.close()
+    }
+
+    @Test
+    fun abandonSession_inStandardMode_doesNotLogDungeonFailure() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val initialChar = createBaseState()
+        repository.saveCharacterState(initialChar)
+
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { 1000000L }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val config = FocusSessionConfig(
+            selectedSkillIdx = 0,
+            isWildernessChecked = false,
+            isDungeonMode = false,
+            dungeonSessions = 0
+        )
+        viewModel.startSession(config, durationMinutes = 25)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val countBefore = viewModel.systemLogs.value.size
+        viewModel.abandonSession()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logsAfter = viewModel.systemLogs.value
+        assertEquals(countBefore, logsAfter.size)
+        assertNull(logsAfter.find { it.text.contains("FRACASSO NA MASMORRA") })
+        assertFalse(viewModel.focusSessionState.value.isRunning)
 
         db.close()
     }

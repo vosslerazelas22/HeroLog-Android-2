@@ -104,7 +104,7 @@ class HeroLogViewModel(
     val systemLogs: StateFlow<List<LogEntry>> = _systemLogs.asStateFlow()
 
     /** Porte de addSystemLog (App.tsx ~1223). Cap 51 (mais recente primeiro). */
-    private fun addSystemLog(text: String, highlighted: Boolean = false) {
+    fun addSystemLog(text: String, highlighted: Boolean = false) {
         val timeStr = SimpleDateFormat("HH:mm:ss", Locale.forLanguageTag("pt-BR"))
             .format(Date(clock()))
         _systemLogs.value = (listOf(LogEntry(UUID.randomUUID().toString(), timeStr, text, highlighted)) + _systemLogs.value)
@@ -658,6 +658,11 @@ class HeroLogViewModel(
         cancelSession()
         if (wasDungeonMode) {
             _dungeonSessionsProgress.value = 0
+            addSystemLog(
+                "💀 FRACASSO NA MASMORRA: Ao abandonar, sua expedição na Masmorra colapsou " +
+                    "tragicamente e todo o progresso heróico de focos seguidos foi perdido nas cinzas.",
+                highlighted = true
+            )
         }
     }
 

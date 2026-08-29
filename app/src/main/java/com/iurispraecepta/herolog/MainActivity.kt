@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -44,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.R
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -509,6 +514,10 @@ fun FocusOrbPreviewScreen(
     var isAmbientModalOpen by remember { mutableStateOf(false) }
     val ambientController = rememberAmbientSoundController()
 
+    var isConfirmingAbandon by remember { mutableStateOf(false) }
+    var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
     val focusState by viewModel.focusSessionState.collectAsState()
     val dungeonSessionsProgress by viewModel.dungeonSessionsProgress.collectAsState()
     val breakTimerState by viewModel.breakTimerState.collectAsState()
@@ -663,7 +672,33 @@ fun FocusOrbPreviewScreen(
                         Text(if (focusState.isPaused) "Retomar" else "Pausar")
                     }
                     OutlinedButton(
-                        onClick = { viewModel.abandonSession() },
+                        onClick = {
+                            if (!isConfirmingAbandon) {
+                                isConfirmingAbandon = true
+                                viewModel.addSystemLog(
+                                    "⚠️ Atenção: Clique novamente em \"Abandonar\" para confirmar a desistência da missão."
+                                )
+                                confirmAbandonJob?.cancel()
+                                confirmAbandonJob = coroutineScope.launch {
+                                    delay(5000)
+                                    isConfirmingAbandon = false
+                                }
+                            } else {
+                                confirmAbandonJob?.cancel()
+                                isConfirmingAbandon = false
+                                viewModel.abandonSession()
+                            }
+                        },
+                        colors = if (isConfirmingAbandon) {
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFFDC2626),
+                                contentColor = Color.White
+                            )
+                        } else {
+                            ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color(0xFFF87171)
+                            )
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
@@ -672,7 +707,7 @@ fun FocusOrbPreviewScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Abandonar")
+                        Text(if (isConfirmingAbandon) "Confirmar?" else "Abandonar", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal)
                     }
                 }
 
@@ -708,6 +743,34 @@ fun FocusOrbPreviewScreen(
                     onOpenSkillsManager = { isSkillSelectorOpen = true }
                 )
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                FocusOrb(
+                    timeLeft = focusDuration * 60,
+                    totalSeconds = focusDuration * 60,
+                    isRunning = false,
+                    isPaused = false,
+                    isBreakActive = false,
+                    size = FocusOrbSize.STANDARD
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        val config = FocusSessionConfig(
+                            selectedSkillIdx = validSkillIdx,
+                            isWildernessChecked = isWildernessPreview,
+                            isDungeonMode = isDungeonModePreview,
+                            dungeonSessions = dungeonSessionsProgress
+                        )
+                        viewModel.startSession(config, durationMinutes = focusDuration)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("▶ Iniciar Missão de Foco")
+                }
+
                 Spacer(modifier = Modifier.height(10.dp))
 
                 RaidModeInfoBox(
@@ -736,34 +799,6 @@ fun FocusOrbPreviewScreen(
                     isSettingsEnabled = true,
                     onOpenSettingsModal = { isTimerSettingsOpen = true },
                     onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = {
-                        val config = FocusSessionConfig(
-                            selectedSkillIdx = validSkillIdx,
-                            isWildernessChecked = isWildernessPreview,
-                            isDungeonMode = isDungeonModePreview,
-                            dungeonSessions = dungeonSessionsProgress
-                        )
-                        viewModel.startSession(config, durationMinutes = focusDuration)
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Entrar em Modo Foco ($focusDuration min)")
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                FocusOrb(
-                    timeLeft = focusDuration * 60,
-                    totalSeconds = focusDuration * 60,
-                    isRunning = false,
-                    isPaused = false,
-                    isBreakActive = false,
-                    size = FocusOrbSize.STANDARD
                 )
             }
 

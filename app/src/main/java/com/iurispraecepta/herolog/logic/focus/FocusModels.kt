@@ -55,3 +55,10 @@ data class FocusRewardsCalculation(
     val isDungeonMode: Boolean,
     val comboBonusPercent: Int
 )
+
+data class SystemLogEntry(
+    val id: String,
+    val time: String,
+    val text: String,
+    val highlighted: Boolean = false
+)
