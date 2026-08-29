@@ -63,13 +63,17 @@ import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
 import com.iurispraecepta.herolog.ui.components.ModalVariant
+import com.iurispraecepta.herolog.ui.focus.AMBIENT_SOUNDS
+import com.iurispraecepta.herolog.ui.focus.AmbientSoundModal
 import com.iurispraecepta.herolog.ui.focus.BreakPrepScreen
 import com.iurispraecepta.herolog.ui.focus.FocusModeScreen
 import com.iurispraecepta.herolog.ui.focus.FocusOrb
 import com.iurispraecepta.herolog.ui.focus.FocusOrbSize
 import com.iurispraecepta.herolog.ui.focus.IncursionModeModal
 import com.iurispraecepta.herolog.ui.focus.ModeDescriptionModal
+import com.iurispraecepta.herolog.ui.focus.QuickActionsBar
 import com.iurispraecepta.herolog.ui.focus.TimerSettingsModal
+import com.iurispraecepta.herolog.ui.focus.rememberAmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.RaidMode
 import com.iurispraecepta.herolog.ui.focus.RaidModeHelpContent
 import com.iurispraecepta.herolog.ui.focus.RaidModeInfoBox
@@ -496,10 +500,19 @@ fun FocusOrbPreviewScreen(
     var isSkillSelectorOpen by remember { mutableStateOf(false) }
     var isTimerSettingsOpen by remember { mutableStateOf(false) }
     var selectedSkillIdx by remember { mutableStateOf(0) }
+    var isFocusMode by remember { mutableStateOf(false) }
+    var isAmbientModalOpen by remember { mutableStateOf(false) }
+    val ambientController = rememberAmbientSoundController()
 
     val focusState by viewModel.focusSessionState.collectAsState()
     val dungeonSessionsProgress by viewModel.dungeonSessionsProgress.collectAsState()
     val breakTimerState by viewModel.breakTimerState.collectAsState()
+
+    LaunchedEffect(focusState.isRunning, focusState.isPaused, breakTimerState.isBreakActive) {
+        ambientController.sync(
+            isWorkSessionActive = focusState.isRunning && !focusState.isPaused && !breakTimerState.isBreakActive
+        )
+    }
 
     LaunchedEffect(dungeonSessionsProgress) {
         if (dungeonSessionsProgress == 0 && isDungeonModePreview) {
@@ -537,7 +550,7 @@ fun FocusOrbPreviewScreen(
                     Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
                 }
             }
-        } else if (focusState.isRunning || characterState.isPlayerDead) {
+        } else if ((focusState.isRunning && isFocusMode) || characterState.isPlayerDead) {
             val config = focusState.config
             val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
             val skillName = selectedSkillForSession?.name ?: "Habilidade"
@@ -555,8 +568,7 @@ fun FocusOrbPreviewScreen(
                 isPaused = focusState.isPaused,
                 onTogglePause = { viewModel.togglePauseQuest() },
                 onExit = {
-                    viewModel.abandonSession()
-                    isDungeonModePreview = false
+                    isFocusMode = false
                 },
                 isGraceActive = focusState.isGraceActive,
                 graceSecondsLeft = focusState.graceSecondsLeft,
@@ -597,6 +609,68 @@ fun FocusOrbPreviewScreen(
                 ) {
                     Text("⏩ Pular Descanso")
                 }
+            }
+        } else if (focusState.isRunning) {
+            // Sessão ativa, mas NÃO em tela cheia — orb inline + Pausar/Abandonar, igual a
+            // fonte real (App.tsx renderiza o orb direto na aba Foco enquanto roda; "Tela Cheia"
+            // é ação separada, não automática).
+            val config = focusState.config
+            val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
+            val currentRaidModeRunning = raidModeFrom(config?.isDungeonMode ?: false, config?.isWildernessChecked ?: false)
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = selectedSkillForSession?.name ?: "Habilidade",
+                    color = Color(0xFFFCD34D),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                FocusOrb(
+                    timeLeft = focusState.timeLeft,
+                    totalSeconds = focusState.totalSeconds,
+                    isRunning = focusState.isRunning,
+                    isPaused = focusState.isPaused,
+                    size = FocusOrbSize.STANDARD
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { viewModel.togglePauseQuest() },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(if (focusState.isPaused) "▶ Retomar" else "⏸️ Pausar")
+                    }
+                    OutlinedButton(
+                        onClick = { viewModel.abandonSession() },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Abandonar")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                QuickActionsBar(
+                    isDungeonMode = config?.isDungeonMode ?: false,
+                    isWildernessMode = config?.isWildernessChecked ?: false,
+                    isRunning = true,
+                    onOpenModeModal = { /* Modo não editável com sessão em andamento, fonte já trata via disabled */ },
+                    activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                    onOpenAmbientModal = { isAmbientModalOpen = true },
+                    isSettingsEnabled = false,
+                    onOpenSettingsModal = {},
+                    onEnterFullscreen = { isFocusMode = true }
+                )
             }
         } else {
             val currentRaidMode = raidModeFrom(isDungeonModePreview, isWildernessPreview)
@@ -650,19 +724,6 @@ fun FocusOrbPreviewScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                RaidModeSegmentedControl(
-                    mode = currentRaidMode,
-                    isRunning = false,
-                    onModeSelected = { newMode ->
-                        val (dungeon, wilderness) = newMode.toLegacyFlags()
-                        isDungeonModePreview = dungeon
-                        isWildernessPreview = wilderness
-                    },
-                    onLog = {}
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 RaidModeInfoBox(
                     mode = currentRaidMode,
                     dungeonSessions = dungeonSessionsProgress,
@@ -679,24 +740,17 @@ fun FocusOrbPreviewScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { isIncursionModalOpen = true },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Modos Incursão", maxLines = 1)
-                    }
-
-                    OutlinedButton(
-                        onClick = { isTimerSettingsOpen = true },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Ajustes ($focusDuration m) ⚙️", maxLines = 1)
-                    }
-                }
+                QuickActionsBar(
+                    isDungeonMode = isDungeonModePreview,
+                    isWildernessMode = isWildernessPreview,
+                    isRunning = false,
+                    onOpenModeModal = { isIncursionModalOpen = true },
+                    activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                    onOpenAmbientModal = { isAmbientModalOpen = true },
+                    isSettingsEnabled = true,
+                    onOpenSettingsModal = { isTimerSettingsOpen = true },
+                    onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -794,6 +848,16 @@ fun FocusOrbPreviewScreen(
                 onToggleAutoStartFocus = { viewModel.toggleAutoStartFocus() }
             )
         }
+
+        AmbientSoundModal(
+            isOpen = isAmbientModalOpen,
+            onClose = { isAmbientModalOpen = false },
+            selectedTrack = ambientController.selectedTrack,
+            volume = ambientController.volume,
+            onSelectTrack = { ambientController.selectTrack(it) },
+            onSetVolume = { ambientController.setVolume(it) },
+            tracks = AMBIENT_SOUNDS
+        )
     }
 }
 
