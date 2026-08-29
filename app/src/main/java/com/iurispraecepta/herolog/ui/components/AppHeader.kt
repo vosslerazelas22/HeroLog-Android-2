@@ -1,4 +1,4 @@
-package com.herolog.android.ui.components // TODO Bruno: ajustar pro pacote real do projeto
+package com.iurispraecepta.herolog.ui.components
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -37,7 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// import com.herolog.android.R // TODO Bruno: descomentar quando os .ttf abaixo existirem em res/font
+// import com.iurispraecepta.herolog.R // TODO Bruno: descomentar quando os .ttf abaixo existirem em res/font
 
 /*
  * ============================================================================

@@ -98,6 +98,7 @@ import com.iurispraecepta.herolog.ui.kingdom.ShopScreen
 import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
 import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
 import com.iurispraecepta.herolog.ui.kingdom.TitleSelectorScreen
+import com.iurispraecepta.herolog.ui.components.AppHeader
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
@@ -138,6 +139,7 @@ class MainActivity : ComponentActivity() {
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application))
                 val characterState by heroLogViewModel.characterState.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
+                var isSfxMuted by remember { mutableStateOf(false) }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
@@ -155,28 +157,14 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        TopAppBar(
-                            title = {
-                                val moduleTitle = MODULE_TITLES[getActiveModule(activeTab)] ?: when (activeTab) {
-                                    "focus" -> "Foco"
-                                    "skills" -> "Skills"
-                                    else -> "HeroLog"
-                                }
-                                Text(text = "HeroLog — $moduleTitle", color = Amber400)
-                            },
-                            actions = {
-                                IconButton(onClick = { isRestoreSaveOpen = true }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Settings,
-                                        contentDescription = "Restaurar save",
-                                        tint = Amber400
-                                    )
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = Stone900,
-                                titleContentColor = Amber400
-                            )
+                        AppHeader(
+                            streak = characterState?.streak ?: 0,
+                            gold = characterState?.gold ?: 0,
+                            isSfxMuted = isSfxMuted,
+                            onToggleSfx = { isSfxMuted = !isSfxMuted },
+                            onOpenSettings = {
+                                isRestoreSaveOpen = true
+                            }
                         )
                     },
                     bottomBar = {
