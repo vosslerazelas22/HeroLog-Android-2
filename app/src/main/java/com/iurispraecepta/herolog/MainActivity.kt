@@ -82,6 +82,7 @@ import com.iurispraecepta.herolog.ui.focus.RaidMode
 import com.iurispraecepta.herolog.ui.focus.RaidModeHelpContent
 import com.iurispraecepta.herolog.ui.focus.RaidModeInfoBox
 import com.iurispraecepta.herolog.ui.focus.RaidModeSegmentedControl
+import com.iurispraecepta.herolog.ui.focus.SkillInlineCarousel
 import com.iurispraecepta.herolog.ui.focus.TitleDisplay
 import com.iurispraecepta.herolog.ui.focus.buildStandardLootHelpBlocks
 import com.iurispraecepta.herolog.ui.focus.lootChancePercentFrom
@@ -525,7 +526,6 @@ fun FocusOrbPreviewScreen(
     }
 
     val validSkillIdx = selectedSkillIdx.coerceIn(0, (characterState.skills.size - 1).coerceAtLeast(0))
-    val currentSelectedSkill = characterState.skills.getOrNull(validSkillIdx) ?: selectedSkill
     val focusDuration = characterState.pomodoroSettings.focusDuration
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -700,45 +700,13 @@ fun FocusOrbPreviewScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Skill Selector Entry Card
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF1C1917))
-                        .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                        .clickable { isSkillSelectorOpen = true }
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(currentSelectedSkill.emoji ?: "🎯", fontSize = 22.sp)
-                        Column {
-                            Text(
-                                text = currentSelectedSkill.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFFFCD34D),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Nível ${currentSelectedSkill.level} • Toque para trocar",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFA8A29E)
-                            )
-                        }
-                    }
-                    OutlinedButton(
-                        onClick = { isSkillSelectorOpen = true },
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text("Trocar", fontSize = 11.sp)
-                    }
-                }
+                SkillInlineCarousel(
+                    skills = characterState.skills,
+                    selectedIndex = validSkillIdx,
+                    onSelectIndex = { selectedSkillIdx = it },
+                    disabled = focusState.isRunning,
+                    onOpenSkillsManager = { isSkillSelectorOpen = true }
+                )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
