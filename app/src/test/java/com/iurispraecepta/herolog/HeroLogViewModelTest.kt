@@ -2004,4 +2004,139 @@ class HeroLogViewModelTest {
 
         db.close()
     }
+
+    @Test
+    fun systemLogs_surviveWildernessAchievement_logsCorrectText() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+
+        val skills = listOf(com.iurispraecepta.herolog.model.Skill(name = "Programação", level = 1, xp = 0))
+        val state = createBaseState().copy(achievements = emptyList(), skills = skills)
+        repository.saveCharacterState(state)
+
+        var fakeTime = 1000000L
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        testDispatcher.scheduler.runCurrent()
+
+        val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
+        viewModel.startSession(config, 25)
+        testDispatcher.scheduler.runCurrent()
+
+        fakeTime += 25 * 60 * 1000L
+        testDispatcher.scheduler.advanceTimeBy(25 * 60 * 1000L)
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.confirmFocusSession(editedNotes = "", selectedTag = "")
+        testDispatcher.scheduler.runCurrent()
+
+        val logs = viewModel.systemLogs.value
+        val wildernessLog = logs.find { it.text.contains("Sobrevivente da Wilderness") }
+        assertNotNull(wildernessLog)
+        assertEquals("🏆 CONQUISTA HERÓICA: Desbloqueaste o selo [Sobrevivente da Wilderness]!", wildernessLog?.text)
+        assertTrue(wildernessLog?.highlighted == true)
+
+        viewModel.cancelSession()
+        testDispatcher.scheduler.runCurrent()
+        db.close()
+    }
+
+    @Test
+    fun systemLogs_combatLevelUp_logsSingleUnifiedText() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+
+        val state = createBaseState().copy(combatLevel = 1)
+        repository.saveCharacterState(state)
+
+        val viewModel = HeroLogViewModel(repository, focusRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.saveCharacterState(state.copy(combatLevel = 2))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logs = viewModel.systemLogs.value
+        val combatLogs = logs.filter { it.text.contains("COMBAT LEVEL UP") }
+        assertEquals(1, combatLogs.size)
+        assertEquals("🆙 COMBAT LEVEL UP: Nível de combate subiu para 2!", combatLogs[0].text)
+        assertTrue(combatLogs[0].highlighted)
+
+        db.close()
+    }
+
+    @Test
+    fun systemLogs_rollover_shieldConsumedAndDamage_logsCorrectly() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+
+        val previousDayStr = "Tue Aug 11 2026"
+        val todayStr = "Wed Aug 12 2026"
+        val dailyIncomplete = Daily(
+            id = "d1",
+            title = "Exercício",
+            notes = "",
+            difficulty = Difficulty.Medium,
+            completed = false,
+            streak = 5,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = emptyList(),
+            checklist = emptyList(),
+            value = 0,
+            createdAt = "2026-08-11T10:00:00Z"
+        )
+        val shieldItem = com.iurispraecepta.herolog.model.InventoryItem(
+            id = "shield1",
+            name = "Escudo de Streak",
+            emoji = "🛡️",
+            buff = com.iurispraecepta.herolog.model.BuffType.StreakShield,
+            price = 50,
+            desc = "Protege contra o esquecimento"
+        )
+        val stateWithShield = createBaseState().copy(
+            todayDate = previousDayStr,
+            inventory = listOf(shieldItem),
+            dailies = listOf(dailyIncomplete)
+        )
+        repository.saveCharacterState(stateWithShield)
+
+        val jsDateRef = java.text.SimpleDateFormat("EEE MMM dd yyyy", java.util.Locale.US).parse(todayStr)!!.time
+        val viewModelWithShield = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { jsDateRef }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logsShield = viewModelWithShield.systemLogs.value
+        val shieldLog = logsShield.find { it.text.contains("Escudo de Streak ativado") }
+        assertNotNull(shieldLog)
+        assertEquals("🛡️ Escudo de Streak ativado! Oração do Santuário absorveu o choque de 1 diárias negligenciadas de ontem.", shieldLog?.text)
+
+        // Cenario 2: Rollover sem escudo com dano solar
+        val stateWithoutShield = createBaseState().copy(
+            todayDate = previousDayStr,
+            inventory = emptyList(),
+            hp = 100,
+            dailies = listOf(dailyIncomplete)
+        )
+        repository.saveCharacterState(stateWithoutShield)
+
+        val viewModelDamage = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { jsDateRef }
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val logsDamage = viewModelDamage.systemLogs.value
+        val damageLog = logsDamage.find { it.text.contains("Dano Solar da Negligência") }
+        assertNotNull(damageLog)
+        assertTrue(damageLog!!.text.contains("💀 Dano Solar da Negligência: Deixaste 1 Diárias incompletas ontem! Perdeste -"))
+        assertFalse(damageLog.highlighted)
+
+        db.close()
+    }
 }

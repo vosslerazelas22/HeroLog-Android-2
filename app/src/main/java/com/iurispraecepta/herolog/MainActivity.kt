@@ -93,6 +93,7 @@ import com.iurispraecepta.herolog.ui.navigation.getActiveModule
 import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
 import com.iurispraecepta.herolog.ui.kingdom.GuideScreen
 import com.iurispraecepta.herolog.ui.kingdom.HeatmapScreen
+import com.iurispraecepta.herolog.ui.kingdom.LogsScreen
 import com.iurispraecepta.herolog.ui.kingdom.ShopScreen
 import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
 import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
@@ -442,7 +443,7 @@ class MainActivity : ComponentActivity() {
                                     AchievementsScreen(state = state)
                                 }
                             }
-                            "logs" -> PlaceholderScreen(title = "Registros")
+                            "logs" -> LogsScreen(logs = heroLogViewModel.systemLogs.collectAsState().value)
                             "guide" -> GuideScreen()
                             else -> PlaceholderScreen(title = activeTab)
                         }

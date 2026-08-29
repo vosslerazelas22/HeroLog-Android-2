@@ -43,8 +43,11 @@ import com.iurispraecepta.herolog.logic.focus.WildernessInfractionOutcome
 import com.iurispraecepta.herolog.logic.focus.resolveWildernessInfraction
 import com.iurispraecepta.herolog.logic.focus.resolveCognitiveDeath
 import com.iurispraecepta.herolog.logic.focus.resolveRespawn
+import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.InventoryItem
+import com.iurispraecepta.herolog.model.LogEntry
+import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -52,8 +55,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -93,6 +100,17 @@ class HeroLogViewModel(
     private val _levelUpQueue = MutableStateFlow<List<LevelUpEvent>>(emptyList())
     val levelUpQueue: StateFlow<List<LevelUpEvent>> = _levelUpQueue.asStateFlow()
 
+    private val _systemLogs = MutableStateFlow<List<LogEntry>>(emptyList())
+    val systemLogs: StateFlow<List<LogEntry>> = _systemLogs.asStateFlow()
+
+    /** Porte de addSystemLog (App.tsx ~1223). Cap 51 (mais recente primeiro). */
+    private fun addSystemLog(text: String, highlighted: Boolean = false) {
+        val timeStr = SimpleDateFormat("HH:mm:ss", Locale.forLanguageTag("pt-BR"))
+            .format(Date(clock()))
+        _systemLogs.value = (listOf(LogEntry(UUID.randomUUID().toString(), timeStr, text, highlighted)) + _systemLogs.value)
+            .take(51)
+    }
+
     private var focusTickJob: Job? = null
     private var focusEndTimeMillis: Long = 0L
     private var graceTickJob: Job? = null
@@ -117,6 +135,19 @@ class HeroLogViewModel(
                 referenceDate = Date(clock())
             )
             var finalState = rolloverResult.updatedState
+            if (rolloverResult.shieldConsumed) {
+                if (rolloverResult.missedCount > 0) {
+                    addSystemLog("🛡️ Escudo de Streak ativado! Oração do Santuário absorveu o choque de ${rolloverResult.missedCount} diárias negligenciadas de ontem.", true)
+                } else {
+                    addSystemLog("🛡️ Escudo do Santuário ativado! Sua streak de dias consecutivos está preservada do gelo do esquecimento.", true)
+                }
+            } else if (rolloverResult.missedCount > 0) {
+                val dano = stateToUse.hp - rolloverResult.updatedState.hp
+                if (dano > 0) {
+                    addSystemLog("💀 Dano Solar da Negligência: Deixaste ${rolloverResult.missedCount} Diárias incompletas ontem! Perdeste -${dano} de vitalidade HP.", false)
+                }
+            }
+
             if (!finalState.hasClaimedLogin) {
                 val loginGold = if (finalState.charClass == com.iurispraecepta.herolog.model.CharClass.Warrior) 120 else 100
                 finalState = finalState.copy(
@@ -124,6 +155,7 @@ class HeroLogViewModel(
                     totalGoldEarned = finalState.totalGoldEarned + loginGold,
                     hasClaimedLogin = true
                 )
+                addSystemLog("💎 Proclamação Diária: Recebeste +${loginGold} GP por adentrar hoje ao Santuário Sagrado!", true)
             }
 
             if (finalState != existing) {
@@ -211,6 +243,9 @@ class HeroLogViewModel(
             if (newEvents.isNotEmpty()) {
                 _levelUpQueue.value = _levelUpQueue.value + newEvents
             }
+            if (state.combatLevel > previous.combatLevel) {
+                addSystemLog("🆙 COMBAT LEVEL UP: Nível de combate subiu para ${state.combatLevel}!", true)
+            }
         }
         viewModelScope.launch {
             repository.saveCharacterState(state)
@@ -264,9 +299,19 @@ class HeroLogViewModel(
     fun triggerHabit(habitId: String, isUp: Boolean) {
         val current = _characterState.value ?: return
         val habit = current.habits.find { it.id == habitId } ?: return
-        val result = HabitLogic.trigger(habit, current, isUp)
+        val result = HabitLogic.trigger(habit, current, isUp, referenceDate = Date(clock()))
         val updatedHabits = current.habits.map { if (it.id == habitId) result.updatedHabit else it }
         saveCharacterState(result.updatedState.copy(habits = updatedHabits))
+
+        val rewards = getDifficultyRewards(habit.difficulty)
+        if (isUp) {
+            val xp = if (current.charClass == CharClass.Mage) floor(rewards.xp * 1.2).toInt() else rewards.xp
+            val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
+            addSystemLog("✨ Prática Virtuosa: Completou o hábito positivo \"${habit.title}\"! Ganhou +${gold} GP e +${xp} XP.", true)
+        } else {
+            val damage = if (current.charClass == CharClass.Ranger) max(1, floor(rewards.damage * 0.7).toInt()) else rewards.damage
+            addSystemLog("⚠️ Desvio Espiritual: Sofreu dano pelo hábito negativo \"${habit.title}\"! Perdeu -${damage} HP de sua integridade.", false)
+        }
     }
 
     fun toggleDaily(dailyId: String) {
@@ -275,58 +320,83 @@ class HeroLogViewModel(
         val result = DailyLogic.toggle(daily, current)
         val updatedDailies = current.dailies.map { if (it.id == dailyId) result.updatedDaily else it }
         saveCharacterState(result.updatedState.copy(dailies = updatedDailies))
+
+        val rewards = getDifficultyRewards(daily.difficulty)
+        val xp = if (current.charClass == CharClass.Mage) floor(rewards.xp * 1.2).toInt() else rewards.xp
+        val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
+        if (!daily.completed) {
+            val streak = daily.streak
+            addSystemLog("📅 Voto Diário Cumprido: Concluiu \"${daily.title}\"! (+${gold} GP, +${xp} XP, Streak: ${streak + 1} dias)", true)
+        } else {
+            addSystemLog("↩️ Reversão de Voto: Diária \"${daily.title}\" desmarcada. Perdidos -${gold} GP e -${xp} XP.")
+        }
     }
 
     fun toggleTodo(todoId: String) {
         val current = _characterState.value ?: return
         val todo = current.todos.find { it.id == todoId } ?: return
-        val result = TodoLogic.toggle(todo, current)
+        val result = TodoLogic.toggle(todo, current, referenceDate = Date(clock()))
         val updatedTodos = current.todos.map { if (it.id == todoId) result.updatedTodo else it }
         saveCharacterState(result.updatedState.copy(todos = updatedTodos))
+
+        val rewards = getDifficultyRewards(todo.difficulty)
+        val xp = if (current.charClass == CharClass.Mage) floor(rewards.xp * 1.2).toInt() else rewards.xp
+        val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
+        if (!todo.completed) {
+            addSystemLog("✔️ Afazer Cumprido: Concluiu aventura \"${todo.title}\"! (+${gold} GP, +${xp} XP!)", true)
+        } else {
+            addSystemLog("↩️ Reversão de Contrato: Afazer \"${todo.title}\" reaberto. Perdidos -${gold} GP e -${xp} XP.")
+        }
     }
 
     fun addHabit(title: String, notes: String, up: Boolean, down: Boolean, difficulty: Difficulty, tags: List<String>) {
         val current = _characterState.value ?: return
         val newHabit = Habit(
-            id = java.util.UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString(),
             title = title, notes = notes, up = up, down = down, difficulty = difficulty,
             upCount = 0, downCount = 0, streak = 0, tags = tags
         )
         saveCharacterState(current.copy(habits = current.habits + newHabit))
+        addSystemLog("🔥 Runas Consagradas: Novo hábito \"${title}\" adicionado à sua capela diária!")
     }
 
     fun editHabit(edited: Habit) {
         val current = _characterState.value ?: return
         val updated = current.habits.map { if (it.id == edited.id) edited else it }
         saveCharacterState(current.copy(habits = updated))
+        addSystemLog("⚙️ Runas Alteradas: Hábito \"${edited.title}\" atualizado.")
     }
 
     fun deleteHabit(habitId: String) {
         val current = _characterState.value ?: return
         saveCharacterState(current.copy(habits = current.habits.filter { it.id != habitId }))
+        addSystemLog("🗑️ Runas Banidas: Hábito removido com sucesso.")
     }
 
     fun addDaily(title: String, notes: String, difficulty: Difficulty, streak: Int, repeats: RepeatInterval, every: Int, tags: List<String>, checklistTexts: List<String>) {
         val current = _characterState.value ?: return
-        val checklist = checklistTexts.map { ChecklistItem(id = java.util.UUID.randomUUID().toString(), text = it, completed = false) }
+        val checklist = checklistTexts.map { ChecklistItem(id = UUID.randomUUID().toString(), text = it, completed = false) }
         val newDaily = Daily(
-            id = java.util.UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString(),
             title = title, notes = notes, difficulty = difficulty, completed = false,
             streak = streak, repeats = repeats, every = every, tags = tags, checklist = checklist,
             value = 0, createdAt = java.time.Instant.now().toString()
         )
         saveCharacterState(current.copy(dailies = current.dailies + newDaily))
+        addSystemLog("📅 Novo Voto de Diária Consagrado: \"${newDaily.title}\"!")
     }
 
     fun editDaily(edited: Daily) {
         val current = _characterState.value ?: return
         val updated = current.dailies.map { if (it.id == edited.id) edited else it }
         saveCharacterState(current.copy(dailies = updated))
+        addSystemLog("⚙️ Diária Modificada: \"${edited.title}\" atualizada.")
     }
 
     fun deleteDaily(dailyId: String) {
         val current = _characterState.value ?: return
         saveCharacterState(current.copy(dailies = current.dailies.filter { it.id != dailyId }))
+        addSystemLog("🗑️ Voto de Diária Aniquilado.")
     }
 
     fun toggleDailyChecklistItem(dailyId: String, itemId: String) {
@@ -340,24 +410,27 @@ class HeroLogViewModel(
 
     fun addTodo(title: String, notes: String, difficulty: Difficulty, tags: List<String>, checklistTexts: List<String>) {
         val current = _characterState.value ?: return
-        val checklist = checklistTexts.map { ChecklistItem(id = java.util.UUID.randomUUID().toString(), text = it, completed = false) }
+        val checklist = checklistTexts.map { ChecklistItem(id = UUID.randomUUID().toString(), text = it, completed = false) }
         val newTodo = Todo(
-            id = java.util.UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString(),
             title = title, notes = notes, difficulty = difficulty, completed = false,
             tags = tags, checklist = checklist, createdAt = java.time.Instant.now().toString()
         )
         saveCharacterState(current.copy(todos = current.todos + newTodo))
+        addSystemLog("📜 Novo Contrato / Afazer em mãos: \"${newTodo.title}\"!")
     }
 
     fun editTodo(edited: Todo) {
         val current = _characterState.value ?: return
         val updated = current.todos.map { if (it.id == edited.id) edited else it }
         saveCharacterState(current.copy(todos = updated))
+        addSystemLog("⚙️ Afazer Editado: \"${edited.title}\" atualizado.")
     }
 
     fun deleteTodo(todoId: String) {
         val current = _characterState.value ?: return
         saveCharacterState(current.copy(todos = current.todos.filter { it.id != todoId }))
+        addSystemLog("🗑️ Contrato de Afazer Destruído.")
     }
 
     fun toggleTodoChecklistItem(todoId: String, itemId: String) {
@@ -407,6 +480,7 @@ class HeroLogViewModel(
         val current = _characterState.value ?: return
         val updated = QuestApplyLogic.claimQuestReward(current, questId, goldReward, xpReward)
         saveCharacterState(updated)
+        addSystemLog("📜 Contrato da Gilda Resgatado! Moedas +${goldReward} GP e Relíquias +${xpReward} XP depositadas nas sacolas.", true)
     }
 
     fun equipTitle(titleId: String?) {
@@ -687,6 +761,50 @@ class HeroLogViewModel(
             selectedTag = selectedTag.ifEmpty { null },
             referenceDate = Date(clock())
         )
+
+        // Skill level up
+        val newSkillLevel = newState.skills.getOrNull(calc.skillIdx)?.level
+        val oldSkillLevel = charState.skills.getOrNull(calc.skillIdx)?.level
+        if (newSkillLevel != null && oldSkillLevel != null && newSkillLevel > oldSkillLevel) {
+            addSystemLog("${calc.skillName} alcançou o Nível ${newSkillLevel}.", true)
+        }
+
+        // Loot
+        calc.lootedItems.forEach {
+            addSystemLog("✨ ESPÓLIO ENCONTRADO: Você localizou o item \"${it.emoji} ${it.name}\"! Vá ao Inventário para visualizá-lo ou equipá-lo.", true)
+        }
+
+        // Título raro
+        calc.droppedTitle?.let {
+            addSystemLog("✨ SORTUDO UNMISSABLE: O reino abençoou sua constância e você dropou o TÍTULO RARO [${it.name}]!", true)
+        }
+
+        // Equipamento quebrado (charges <= 0 após decremento)
+        calc.usedEquipmentIndicesAndCharges.forEach { (index, charges) ->
+            if (charges <= 0) {
+                charState.equippedEquipment?.getOrNull(index)?.let { item ->
+                    addSystemLog("⚠️ O equipamento \"${item.emoji} ${item.name}\" gastou todas as suas cargas e quebrou!", false)
+                }
+            }
+        }
+
+        // Masmorra
+        if (calc.dungeonClearGoldBonus > 0) {
+            addSystemLog("🏆 EXPLORAÇÃO MASMORRA SUCESSO: Concluiu as 4 sessões heróicas consecutivas! Um bônus monumental místico de +2.500 GP foi adicionado aos teus espólios!", true)
+        } else if (calc.isDungeonMode && config != null) {
+            val nextSessions = config.dungeonSessions + 1
+            addSystemLog("⚔️ Masmorra Progresso: (${nextSessions}/4) focos consecutivos selados. Só mais ${4 - nextSessions} sessões para a glória eterna!", true)
+        }
+
+        // Conquistas novas (comparar antes/depois)
+        (newState.achievements.toSet() - charState.achievements.toSet()).forEach { id ->
+            if (id == "survive_wilderness") {
+                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueaste o selo [Sobrevivente da Wilderness]!", true)
+            } else {
+                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueada rúnica especial [${id.uppercase()}]!", true)
+            }
+        }
+
         saveCharacterState(newState)
 
         if (config?.isDungeonMode == true) {
