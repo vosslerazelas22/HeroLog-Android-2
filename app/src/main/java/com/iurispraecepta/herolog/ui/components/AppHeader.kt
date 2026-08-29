@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +39,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// import com.iurispraecepta.herolog.R // TODO Bruno: descomentar quando os .ttf abaixo existirem em res/font
+// import com.herolog.android.R // TODO Bruno: descomentar quando os .ttf abaixo existirem em res/font
 
 /*
  * ============================================================================
@@ -61,6 +62,12 @@ import androidx.compose.ui.unit.sp
  *   3. `sticky top-0` / `z-40` / `backdrop-blur-md` / box-shadow custom —
  *      são responsabilidade de quem posiciona o header (Scaffold topBar ou
  *      Box com zIndex), não do Composable em si.
+ *   4. [28/08, correção pós-integração] `statusBarsPadding()` adicionado — o
+ *      React não tem conceito de status bar (é web), então isso não vem da
+ *      fonte; é ajuste puramente nativo pra evitar o conteúdo (logo/pills/
+ *      botões) desenhar por baixo do relógio/notch/ícones do Android quando
+ *      a Activity usa edge-to-edge. O fundo (QuestPanel) continua full-bleed
+ *      atrás da status bar — só o conteúdo é empurrado pra baixo.
  *
  * ACHADO EM ABERTO (não bloqueia, registrar em PARIDADE.md): a pill de gold
  * na fonte tem classes conflitantes `font-mono font-bold font-serif` no
@@ -213,7 +220,8 @@ fun AppHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(QuestPanel.copy(alpha = 0.95f))
+            .background(QuestPanel.copy(alpha = 0.95f)) // pinta atrás da status bar também (full-bleed)
+            .statusBarsPadding() // empurra o CONTEÚDO pra baixo da status bar/notch — não existe equivalente no React (web não tem status bar), ajuste nativo necessário
             .drawBehind {
                 val strokePx = bottomBorderWidth.toPx()
                 drawLine(
