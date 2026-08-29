@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -23,9 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 
@@ -183,10 +183,11 @@ private fun AmbientTrackRow(
         }
 
         Icon(
-            imageVector = if (isSelected) Icons.Default.RadioButtonChecked else Icons.Default.RadioButtonUnchecked,
-            contentDescription = if (isSelected) "Selecionado" else "Não selecionado",
-            tint = if (isSelected) Amber400 else Stone500,
-            modifier = Modifier.size(20.dp)
+            painter = painterResource(
+                if (isSelected) R.drawable.lucide_ic_toggle_right else R.drawable.lucide_ic_toggle_left
+            ),
+            contentDescription = null,
+            tint = if (isSelected) Color(0xFFE5C158) else Color(0xFFA1A1AA)
         )
     }
 }

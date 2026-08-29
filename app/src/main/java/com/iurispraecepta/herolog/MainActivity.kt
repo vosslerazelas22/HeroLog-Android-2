@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -46,7 +48,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -648,12 +652,26 @@ fun FocusOrbPreviewScreen(
                         onClick = { viewModel.togglePauseQuest() },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(if (focusState.isPaused) "▶ Retomar" else "⏸️ Pausar")
+                        Icon(
+                            painter = painterResource(
+                                if (focusState.isPaused) R.drawable.lucide_ic_play else R.drawable.lucide_ic_pause
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(if (focusState.isPaused) "Retomar" else "Pausar")
                     }
                     OutlinedButton(
                         onClick = { viewModel.abandonSession() },
                         modifier = Modifier.weight(1f)
                     ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_ic_x),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text("Abandonar")
                     }
                 }

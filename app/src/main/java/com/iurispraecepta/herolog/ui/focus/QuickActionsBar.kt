@@ -7,21 +7,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R
 
 @Composable
 fun QuickActionsBar(
@@ -47,9 +42,9 @@ fun QuickActionsBar(
             onClick = onOpenModeModal
         ) {
             when {
-                isDungeonMode -> Icon(Icons.Filled.Shield, null, tint = Color(0xFFC084FC))
-                isWildernessMode -> Icon(Icons.Filled.WarningAmber, null, tint = Color(0xFFF87171))
-                else -> Icon(Icons.Filled.AutoAwesome, null, tint = Color(0xFFE5C158))
+                isDungeonMode -> Icon(painterResource(R.drawable.lucide_ic_shield), null, tint = Color(0xFFC084FC))
+                isWildernessMode -> Icon(painterResource(R.drawable.lucide_ic_shield_alert), null, tint = Color(0xFFF87171))
+                else -> Icon(painterResource(R.drawable.lucide_ic_sparkles), null, tint = Color(0xFFE5C158))
             }
         }
         // 2. Som Ambiente
@@ -57,20 +52,20 @@ fun QuickActionsBar(
             if (activeAmbientIcon != null) {
                 Text(activeAmbientIcon, fontSize = 18.sp)
             } else {
-                Icon(Icons.Filled.VolumeOff, null, tint = Color(0xFFA1A1AA))
+                Icon(painterResource(R.drawable.lucide_ic_volume_x), null, tint = Color(0xFFA1A1AA))
             }
         }
         // 3. Ajustes
         QuickActionButton(label = "Ajustes", enabled = isSettingsEnabled, onClick = onOpenSettingsModal) {
             Icon(
-                Icons.Filled.Settings,
-                null,
+                painter = painterResource(R.drawable.lucide_ic_settings),
+                contentDescription = null,
                 tint = if (isSettingsEnabled) Color(0xFFA1A1AA) else Color(0xFF52525B)
             )
         }
         // 4. Tela Cheia
         QuickActionButton(label = "Tela Cheia", enabled = true, onClick = onEnterFullscreen) {
-            Icon(Icons.Filled.Fullscreen, null, tint = Color(0xFFA1A1AA))
+            Icon(painterResource(R.drawable.lucide_ic_maximize), null, tint = Color(0xFFA1A1AA))
         }
     }
 }
