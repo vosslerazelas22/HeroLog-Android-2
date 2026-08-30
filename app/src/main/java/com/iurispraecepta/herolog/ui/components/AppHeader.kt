@@ -28,6 +28,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -103,8 +105,8 @@ private val Stone900 = Color(0xFF1C1917)  // stone-900 padrão Tailwind (fundo d
 // ---------------------------------------------------------------------------
 // private val CinzelFamily = FontFamily(Font(R.font.cinzel_black, FontWeight.Black))
 // private val JetBrainsMonoFamily = FontFamily(Font(R.font.jetbrains_mono_bold, FontWeight.Bold))
-private val CinzelFamily = FontFamily.Serif // placeholder até os .ttf existirem
-private val JetBrainsMonoFamily = FontFamily.Monospace // placeholder até os .ttf existirem
+private val CinzelFamily = Cinzel // placeholder até os .ttf existirem
+private val JetBrainsMonoFamily = JetBrainsMono // placeholder até os .ttf existirem
 
 /**
  * Header global do app. Chamar dentro de um container que já resolve
