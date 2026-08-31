@@ -4254,3 +4254,55 @@ do usuário silenciosamente.
 - Nenhum.
 
 **Status: Fechado (lógica + build + testes); visual pendente.**
+
+## [2026-08-30] Bloco: Criação do AGENTS.md — constituição operacional para agentes de código
+
+**Motivação**: estabelecer uma constituição operacional para qualquer agente de código
+trabalhando no repositório, incorporando lições de incidentes já documentados neste
+DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
+
+**Arquivos criados/alterados:**
+- `AGENTS.md` (novo)
+
+**Resumo:**
+- Arquivo criado a partir da leitura de `PARIDADE.md` e `DEV_LOG_ANDROID.md`, com validação
+  factual de todas as afirmações arquiteturais contra o código-fonte real (15 claims
+  verificados: single ViewModel, Room blob JSON, 2 entidades, migration 1→2, 5 módulos de
+  aba, SUB_TABS em HeroLogBottomNav, Material não usado, sem DI, `@Serializable` com
+  `@SerialName` em todos os enums, `createInitialCharacterState` com listas vazias de
+  propósito, 3 formatos de data, `Random.Default` no loot, `fallbackToDestructiveMigration`
+  removido, fontes placeholder sem `res/font/`).
+- **Primeira rodada (autoauditoria)**: 10 problemas encontrados e corrigidos — (1) árvore de
+  pacotes incompleta (faltava `logic/character/` e 7 arquivos soltos em `logic/`), (2) regra
+  de catálogos assume workflow Claude+Bruno, (3) distinção React/AI Studio vaga sem
+  diferenciação clara, (4) `createInitialCharacterState` não documentava intencionalidade das
+  listas vazias, (5) 3 formatos de data não documentados, (6) referências ao inexistente
+  `ARCHITECTURE_MOC.md` (3×) e `ARMADILHAS_CONHECIDAS.md` (12× no DEV_LOG) — ambos
+  confirmados ausentes via grep + filesystem, (7) contradição entre seções 5.7 e 6 sobre
+  testes parciais, (8) `res/font/` misturado com regras de dependências, (9) detalhes de
+  baixa importância não adicionados (isTransitive, nomes de tasks Roborazzi, estrutura
+  SubTabOption), (10) referências a workflow com Bruno presentes em regras genéricas.
+- **Segunda rodada (auditoria independente)**: 3 problemas adicionais encontrados — (1)
+  afirmação absoluta "sem efeitos colaterais" na seção 4 Lógica estava fora do escopo das
+  10 correções originais (deveria descrever padrão predominante, não regra), (2) erro de
+  digitação "dipendência" na seção 9 armadilha #4, (3) valor `-Xmx1536m` na seção 9 armadilha
+  #2 precisava confirmação na fonte. Todos os 3 corrigidos e verificados.
+- Validação de `-Xmx1536m`: confirmado em `DEV_LOG_ANDROID.md` linha 1655 — "o ambiente AI
+  Studio travou consistentemente na task `:app:testDebugUnitTest` mesmo após limpeza de cache
+  e aumento de heap (`-Xmx1536m`)".
+- Arquivo final: 306 linhas, 10 seções, zero referências a `ARCHITECTURE_MOC.md` ou
+  `ARMADILHAS_CONHECIDAS.md` como arquivos existentes, zero referências a workflow
+  específico com Claude/Bruno. Pronto para commit.
+
+**Validação:**
+- Duas rodadas completas de auditoria (autoauditoria via OpenCode/MiMo + auditoria
+  independente externa).
+- Sem build/testes aplicável — alteração é puramente de documentação.
+- Toda afirmação factual do documento final conferida contra código-fonte real
+  (app/src/main/java/) ou contra o próprio `DEV_LOG_ANDROID.md` (incluindo confirmação
+  do valor `-Xmx1536m` na linha 1655).
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+**Status: FECHADO.**
