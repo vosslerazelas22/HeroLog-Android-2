@@ -1,0 +1,13 @@
+{
+  "references": {
+    "react-source": {
+      "path": "~/projetos/HeroLog-React-ref",
+      "description": "Repositório React original — fonte de verdade funcional. Consultar antes de portar qualquer tela ou lógica."
+    }
+  },
+  "permission": {
+    "edit": {
+      "~/projetos/HeroLog-React-ref/**": "deny"
+    }
+  }
+}
