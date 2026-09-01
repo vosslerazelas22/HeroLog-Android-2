@@ -59,6 +59,9 @@ Android Studio, é presumidamente falsa.
   persistidos já calculados, nunca recalculados numa recuperação futura.
 - Atenção a `@SerialName` em enums — nunca remover ou alterar sem verificar o
   impacto na compatibilidade com dados já persistidos.
+- Ao commitar, use `git add <arquivo específico>` para cada arquivo alterado —
+  nunca `git add -A` ou `git add .` — para evitar incluir mudanças não relacionadas
+  ao escopo do bloco.
 
 ## Formato do relatório final
 
