@@ -2,6 +2,7 @@ package com.iurispraecepta.herolog.ui.focus
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +20,7 @@ class AmbientSoundController(private val context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private var mediaPlayer: MediaPlayer? = null
     private var currentPlayingTrackId: String? = null
+    private var pendingPlayOnPrepared = false
 
     var selectedTrack: String? by mutableStateOf(prefs.getString(KEY_TRACK, null))
         private set
@@ -54,23 +56,48 @@ class AmbientSoundController(private val context: Context) {
         val track = AMBIENT_SOUNDS.find { it.id == trackId } ?: return
 
         if (currentPlayingTrackId != trackId) {
-            mediaPlayer?.release()
-            mediaPlayer = null
-            currentPlayingTrackId = null
-        }
-
-        if (mediaPlayer == null) {
-            mediaPlayer = MediaPlayer.create(context, track.rawRes)?.apply {
-                isLooping = true
-                setVolume(volume / 100f, volume / 100f)
+            // Troca de trilha em tempo real: reutiliza o MediaPlayer via setDataSource + prepareAsync
+            // (paridade com React: audio.src = newSrc; audio.load())
+            val uri = Uri.parse("android.resource://${context.packageName}/${track.rawRes}")
+            if (mediaPlayer == null) {
+                mediaPlayer = MediaPlayer().apply {
+                    setOnPreparedListener { mp ->
+                        mp.isLooping = true
+                        mp.setVolume(volume / 100f, volume / 100f)
+                        if (pendingPlayOnPrepared) {
+                            mp.start()
+                            pendingPlayOnPrepared = false
+                        }
+                    }
+                    setOnErrorListener { _, _, _ ->
+                        pendingPlayOnPrepared = false
+                        true
+                    }
+                }
             }
-            currentPlayingTrackId = trackId
-        }
-
-        if (isWorkSessionActive) {
-            mediaPlayer?.start()
+            try {
+                mediaPlayer?.reset()
+                mediaPlayer?.setDataSource(context, uri)
+                currentPlayingTrackId = trackId
+                if (isWorkSessionActive) {
+                    pendingPlayOnPrepared = true
+                    mediaPlayer?.prepareAsync()
+                } else {
+                    mediaPlayer?.prepareAsync()
+                }
+            } catch (e: Exception) {
+                // Em caso de erro, limpa e tenta recriar na próxima sync
+                mediaPlayer?.release()
+                mediaPlayer = null
+                currentPlayingTrackId = null
+            }
         } else {
-            mediaPlayer?.pause()
+            // Mesma trilha: só controla play/pause conforme isWorkSessionActive
+            if (isWorkSessionActive) {
+                mediaPlayer?.start()
+            } else {
+                mediaPlayer?.pause()
+            }
         }
     }
 
@@ -78,6 +105,7 @@ class AmbientSoundController(private val context: Context) {
         mediaPlayer?.release()
         mediaPlayer = null
         currentPlayingTrackId = null
+        pendingPlayOnPrepared = false
     }
 }
 
