@@ -26,6 +26,9 @@ Android Studio, é presumidamente falsa.
    - Ler o trecho real do código React correspondente via `@react-source` — nunca
      supor comportamento por analogia com outro módulo já portado.
    - Ler a implementação Android atual do módulo.
+   - Ao citar o comportamento React como referência no relatório final, citar o
+     arquivo e a linha exata consultados — nunca descrever o comportamento React
+     em prosa sem essa citação.
 
 3. **PLAN** — escopo mínimo e auditável (um "Bloco"). Se o escopo crescer durante a
    inspeção, dividir em blocos menores em vez de expandir silenciosamente o bloco atual.
@@ -68,6 +71,9 @@ Android Studio, é presumidamente falsa.
 Escopo: <o que foi implementado, uma frase>
 
 Arquivos criados/alterados: <lista com caminho completo>
+(gerar esta lista a partir de `git diff --stat` real antes de reportar,
+nunca de memória — o relatório deve refletir o diff real, mesmo que ele
+inclua arquivos fora da intenção original do bloco)
 
 Resumo: <o que mudou e por quê, incluindo qualquer decisão de divergência do React>
 
