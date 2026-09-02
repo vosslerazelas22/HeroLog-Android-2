@@ -528,6 +528,15 @@ fun FocusOrbPreviewScreen(
         )
     }
 
+    // Troca de trilha em tempo real: quando selectedTrack muda (via modal), chama sync()
+    // com o estado atual da sessão. Paridade com React useAmbientSound.ts:60-96
+    // (useEffect com dependência em selectedTrack que faz audio.src = newSrc; audio.load()).
+    LaunchedEffect(ambientController.selectedTrack) {
+        ambientController.sync(
+            isWorkSessionActive = focusState.isRunning && !focusState.isPaused && !breakTimerState.isBreakActive
+        )
+    }
+
     LaunchedEffect(dungeonSessionsProgress) {
         if (dungeonSessionsProgress == 0 && isDungeonModePreview) {
             isDungeonModePreview = false
