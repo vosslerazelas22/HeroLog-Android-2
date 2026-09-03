@@ -82,6 +82,7 @@ import com.iurispraecepta.herolog.ui.focus.IncursionModeModal
 import com.iurispraecepta.herolog.ui.focus.ModeDescriptionModal
 import com.iurispraecepta.herolog.ui.focus.QuickActionsBar
 import com.iurispraecepta.herolog.ui.focus.TimerSettingsModal
+import com.iurispraecepta.herolog.ui.focus.AmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.rememberAmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.RaidMode
 import com.iurispraecepta.herolog.ui.focus.RaidModeHelpContent
@@ -366,7 +367,8 @@ class MainActivity : ComponentActivity() {
                             "focus" -> {
                                 FocusOrbPreviewScreen(
                                     viewModel = heroLogViewModel,
-                                    characterState = characterState
+                                    characterState = characterState,
+                                    ambientController = ambientController
                                 )
                             }
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
@@ -487,6 +489,7 @@ class MainActivity : ComponentActivity() {
 fun FocusOrbPreviewScreen(
     viewModel: HeroLogViewModel,
     characterState: CharacterState?,
+    ambientController: AmbientSoundController,
     modifier: Modifier = Modifier
 ) {
     if (characterState == null) {
