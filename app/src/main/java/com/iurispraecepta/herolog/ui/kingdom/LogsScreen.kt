@@ -23,11 +23,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.LogEntry
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -87,7 +89,7 @@ fun LogsScreen(logs: List<LogEntry>) {
                 color = Champagne400,
                 fontWeight = FontWeight.Black,
                 fontSize = 12.sp,
-                letterSpacing = 1.5.sp,
+                letterSpacing = 0.05.em,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
@@ -119,7 +121,7 @@ fun LogsScreen(logs: List<LogEntry>) {
                                 text = "[${log.time}]",
                                 color = Amber400.copy(alpha = 0.5f),
                                 fontSize = 11.sp,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                fontFamily = JetBrainsMono,
                                 modifier = Modifier.padding(end = 8.dp)
                             )
                             Text(
@@ -127,7 +129,7 @@ fun LogsScreen(logs: List<LogEntry>) {
                                 color = if (log.highlighted) Amber200 else Amber100.copy(alpha = 0.40f),
                                 fontWeight = if (log.highlighted) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 11.sp,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                fontFamily = JetBrainsMono
                             )
                         }
                     }

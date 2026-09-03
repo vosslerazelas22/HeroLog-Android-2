@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +45,8 @@ import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -110,7 +111,7 @@ fun ShopScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "BAZAR DE MYSTARA",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.12.em,
@@ -181,7 +182,7 @@ private fun ShopSubTabButton(
     ) {
         Text(
             text = label.uppercase(),
-            fontFamily = FontFamily.Serif,
+            fontFamily = Cinzel,
             fontWeight = FontWeight.Bold,
             fontSize = 9.sp,
             letterSpacing = 0.06.em,
@@ -263,7 +264,7 @@ private fun ShopItemCard(
             Column {
                 Text(
                     text = entry.name,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     color = Amber200
@@ -271,8 +272,8 @@ private fun ShopItemCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = entry.desc,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
                     color = Amber100Half.copy(alpha = 0.50f)
                 )
             }
@@ -290,7 +291,7 @@ private fun ShopItemCard(
             ) {
                 Text(
                     text = "Já ativo",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 10.sp,
                     color = Amber500
@@ -315,9 +316,9 @@ private fun ShopItemCard(
             ) {
                 Text(
                     text = "${entry.price} GP",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = if (canAfford) Champagne300 else Stone500
                 )
                 Icon(

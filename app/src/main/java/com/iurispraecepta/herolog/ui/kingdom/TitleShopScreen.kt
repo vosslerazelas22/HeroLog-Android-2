@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -47,6 +46,8 @@ import com.iurispraecepta.herolog.data.TitleCategory
 import com.iurispraecepta.herolog.data.TitleItem
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -130,10 +131,10 @@ fun TitleShopScreen(
             Text(
                 text = "MERCADO DE TÍTULOS NOBRES: ADQUIRA BRASÕES COM SEU GP ACUMULADO OU " +
                     "RESGATE SUAS MARCAS DE FEITOS GLORIOSOS.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
-                letterSpacing = 0.10.em,
+                letterSpacing = 0.14.em,
                 color = Amber400
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -270,7 +271,7 @@ private fun TitleShopSectionHeader(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title.uppercase(),
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
                 letterSpacing = 0.08.em,
@@ -322,7 +323,7 @@ private fun CategorySubgroup(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Bold,
                 fontSize = 9.sp,
                 letterSpacing = 0.08.em,
@@ -332,7 +333,7 @@ private fun CategorySubgroup(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = sublabel,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontSize = 8.sp,
                     color = Cyan400
                 )
@@ -411,7 +412,7 @@ private fun TitleCard(
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = title.name.uppercase(),
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
                 letterSpacing = 0.06.em,
@@ -426,7 +427,7 @@ private fun TitleCard(
                 title.perks.forEach { perk ->
                     Text(
                         text = perk,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontSize = 9.sp,
                         color = Cyan400
                     )
@@ -471,7 +472,7 @@ private fun TitleFooterLeft(title: TitleItem, isOwned: Boolean, isAchievementUnl
             val color = if (isOwned) Emerald400 else if (isAchievementUnlocked) Amber500 else Stone500
             Text(
                 text = if (isOwned) "🔓 Adquirido" else "🔒 ${title.requirementText}",
-                fontFamily = FontFamily.Monospace,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Bold,
                 fontSize = 9.sp,
                 color = color
@@ -480,7 +481,7 @@ private fun TitleFooterLeft(title: TitleItem, isOwned: Boolean, isAchievementUnl
         TitleCategory.Drop -> {
             Text(
                 text = "♦ ${title.dropChanceText}",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 9.sp,
                 color = Amber500.copy(alpha = 0.60f)
@@ -491,7 +492,7 @@ private fun TitleFooterLeft(title: TitleItem, isOwned: Boolean, isAchievementUnl
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = gpFormatter.format(title.price),
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,
                         color = Amber500
@@ -499,7 +500,7 @@ private fun TitleFooterLeft(title: TitleItem, isOwned: Boolean, isAchievementUnl
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = "GP",
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontSize = 8.sp,
                         color = Amber500.copy(alpha = 0.70f)
                     )
@@ -507,7 +508,7 @@ private fun TitleFooterLeft(title: TitleItem, isOwned: Boolean, isAchievementUnl
             } else {
                 Text(
                     text = "Adquirido",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold,
                     fontSize = 9.sp,
                     color = Emerald400
@@ -537,7 +538,7 @@ private fun TitleFooterAction(
             ) {
                 Text(
                     text = "Desbloqueado",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold,
                     fontSize = 8.sp,
                     letterSpacing = 0.05.em,
@@ -564,7 +565,7 @@ private fun TitleFooterAction(
                 ) {
                     Text(
                         text = "Resgatar",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
                         fontSize = 8.sp,
                         letterSpacing = 0.06.em,
@@ -581,7 +582,7 @@ private fun TitleFooterAction(
                 ) {
                     Text(
                         text = "Bloqueado",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
                         fontSize = 8.sp,
                         letterSpacing = 0.06.em,
@@ -600,7 +601,7 @@ private fun TitleFooterAction(
             ) {
                 Text(
                     text = "Loot Raro",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Black,
                     fontSize = 8.sp,
                     letterSpacing = 0.06.em,
@@ -624,7 +625,7 @@ private fun TitleFooterAction(
             ) {
                 Text(
                     text = "Comprar",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Black,
                     fontSize = 8.sp,
                     letterSpacing = 0.06.em,

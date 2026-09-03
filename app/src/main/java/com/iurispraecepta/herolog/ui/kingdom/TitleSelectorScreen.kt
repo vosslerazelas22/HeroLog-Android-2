@@ -38,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,6 +47,8 @@ import com.iurispraecepta.herolog.data.TITLE_CATALOG
 import com.iurispraecepta.herolog.data.TitleItem
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
@@ -116,7 +117,7 @@ fun TitleSelectorScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "TÍTULOS",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.10.em,
@@ -135,10 +136,10 @@ fun TitleSelectorScreen(
             // Intro
             Text(
                 text = "Escolha o título que deseja exibir no seu perfil e ative os benefícios vinculados a ele.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
-                letterSpacing = 0.10.em,
+                letterSpacing = 0.14.em,
                 color = Champagne400
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -158,7 +159,7 @@ fun TitleSelectorScreen(
                         )
                         Text(
                             text = "SEUS TÍTULOS DESBLOQUEADOS (${unlockedTitles.size})",
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp,
                             letterSpacing = 0.08.em,
@@ -218,7 +219,7 @@ private fun EmptyTitlesState() {
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = "Sua estante de brasões está vazia!",
-            fontFamily = FontFamily.Serif,
+            fontFamily = Cinzel,
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp,
             letterSpacing = 0.05.em,
@@ -227,7 +228,7 @@ private fun EmptyTitlesState() {
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Nenhum título honorífico foi conquistado ainda. Cultive sua força de vontade nas Missões de Foco ou compre patentes de prestígio no Bazar de Mystara!",
-            fontFamily = FontFamily.Serif,
+            fontFamily = Cinzel,
             fontSize = 10.sp,
             lineHeight = 15.sp,
             color = Amber100.copy(alpha = 0.40f),
@@ -261,7 +262,7 @@ private fun TitleCard(
                     Text(text = title.emoji, fontSize = 16.sp)
                     Text(
                         text = title.name,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         letterSpacing = 0.06.em,
@@ -278,7 +279,7 @@ private fun TitleCard(
                 ) {
                     Text(
                         text = title.category.name.lowercase(),
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontSize = 8.sp,
                         letterSpacing = 0.10.em,
                         color = Stone400
@@ -290,7 +291,7 @@ private fun TitleCard(
                         title.perks.forEach { perk ->
                             Text(
                                 text = "⚡ $perk",
-                                fontFamily = FontFamily.Monospace,
+                                fontFamily = JetBrainsMono,
                                 fontSize = 9.sp,
                                 color = Color(0xFF38BDF8)
                             )
@@ -312,7 +313,7 @@ private fun TitleCard(
                             .border(1.dp, Stone700.copy(alpha = 0.50f), RoundedCornerShape(4.dp))
                             .clickable(onClick = onUnequip)
                             .padding(horizontal = 12.dp, vertical = 6.dp),
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
                         fontSize = 8.sp,
                         letterSpacing = 0.12.em,
@@ -327,7 +328,7 @@ private fun TitleCard(
                             .border(1.dp, Color(0xFFFBBF24), RoundedCornerShape(4.dp))
                             .clickable(onClick = onEquip)
                             .padding(horizontal = 12.dp, vertical = 6.dp),
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
                         fontSize = 8.sp,
                         letterSpacing = 0.12.em,
@@ -348,7 +349,7 @@ private fun TitleCard(
             ) {
                 Text(
                     text = "ATIVO",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Black,
                     fontSize = 8.sp,
                     letterSpacing = 0.08.em,
