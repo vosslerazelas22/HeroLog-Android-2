@@ -65,6 +65,8 @@ private val Emerald400 = Color(0xFF34D399)
 private val Yellow400 = Color(0xFFFACC15)
 private val Stone400 = Color(0xFFA8A29E)
 private val Stone500 = Color(0xFF78716C)
+private val Amber300 = Color(0xFFFCD34D) // amber-300 exato — cor do texto "Comprar" na fonte
+private val Amber400 = Color(0xFFFBBF24) // amber-400 exato — cor do header intro na fonte
 private val Cyan400 = Color(0xFF38BDF8)
 
 /**
@@ -132,7 +134,7 @@ fun TitleShopScreen(
                 fontWeight = FontWeight.Bold,
                 fontSize = 11.sp,
                 letterSpacing = 0.10.em,
-                color = Amber500
+                color = Amber400
             )
             Spacer(modifier = Modifier.height(12.dp))
             Box(
@@ -626,7 +628,7 @@ private fun TitleFooterAction(
                     fontWeight = FontWeight.Black,
                     fontSize = 8.sp,
                     letterSpacing = 0.06.em,
-                    color = if (canAfford) Champagne300 else Stone500
+                    color = if (canAfford) Amber300 else Stone500
                 )
             }
         }

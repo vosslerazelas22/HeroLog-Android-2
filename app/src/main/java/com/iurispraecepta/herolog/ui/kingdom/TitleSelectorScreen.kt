@@ -56,6 +56,7 @@ private val Champagne400 = Color(0xFFE5C158)
 private val Champagne500 = Color(0xFFD4AF37)
 private val Stone400 = Color(0xFFA8A29E)
 private val Stone700 = Color(0xFF44403C)
+private val Stone300 = Color(0xFFD6D3D1) // stone-300 exato — cor do texto "Remover" na fonte
 private val Stone800 = Color(0xFF292524)
 
 /**
@@ -288,7 +289,7 @@ private fun TitleCard(
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         title.perks.forEach { perk ->
                             Text(
-                                text = perk,
+                                text = "⚡ $perk",
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 9.sp,
                                 color = Color(0xFF38BDF8)
@@ -315,7 +316,7 @@ private fun TitleCard(
                         fontWeight = FontWeight.Black,
                         fontSize = 8.sp,
                         letterSpacing = 0.12.em,
-                        color = Stone400
+                        color = Stone300
                     )
                 } else {
                     Text(
@@ -323,6 +324,7 @@ private fun TitleCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .background(Amber500)
+                            .border(1.dp, Color(0xFFFBBF24), RoundedCornerShape(4.dp))
                             .clickable(onClick = onEquip)
                             .padding(horizontal = 12.dp, vertical = 6.dp),
                         fontFamily = FontFamily.Serif,

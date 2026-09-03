@@ -13,7 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -29,6 +29,10 @@ import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Stone950
+
+private val Champagne400 = Color(0xFFE5C158)
+private val Champagne500 = Color(0xFFD4AF37)
+private val Amber200 = Color(0xFFFDE68A)
 
 /**
  * Porte de `{activeTab === 'logs' && (...)}` em `App.tsx` (linha ~3517) — a aba "REGISTRO DE
@@ -73,14 +77,14 @@ fun LogsScreen(logs: List<LogEntry>) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Filled.Menu, // TODO: trocar por ícone de pergaminho -- ver nota acima
+                imageVector = Icons.Filled.Article,
                 contentDescription = null,
-                tint = Amber500,
+                tint = Champagne500,
                 modifier = Modifier.height(16.dp)
             )
             Text(
                 text = "REGISTRO DE ATIVIDADES",
-                color = Amber400,
+                color = Champagne400,
                 fontWeight = FontWeight.Black,
                 fontSize = 12.sp,
                 letterSpacing = 1.5.sp,
@@ -120,7 +124,7 @@ fun LogsScreen(logs: List<LogEntry>) {
                             )
                             Text(
                                 text = log.text,
-                                color = if (log.highlighted) Amber100.copy(alpha = 0.92f) else Amber100.copy(alpha = 0.40f),
+                                color = if (log.highlighted) Amber200 else Amber100.copy(alpha = 0.40f),
                                 fontWeight = if (log.highlighted) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 11.sp,
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace

@@ -56,6 +56,7 @@ private val Champagne400 = Color(0xFFE5C158)
 private val Champagne500 = Color(0xFFD4AF37)
 private val Amber200 = Color(0xFFFDE68A)
 private val Amber100Half = Color(0xFFFEF3C7) // amber-100, usado com alpha p/ desc
+private val Stone500 = Color(0xFF78716C) // stone-500 exato (não-confundir com Stone400)
 
 /**
  * Tela do Bazar de Mystara — porte do bloco `activeTab === 'shop'` de `App.tsx` (Bloco E).
@@ -317,12 +318,12 @@ private fun ShopItemCard(
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
-                    color = if (canAfford) Champagne300 else Stone400
+                    color = if (canAfford) Champagne300 else Stone500
                 )
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = if (canAfford) Champagne300 else Stone400,
+                    tint = if (canAfford) Champagne300 else Stone500,
                     modifier = Modifier.size(14.dp)
                 )
             }
