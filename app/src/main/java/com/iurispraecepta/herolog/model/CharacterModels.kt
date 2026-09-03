@@ -145,6 +145,14 @@ enum class CharClass {
 }
 
 @Serializable
+enum class OrbConcept {
+    @SerialName("A") A,
+    @SerialName("B") B,
+    @SerialName("C") C,
+    @SerialName("D") D
+}
+
+@Serializable
 data class PomodoroSettings(
     val focusDuration: Int,
     val shortBreakDuration: Int,
@@ -189,6 +197,7 @@ data class CharacterState(
     val ownedTitles: List<String>? = null,
     val equippedEquipment: List<InventoryItem?>? = null,
     val pomodoroSettings: PomodoroSettings,
+    val orbConcept: OrbConcept = OrbConcept.D,
     val lastDungeonClearedTime: Long = 0L,
     val isPlayerDead: Boolean = false
 )

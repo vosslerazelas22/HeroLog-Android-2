@@ -113,6 +113,7 @@ import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
 import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
 import com.iurispraecepta.herolog.ui.kingdom.TitleSelectorScreen
 import com.iurispraecepta.herolog.ui.components.AppHeader
+import com.iurispraecepta.herolog.ui.components.GeneralSettingsModal
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
@@ -120,6 +121,7 @@ import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.model.OrbConcept
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -147,6 +149,7 @@ class MainActivity : ComponentActivity() {
                 var questsSubTab by remember { mutableStateOf("daily") }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
                 var isRestoreSaveOpen by remember { mutableStateOf(false) }
+                var isGeneralSettingsOpen by remember { mutableStateOf(false) }
                 var saveImportOutcome by remember { mutableStateOf<SaveImportOutcome?>(null) }
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
@@ -177,7 +180,7 @@ class MainActivity : ComponentActivity() {
                             isSfxMuted = isSfxMuted,
                             onToggleSfx = { isSfxMuted = !isSfxMuted },
                             onOpenSettings = {
-                                isRestoreSaveOpen = true
+                                isGeneralSettingsOpen = true
                             }
                         )
                     },
@@ -360,7 +363,8 @@ class MainActivity : ComponentActivity() {
                             "focus" -> {
                                 FocusOrbPreviewScreen(
                                     viewModel = heroLogViewModel,
-                                    characterState = characterState
+                                    characterState = characterState,
+                                    orbConcept = characterState?.orbConcept ?: OrbConcept.D
                                 )
                             }
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
@@ -464,6 +468,18 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { saveImportOutcome = null }
                     )
 
+                    GeneralSettingsModal(
+                        isOpen = isGeneralSettingsOpen,
+                        onDismiss = { isGeneralSettingsOpen = false },
+                        characterName = characterState?.charName ?: "",
+                        charClass = characterState?.charClass ?: CharClass.Mage,
+                        orbConcept = characterState?.orbConcept ?: OrbConcept.D,
+                        onNameChange = { name -> heroLogViewModel.updateCharacterProfile(name, characterState?.charClass ?: CharClass.Mage) },
+                        onClassChange = { cls -> heroLogViewModel.updateCharacterProfile(characterState?.charName ?: "", cls) },
+                        onOrbConceptChange = { concept -> heroLogViewModel.updateOrbConcept(concept) },
+                        coroutineScope = coroutineScope
+                    )
+
                     // Porte de `activeLevelUp` (useLevelUp.ts) -- popup global, visivel por cima de qualquer
                     // aba, igual a fonte (renderizado no nivel do App.tsx, nao preso a nenhuma tela especifica).
                     val levelUpQueue by heroLogViewModel.levelUpQueue.collectAsState()
@@ -481,6 +497,7 @@ class MainActivity : ComponentActivity() {
 fun FocusOrbPreviewScreen(
     viewModel: HeroLogViewModel,
     characterState: CharacterState?,
+    orbConcept: OrbConcept = OrbConcept.D,
     modifier: Modifier = Modifier
 ) {
     if (characterState == null) {
@@ -597,6 +614,7 @@ fun FocusOrbPreviewScreen(
                 isPlayerDead = characterState.isPlayerDead,
                 onReturnToFocusCap = { viewModel.returnToFocusFromGrace() },
                 onRespawn = { viewModel.respawnHero() },
+                orbConcept = characterState?.orbConcept ?: OrbConcept.D,
                 modifier = Modifier.fillMaxSize()
             )
         } else if (breakTimerState.isBreakPrep) {
@@ -623,6 +641,7 @@ fun FocusOrbPreviewScreen(
                     isRunning = true,
                     isPaused = false,
                     isBreakActive = true,
+                    orbConcept = orbConcept,
                     size = FocusOrbSize.STANDARD
                 )
                 Spacer(modifier = Modifier.height(20.dp))
@@ -658,6 +677,7 @@ fun FocusOrbPreviewScreen(
                     totalSeconds = focusState.totalSeconds,
                     isRunning = focusState.isRunning,
                     isPaused = focusState.isPaused,
+                    orbConcept = orbConcept,
                     size = FocusOrbSize.STANDARD
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -760,6 +780,7 @@ fun FocusOrbPreviewScreen(
                     isRunning = false,
                     isPaused = false,
                     isBreakActive = false,
+                    orbConcept = orbConcept,
                     size = FocusOrbSize.STANDARD
                 )
 
