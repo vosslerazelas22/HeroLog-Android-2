@@ -4306,3 +4306,65 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Nenhum.
 
 **Status: FECHADO.**
+
+## [2026-09-02] Bloco: Bug 1 AmbientSoundController — troca de trilha em tempo real durante sessão ativa
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (LaunchedEffect(ambientController.selectedTrack))
+- `app/src/test/java/com/iurispraecepta/herolog/AmbientSoundControllerTest.kt` (novo)
+
+**Resumo:**
+- Adicionado `LaunchedEffect(ambientController.selectedTrack)` em `MainActivity.kt` que chama `sync()` com estado atual da sessão sempre que `selectedTrack` muda. Paridade com React `useAmbientSound.ts:60-96` (useEffect com dependência em `selectedTrack` que faz `audio.src = newSrc; audio.load()` imediatamente).
+- Causa raiz: `selectTrack()` só atualizava estado/prefs; `sync()` só disparado por `LaunchedEffect` vigiando `isRunning`/`isPaused`/`isBreakActive`, não `selectedTrack`. Confirmado preexistente (não regressão do 4133e59) via `git show 4133e59^:...AmbientSoundController.kt`.
+- Criado `AmbientSoundControllerTest.kt` com 8 testes Robolectric: toggle `selectTrack`, `sync` com track nula, troca durante sessão ativa/pausada, clamp de volume, `release()`, validação lista de 8 trilhas.
+
+**Validação:**
+- Build: `assembleDebug` — BUILD SUCCESSFUL
+- Testes: `testDebugUnitTest` — `AmbientSoundControllerTest` 8/8 PASSED, suíte completa sem regressões
+- Visual: **Confirmado manualmente por Bruno no device (02/09)** — troca imediata de trilha durante sessão rodando (ex.: Floresta → Chuva), sem pausar/retomar, sem corte perceptível
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+**Status: FECHADO.**
+
+## [2026-09-02] Bloco: Bug 2 AmbientSoundController — som para ao trocar de aba
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (move ambientController para escopo HeroLogTheme)
+
+**Resumo:**
+- Movido `ambientController = rememberAmbientSoundController()` do content lambda do Scaffold para escopo do HeroLogTheme (acima do Scaffold). O `remember` dentro do lambda não sobrevive a recomposição quando `activeTab` muda e o lambda produz árvores de UI diferentes — disparava `DisposableEffect(Unit).release()` indevidamente.
+- Causa raiz confirmada preexistente desde primeiro commit de som ambiente (`6e678b9`), não regressão do 4133e59 nem do 083e6a6.
+- `LaunchedEffect` para `sync()` permanecem no content lambda (observam `focusState`/`breakTimerState`), mas capturam `ambientController` do escopo externo estável.
+
+**Validação:**
+- Build: `assembleDebug` — BUILD SUCCESSFUL (após fix de compilação do bloco seguinte)
+- Testes: `testDebugUnitTest` — suíte completa sem regressões
+- Visual: **Confirmado manualmente por Bruno no device (02/09)** — som continua tocando ao trocar Foco → Herói → Skills → Foco com sessão ativa; trilha selecionada persiste
+
+**Desvios de escopo aprovados:**
+- Nenhum. Depende do Bug 1 já commitado (`083e6a6`) — ambos compatíveis.
+
+**Status: FECHADO.**
+
+## [2026-09-02] Bloco: Fix compilação — passar ambientController para FocusOrbPreviewScreen
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (import + parâmetro + chamada)
+
+**Resumo:**
+- Fix de 9 erros "Unresolved reference 'ambientController'" introduzidos no commit `c92311b`: `FocusOrbPreviewScreen` é função de nível superior (não lambda), não captura variável do escopo externo.
+- Adicionado import `AmbientSoundController`, parâmetro `ambientController: AmbientSoundController` na assinatura, e passagem no call site quando `activeTab == "focus"`.
+- Preserva mudança de escopo do Bug 2 (controller no HeroLogTheme scope) — apenas threading do parâmetro.
+
+**Validação:**
+- Build: `compileDebugKotlin --console=plain` — **compilação limpa** (0 erros)
+- Build completo: `assembleDebug` — BUILD SUCCESSFUL
+- Testes: `testDebugUnitTest` — suíte completa sem regressões
+- Visual: **Confirmado manualmente por Bruno no device (02/09)** — mesmos cenários do Bug 2 validados
+
+**Desvios de escopo aprovados:**
+- Nenhum. Fix mínimo e direcionado ao erro de compilação.
+
+**Status: FECHADO.**
