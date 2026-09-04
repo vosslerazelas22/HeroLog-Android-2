@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -115,7 +116,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "TUTORIAL",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.12.em,
@@ -141,7 +142,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "HeroLog funde a famosa técnica Pomodoro com elementos clássicos de RPG de Fantasia Escura. Cada minuto dedicado ao estudo desenvolve suas verdadeiras habilidades, gera fortunas de Ouro do Reino (GP) e concede experiência (XP) ao seu nível de combate heróico.",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
                     color = Amber100.copy(alpha = 0.80f)
@@ -220,7 +221,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "MODO PADRÃO (NEUTRO)",
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 11.sp,
                                 letterSpacing = 0.08.em,
@@ -255,7 +256,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "MODO MASMORRA (DUNGEON)",
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 11.sp,
                                 letterSpacing = 0.08.em,
@@ -297,7 +298,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "Tempo de recarga de 2 horas após a conclusão. Não acumulável com o Modo Selvagem.",
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Cinzel,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = 10.sp,
                                     color = Purple300.copy(alpha = 0.80f)
@@ -320,7 +321,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "MODO SELVAGEM (WILDERNESS)",
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 11.sp,
                                 letterSpacing = 0.08.em,
@@ -360,7 +361,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "TABELA RÁPIDA (RISCO VS. RECOMPENSA)",
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 9.5.sp,
                                 letterSpacing = 0.10.em,
@@ -403,7 +404,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                                     .background(Purple950.copy(alpha = 0.15f))
                                     .padding(vertical = 8.dp, horizontal = 10.dp)
                             ) {
-                                TableCell("Masmorra", Purple400, FontWeight.SemiBold, Modifier.weight(0.8f), FontFamily.Serif)
+                                TableCell("Masmorra", Purple400, FontWeight.SemiBold, Modifier.weight(0.8f), Cinzel)
                                 TableCell("Alto (4 sessões)", Amber100.copy(alpha = 0.65f), FontWeight.Normal, Modifier.weight(1f))
                                 TableCell("+50% XP, Quad Loot, +2500 GP", Purple300, FontWeight.Medium, Modifier.weight(1.3f))
                                 TableCell("Perda de progresso do combo", Red400.copy(alpha = 0.80f), FontWeight.Normal, Modifier.weight(1.2f))
@@ -416,7 +417,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                                     .background(Red950.copy(alpha = 0.15f))
                                     .padding(vertical = 8.dp, horizontal = 10.dp)
                             ) {
-                                TableCell("Selvagem", Red400, FontWeight.SemiBold, Modifier.weight(0.8f), FontFamily.Serif)
+                                TableCell("Selvagem", Red400, FontWeight.SemiBold, Modifier.weight(0.8f), Cinzel)
                                 TableCell("Extremo (Foco Único)", Amber100.copy(alpha = 0.65f), FontWeight.Normal, Modifier.weight(1f))
                                 TableCell("+25% XP & GP extras", Red300, FontWeight.Medium, Modifier.weight(1.3f))
                                 TableCell("Morte (Perda dos bônus e ganhos)", Red400, FontWeight.Normal, Modifier.weight(1.2f))
@@ -435,7 +436,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                         ) {
                             Text(
                                 text = "ORIENTAÇÃO: QUANDO ESCOLHER CADA MODO?",
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Black,
                                 fontSize = 9.5.sp,
                                 letterSpacing = 0.08.em,
@@ -489,7 +490,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "💀 Terra Selvagem (Modo Wilderness):",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = Rose400
@@ -498,7 +499,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "A Wilderness é uma região de altíssimo perigo cognitivo. Se você ativá-lo antes de iniciar a Missão de Foco:",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontSize = 12.sp,
                     lineHeight = 17.sp,
                     color = Amber100.copy(alpha = 0.70f)
@@ -543,7 +544,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
                         withStyle(SpanStyle(color = Amber400, fontWeight = FontWeight.Bold)) { append("+5% bônus de XP por foco extra consecutivo") }
                         append(", até o teto místico de +50% no total. Não desista e mantenha a chama viva!")
                     },
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontSize = 12.sp,
                     lineHeight = 18.sp,
                     color = Amber100.copy(alpha = 0.60f)
@@ -577,7 +578,7 @@ private fun GuideSectionHeader(icon: ImageVector, iconTint: Color, title: String
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = title,
-            fontFamily = FontFamily.Serif,
+            fontFamily = Cinzel,
             fontWeight = FontWeight.Bold,
             fontSize = 13.sp,
             color = Amber300
@@ -599,7 +600,7 @@ private fun BulletItem(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
-            fontFamily = FontFamily.Serif,
+            fontFamily = Cinzel,
             fontSize = fontSize,
             lineHeight = lineHeight,
             color = textColor,
@@ -613,7 +614,7 @@ private fun TableHeaderCell(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         modifier = modifier,
-        fontFamily = FontFamily.Serif,
+        fontFamily = Cinzel,
         fontWeight = FontWeight.Bold,
         fontSize = 10.sp,
         color = Amber300

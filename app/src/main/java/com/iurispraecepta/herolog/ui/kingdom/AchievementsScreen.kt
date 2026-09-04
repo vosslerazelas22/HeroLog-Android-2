@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -39,6 +38,7 @@ import com.iurispraecepta.herolog.logic.achievements.AchievementLogic
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
@@ -83,7 +83,7 @@ fun AchievementsScreen(state: CharacterState, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "CONQUISTAS",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.10.em,
@@ -146,10 +146,10 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = achievement.name,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    letterSpacing = 0.02.em,
+                    letterSpacing = 0.025.em,
                     color = Amber100.copy(alpha = 0.90f)
                 )
                 if (isUnlocked) {
@@ -170,7 +170,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                         )
                         Text(
                             text = "DESBLOQUEADO",
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp,
                             letterSpacing = 0.05.em,
@@ -182,7 +182,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = achievement.desc,
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontSize = 12.sp,
                 color = Amber100.copy(alpha = 0.40f)
             )
