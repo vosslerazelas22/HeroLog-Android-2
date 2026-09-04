@@ -4368,3 +4368,50 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Nenhum. Fix mínimo e direcionado ao erro de compilação.
 
 **Status: FECHADO.**
+
+## [2026-09-03] Bloco: Setup de toolchain — JDK 17/21, Gradle Wrapper, Android SDK
+
+**Arquivos criados/alterados:**
+- `gradlew` (criado — Gradle Wrapper script)
+- `gradlew.bat` (criado — Gradle Wrapper para Windows)
+- `gradle/wrapper/gradle-wrapper.jar` (criado — jar do wrapper)
+- `gradle/wrapper/gradle-wrapper.properties` (criado — aponta para Gradle 9.3.1)
+- `local.properties` (criado — sdk.dir=/home/bruno/Android/Sdk)
+- `app/build.gradle.kts` (alterado — adicionado `tasks.withType<Test>` com Java toolchain JDK 21/Adoptium)
+- `gradle.properties` (alterado — adicionado `org.gradle.java.installations.paths` para JDK 17+21)
+- `~/.bashrc` (alterado — export JAVA_HOME, GRADLE, ANDROID_HOME, PATH)
+
+**Resumo:**
+- **JDK 17** (Adoptium Temurin 17.0.20.1) instalado em `~/jdk-17` via download direto (sem sudo — WSL2 sem acesso a sudo)
+- **Gradle 9.3.1** instalado globalmente em `~/gradle/gradle-9.3.1/`
+- **Gradle Wrapper** gerado via `gradle wrapper --gradle-version 9.3.1` (o projeto não tinha wrapper commitado — dependia do Gradle embutido no AI Studio)
+- **Android SDK** instalado em `~/Android/Sdk` via cmdline-tools:
+  - cmdline-tools (latest)
+  - platform-tools (37.0.1)
+  - build-tools (36.0.0)
+  - platforms;android-36 + android-36.1 (auto-instalado pelo AGP 9.1.1)
+- **debug.keystore** gerado via `keytool` (necessário para signing de debug — estava no `.gitignore`)
+- **Toolchain JDK 21** (Adoptium Temurin 21.0.12.1) instalado em `~/jdk-21` para testes Robolectric — Robolectric 4.16.1 + SDK 36 requerem JDK 21
+- Configuração de toolchain no `app/build.gradle.kts`: `javaLauncher.set(javaToolchains.launcherFor { languageVersion=21, vendor=ADOPTIUM })`
+- Variáveis de ambiente via `~/.bashrc`:
+  - `JAVA_HOME=~/jdk-17` (compilação)
+  - `ANDROID_HOME=~/Android/Sdk`
+  - `PATH` inclui `$JAVA_HOME/bin`, `$ANDROID_HOME/cmdline-tools/latest/bin`, `$ANDROID_HOME/platform-tools`, `~/gradle/gradle-9.3.1/bin`
+
+**Validação:**
+- Build: `assembleDebug` — **BUILD SUCCESSFUL** (21s com cache)
+- APK gerado: `app/build/outputs/apk/debug/app-debug.apk` (33MB)
+- Testes: `testDebugUnitTest` — 206/284 executados (timeout 30min), **0 falhas** — suíte completa não terminou por tempo, não por erro
+- 31/62 classes de teste executadas com sucesso, incluindo `HeroLogViewModelTest` (28 testes, 0 falhas)
+- Toolchain JDK 21 funcionando: erro "Android SDK 36 requires Java 21" eliminado
+
+**Decisões:**
+- Build principal (assembleDebug) roda com JDK 17 (compilação Kotlin/Java)
+- Testes unitários rodam com JDK 21 via Java Toolchain (exigido pelo Robolectric 4.16.1 + SDK 36)
+- Gradle global mantido em `~/gradle/` para geração de wrapper e utilitários; builds do projeto usam `./gradlew` (wrapper)
+
+**Desvios aprovados:**
+- `local.properties` criado no repo (não commitável — está no `.gitignore`)
+- `debug.keystore` gerado e mantido localmente (não commitável — está no `.gitignore`)
+
+**Status: FECHADO.**

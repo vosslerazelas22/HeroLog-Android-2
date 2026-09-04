@@ -68,6 +68,15 @@ android {
   }
 }
 
+tasks.withType<Test>().configureEach {
+  javaLauncher.set(
+    javaToolchains.launcherFor {
+      languageVersion.set(JavaLanguageVersion.of(21))
+      vendor.set(JvmVendorSpec.ADOPTIUM)
+    }
+  )
+}
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {
