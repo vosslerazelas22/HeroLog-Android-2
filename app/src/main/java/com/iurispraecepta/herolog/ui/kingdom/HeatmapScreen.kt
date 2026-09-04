@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,6 +43,8 @@ import com.iurispraecepta.herolog.logic.kingdom.MinuteBucket
 import com.iurispraecepta.herolog.logic.kingdom.MonthLabel
 import com.iurispraecepta.herolog.model.HistoryEntry
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
@@ -126,7 +127,7 @@ fun HeatmapScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "HEATMAP",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.12.em,
@@ -196,7 +197,7 @@ private fun ConsistencyCard(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "CONSISTÊNCIA NOS ÚLTIMOS 30 DIAS",
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Black,
                             fontSize = 11.sp,
                             letterSpacing = 0.08.em,
@@ -206,7 +207,7 @@ private fun ConsistencyCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Seu comprometimento diário molda o seu heroísmo. Cada dia de foco é um golpe contra a estagnação.",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontSize = 10.sp,
                         color = Amber100Half.copy(alpha = 0.50f)
                     )
@@ -221,14 +222,14 @@ private fun ConsistencyCard(
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = "$consistencyPercentage",
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = JetBrainsMono,
                             fontWeight = FontWeight.Black,
-                            fontSize = 34.sp,
+                            fontSize = 30.sp,
                             color = Amber200
                         )
                         Text(
                             text = "%",
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = JetBrainsMono,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp,
                             color = Amber500.copy(alpha = 0.70f)
@@ -236,7 +237,7 @@ private fun ConsistencyCard(
                     }
                     Text(
                         text = "$studyDaysInLast30 / 30 DIAS CUMPRIDOS",
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Bold,
                         fontSize = 8.5.sp,
                         letterSpacing = 0.06.em,
@@ -297,16 +298,16 @@ private fun HeatmapGridPanel(
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "\uD83D\uDCDC VISÃO GERAL DO PERÍODO — ${if (scope == HeatmapScope.THREE_MONTHS) "ÚLTIMOS 3 MESES" else "ÚLTIMOS 6 MESES"}",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 10.sp,
-                letterSpacing = 0.08.em,
+                letterSpacing = 0.10.em,
                 color = GoldAccent
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "Sua consagração é medida em horas e minutos focados",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontSize = 9.sp,
                 color = Amber100Half.copy(alpha = 0.35f)
             )
@@ -345,7 +346,7 @@ private fun HeatmapGridPanel(
                 ) {
                     Text(
                         text = "Streak Atual: $streak ${if (streak == 1) "Dia" else "Dias"}",
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Black,
                         fontSize = 10.sp,
                         color = GoldAccent
@@ -372,7 +373,7 @@ private fun HeatmapGridPanel(
                         if (label != null) {
                             Text(
                                 text = label.name,
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 8.sp,
                                 color = Amber500.copy(alpha = 0.80f),
@@ -443,7 +444,7 @@ private fun HeatmapGridPanel(
         Text(
             text = selectedCell?.let { describeCell(it) }
                 ?: "Toque nos blocos para ver os detalhes diários de estudo.",
-            fontFamily = FontFamily.Monospace,
+            fontFamily = JetBrainsMono,
             fontSize = 9.sp,
             color = if (selectedCell != null) Emerald400 else HintMuted
         )
@@ -456,13 +457,13 @@ private fun HeatmapGridPanel(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "MENOS", fontSize = 9.sp, fontFamily = FontFamily.Monospace, color = Amber100Half.copy(alpha = 0.40f))
+            Text(text = "MENOS", fontSize = 9.sp, fontFamily = JetBrainsMono, color = Amber100Half.copy(alpha = 0.40f))
             LegendSwatch(BucketZeroBg, Amber500.copy(alpha = 0.05f))
             LegendSwatch(BucketLowBg, BucketLowBorder)
             LegendSwatch(BucketMidBg, BucketMidBorder)
             LegendSwatch(BucketHighBg, BucketHighBorder)
             LegendSwatch(BucketEliteBg, BucketEliteBorder)
-            Text(text = "MAIS", fontSize = 9.sp, fontFamily = FontFamily.Monospace, color = Amber100Half.copy(alpha = 0.40f))
+            Text(text = "MAIS", fontSize = 9.sp, fontFamily = JetBrainsMono, color = Amber100Half.copy(alpha = 0.40f))
         }
     }
 }
@@ -482,7 +483,7 @@ private fun ScopeToggleButton(label: String, selected: Boolean, onClick: () -> U
     ) {
         Text(
             text = label,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = JetBrainsMono,
             fontWeight = FontWeight.Bold,
             fontSize = 9.sp,
             color = if (selected) GoldAccent else Amber100Half.copy(alpha = 0.40f)
@@ -605,7 +606,7 @@ private fun StatsCardsSection(
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = HeatmapLogic.formatMinutes(thisMonthMinutes),
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp,
                     letterSpacing = 0.04.em,
@@ -630,7 +631,7 @@ private fun StatCard(label: String, value: String, valueColor: Color, modifier: 
             Text(
                 text = label,
                 fontSize = 8.5.sp,
-                letterSpacing = 0.06.em,
+                letterSpacing = 0.10.em,
                 color = StatsMuted,
                 textAlign = TextAlign.Center,
                 maxLines = 1
