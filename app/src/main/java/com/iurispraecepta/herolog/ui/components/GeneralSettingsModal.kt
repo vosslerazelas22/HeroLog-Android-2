@@ -42,7 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.em
-import com.composables.icons.lucide.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.OrbConcept
 import com.iurispraecepta.herolog.ui.theme.Amber400
@@ -118,7 +119,7 @@ fun GeneralSettingsModal(
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(
-                            painter = painterResource(R.drawable.lucide_ic_x),
+                            imageVector = Icons.Default.Close,
                             contentDescription = "Fechar",
                             tint = Color(0xFF9CA3AF),
                             modifier = androidx.compose.ui.Modifier.size(24.dp)
