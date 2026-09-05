@@ -6,6 +6,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,8 +89,19 @@ fun GeneralSettingsModal(
             .pointerInput(Unit) {
                 coroutineScope.launch {
                     awaitPointerEventScope {
-                        awaitFirstDown()
-                        onDismiss()
+                        val down = awaitFirstDown()
+                        val containerSizePx = 320.dp.toPx()
+                        val parentW = size.width.toFloat()
+                        val parentH = size.height.toFloat()
+                        val left = (parentW - containerSizePx) / 2f
+                        val top = (parentH - containerSizePx) / 2f
+                        val x = down.position.x
+                        val y = down.position.y
+                        val isInside = x >= left && x <= left + containerSizePx &&
+                            y >= top && y <= top + containerSizePx
+                        if (!isInside) {
+                            onDismiss()
+                        }
                     }
                 }
             }
@@ -104,6 +117,7 @@ fun GeneralSettingsModal(
             Column(
                 modifier = androidx.compose.ui.Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
