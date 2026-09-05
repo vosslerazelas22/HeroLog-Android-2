@@ -6,6 +6,9 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.ui.unit.em
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -259,26 +262,26 @@ private fun buildWavePath(baseY: Float, phase: Float, amplitude: Float, scale: F
 }
 
 private data class ColorSet(
-    val accent: Color,
-    val frontGrad: List<Color>,
-    val backGrad: List<Color>,
-    val glow: Color,
+    val accent: Color = Color.Transparent,
+    val frontGrad: List<Color> = emptyList(),
+    val backGrad: List<Color> = emptyList(),
+    val glow: Color = Color.Transparent,
     val ringGrad: List<Color>? = null,
     val tickColor: Color? = null,
     val liquidFront: List<Color>? = null,
-    val liquidBack: List<Color>? = nil,
+    val liquidBack: List<Color>? = null,
     val runeColor: Color? = null,
     val track: Color? = null,
-    val trackBg: Color? = nil,
+    val trackBg: Color? = null,
     val bgGlow: Color? = null,
     val textColor: Color? = null,
-    val liquid: List<Color>? = nil,
-    val back: List<Color>? = nil,
+    val liquid: List<Color>? = null,
+    val back: List<Color>? = null,
     val octagonStroke: Color? = null,
     val highlightWhite: Color? = null,
     val ringWhite: Color? = null,
     val vignetteStops: List<Color>? = null,
-    val goldRing: Color? = nil,
+    val goldRing: Color? = null,
     val darkRing: Color? = null
 )
 
@@ -508,20 +511,23 @@ private fun OrbConceptA(
             drawCircle(color = colors.glow, radius = 50f * scale, center = center)
 
             // Background circles
-            drawCircle(color = Color(0xFF0C0C10), radius = 48.5f * scale, center = center, style = Stroke(width = 0.8f * scale, color = Color(0xFF27272A)))
-            drawCircle(color = Color.Transparent, radius = 46f * scale, center = center, style = Stroke(width = 3f * scale, color = Color(0xFF18181B)))
+            drawCircle(color = Color(0xFF0C0C10), radius = 48.5f * scale, center = center) // preenchimento
+            drawCircle(color = Color(0xFF27272A), radius = 48.5f * scale, center = center, style = Stroke(width = 0.8f * scale)) // contorno
+            drawCircle(color = Color(0xFF18181B), radius = 46f * scale, center = center, style = Stroke(width = 3f * scale))
 
             // Ticks
             for (i in 0..11) {
                 val angle = (i * 360f) / 12
                 val isMajor = i % 3 == 0
-                drawLine(
-                    start = Offset(center.x, center.y - 2.5f * scale),
-                    end = Offset(center.x, center.y - (if (isMajor) 6.5f else 5f) * scale),
-                    color = colors.tickColor!!,
-                    strokeWidth = (if (isMajor) 1.2f else 0.6f) * scale,
-                    alpha = if (isMajor) 0.9f else 0.4f
-                ) { this.rotate(angle, center = center) }
+                rotate(angle, pivot = center) {
+                    drawLine(
+                        start = Offset(center.x, center.y - 2.5f * scale),
+                        end = Offset(center.x, center.y - (if (isMajor) 6.5f else 5f) * scale),
+                        color = colors.tickColor!!,
+                        strokeWidth = (if (isMajor) 1.2f else 0.6f) * scale,
+                        alpha = if (isMajor) 0.9f else 0.4f
+                    )
+                }
             }
 
             // Progress ring
@@ -531,16 +537,15 @@ private fun OrbConceptA(
                 center = center,
                 style = Stroke(
                     width = 2.2f * scale,
-                    pathEffect = PathEffect.cornerPathEffect(0f),
-                    color = androidx.compose.ui.graphics.Color.Transparent
+                    pathEffect = PathEffect.cornerPathEffect(0f)
                 )
-            ) {
+            )
                 // We can't easily do strokeDashoffset with gradient in Compose Canvas
                 // So we'll use a simpler approach with sweep gradient or just solid color
-            }
 
             // Inner circle
-            drawCircle(color = Color(0xFF09090B), radius = 40f * scale, center = center, style = Stroke(width = 0.8f * scale, color = Color(0xFF3F3F46)))
+            drawCircle(color = Color(0xFF09090B), radius = 40f * scale, center = center)
+            drawCircle(color = Color(0xFF3F3F46), radius = 40f * scale, center = center, style = Stroke(width = 0.8f * scale))
 
             // Clipped wave area
             clipPath(buildCirclePath(center, 39.5f * scale)) {
@@ -640,38 +645,37 @@ private fun OrbConceptB(
             drawCircle(color = colors.glow, radius = 48f * scale, center = center)
 
             // Base circle
-            drawCircle(color = Color(0xFF09090B), radius = 45f * scale, center = center, style = Stroke(width = 1f * scale, color = Color(0xFF1F1F23)))
+            drawCircle(color = Color(0xFF09090B), radius = 45f * scale, center = center)
+            drawCircle(color = Color(0xFF1F1F23), radius = 45f * scale, center = center, style = Stroke(width = 1f * scale))
 
             // Runes
             val runeColor = colors.runeColor!!
-            withTransform({ rotate(0f, center = center) }) {
-                drawPath(
-                    path = Path().apply {
-                        moveTo(center.x, center.y - 35f * scale)
-                        lineTo(center.x + 28f * scale, center.y + 15f * scale)
-                        lineTo(center.x - 28f * scale, center.y + 15f * scale)
-                        close()
-                    },
-                    color = runeColor.copy(alpha = 0.08f),
-                    style = Stroke(width = 0.8f * scale)
-                )
-                drawPath(
-                    path = Path().apply {
-                        moveTo(center.x, center.y + 35f * scale)
-                        lineTo(center.x + 28f * scale, center.y - 15f * scale)
-                        lineTo(center.x - 28f * scale, center.y - 15f * scale)
-                        close()
-                    },
-                    color = runeColor.copy(alpha = 0.08f),
-                    style = Stroke(width = 0.8f * scale)
-                )
-                drawCircle(
-                    color = Color.Transparent,
-                    radius = 18f * scale,
-                    center = center,
-                    style = Stroke(width = 0.8f * scale, color = runeColor.copy(alpha = 0.08f))
-                )
-            }
+            drawPath(
+                path = Path().apply {
+                    moveTo(center.x, center.y - 35f * scale)
+                    lineTo(center.x + 28f * scale, center.y + 15f * scale)
+                    lineTo(center.x - 28f * scale, center.y + 15f * scale)
+                    close()
+                },
+                color = runeColor.copy(alpha = 0.08f),
+                style = Stroke(width = 0.8f * scale)
+            )
+            drawPath(
+                path = Path().apply {
+                    moveTo(center.x, center.y + 35f * scale)
+                    lineTo(center.x + 28f * scale, center.y - 15f * scale)
+                    lineTo(center.x - 28f * scale, center.y - 15f * scale)
+                    close()
+                },
+                color = runeColor.copy(alpha = 0.08f),
+                style = Stroke(width = 0.8f * scale)
+            )
+            drawCircle(
+                color = runeColor.copy(alpha = 0.08f),
+                radius = 18f * scale,
+                center = center,
+                style = Stroke(width = 0.8f * scale)
+            )
 
             // Clipped wave area
             clipPath(buildCirclePath(center, 43f * scale)) {
@@ -697,7 +701,6 @@ private fun OrbConceptB(
 
             // Vignette
             drawCircle(
-                color = Color.Transparent,
                 radius = 43f * scale,
                 center = center,
                 brush = Brush.radialGradient(
@@ -786,20 +789,21 @@ private fun OrbConceptC(
             drawCircle(color = colors.bgGlow!!, radius = 44f * scale, center = center)
 
             // Base circles
-            drawCircle(color = Color(0xFF111116), radius = 48f * scale, center = center, style = Stroke(width = 0.8f * scale, color = Color(0xFF27272A)))
+            drawCircle(color = Color(0xFF111116), radius = 48f * scale, center = center)
+            drawCircle(color = Color(0xFF27272A), radius = 48f * scale, center = center, style = Stroke(width = 0.8f * scale))
             drawCircle(color = Color(0xFF09090B), radius = 46.5f * scale, center = center)
 
             // Subtle grid
             val gridColor = Color.White.copy(alpha = 0.06f)
-            drawCircle(color = Color.Transparent, radius = 32f * scale, center = center, style = Stroke(width = 0.3f * scale, color = gridColor, pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * scale, 3f * scale))))
-            drawCircle(color = Color.Transparent, radius = 20f * scale, center = center, style = Stroke(width = 0.3f * scale, color = gridColor))
+            drawCircle(color = gridColor, radius = 32f * scale, center = center, style = Stroke(width = 0.3f * scale, pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f * scale, 3f * scale))))
+            drawCircle(color = gridColor, radius = 20f * scale, center = center, style = Stroke(width = 0.3f * scale))
             drawLine(start = Offset(center.x, center.y - 18f * scale), end = Offset(center.x, center.y + 18f * scale), color = gridColor, strokeWidth = 0.3f * scale)
             drawLine(start = Offset(center.x - 18f * scale, center.y), end = Offset(center.x + 18f * scale, center.y), color = gridColor, strokeWidth = 0.3f * scale)
             drawLine(start = Offset(center.x - 15f * scale, center.y - 15f * scale), end = Offset(center.x + 15f * scale, center.y + 15f * scale), color = gridColor, strokeWidth = 0.3f * scale)
             drawLine(start = Offset(center.x - 15f * scale, center.y + 15f * scale), end = Offset(center.x + 15f * scale, center.y - 15f * scale), color = gridColor, strokeWidth = 0.3f * scale)
 
             // Track background
-            drawCircle(color = Color.Transparent, radius = radius * scale, center = center, style = Stroke(width = 3f * scale, color = colors.trackBg!!))
+            drawCircle(color = colors.trackBg!!, radius = radius * scale, center = center, style = Stroke(width = 3f * scale))
 
             // Progress ring with gradient
             val trackGrad = Brush.linearGradient(
@@ -812,17 +816,17 @@ private fun OrbConceptC(
                 end = Offset(radius * 2f * scale, radius * 2f * scale)
             )
             drawCircle(
-                color = Color.Transparent,
                 radius = radius * scale,
                 center = center,
+                brush = trackGrad,
                 style = Stroke(
                     width = 3.2f * scale,
-                    color = Color.Transparent
                 )
             )
 
             // Inner circle
-            drawCircle(color = Color(0xFF0C0C10), radius = 36f * scale, center = center, style = Stroke(width = 0.75f * scale, color = Color(0xFF1F1F23)))
+            drawCircle(color = Color(0xFF0C0C10), radius = 36f * scale, center = center)
+            drawCircle(color = Color(0xFF1F1F23), radius = 36f * scale, center = center, style = Stroke(width = 0.75f * scale))
         }
 
         androidx.compose.material3.Text(
@@ -914,7 +918,8 @@ private fun OrbConceptD(
             drawCircle(color = colors.glow, radius = 48f * scale, center = center)
 
             // Base circle
-            drawCircle(color = Color(0xFF09090B), radius = 45f * scale, center = center, style = Stroke(width = 0.8f * scale, color = Color(0xFF3F3F46)))
+            drawCircle(color = Color(0xFF09090B), radius = 45f * scale, center = center)
+            drawCircle(color = Color(0xFF3F3F46), radius = 45f * scale, center = center, style = Stroke(width = 0.8f * scale))
 
             // Octagon
             val octagonPath = Path().apply {

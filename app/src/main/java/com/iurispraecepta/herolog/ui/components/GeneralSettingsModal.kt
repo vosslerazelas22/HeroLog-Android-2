@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -30,14 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,15 +46,22 @@ import androidx.compose.material.icons.filled.Close
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.OrbConcept
 import com.iurispraecepta.herolog.ui.theme.Amber400
-import com.iurispraecepta.herolog.ui.theme.Champagne400
-import com.iurispraecepta.herolog.ui.theme.Champagne500
+import androidx.compose.ui.text.style.TextAlign
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.em
 
 // Paleta 1:1 com React
 private val QuestPanel = Color(0xFF0B0915)
 private val Stone800 = Color(0xFF292524)
+private val Champagne400 = Color(0xFFE5C158)
+private val Champagne500 = Color(0xFFD4AF37)
 
 @Composable
 fun GeneralSettingsModal(
@@ -86,14 +92,13 @@ fun GeneralSettingsModal(
                     }
                 }
             }
-            .clip(Rect(0f, 0f, androidx.compose.ui.unit.Constraints.Infinity.maxWidth.toFloat(), androidx.compose.ui.unit.Constraints.Infinity.maxHeight.toFloat()))
     ) {
         Box(
             modifier = androidx.compose.ui.Modifier
                 .size(320.dp)
                 .background(QuestPanel, RoundedCornerShape(12.dp))
                 .border(2.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                .shadow(16.dp, Color.Black.copy(alpha = 0.5f)),
+                .shadow(16.dp, RoundedCornerShape(12.dp), ambientColor = Color.Black.copy(alpha = 0.5f), spotColor = Color.Black.copy(alpha = 0.5f)),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -144,24 +149,25 @@ fun GeneralSettingsModal(
                             )
                             TextField(
                                 value = nameInput,
-                                onValueChange = onNameChange,
+                                onValueChange = { if (it.length <= 24) onNameChange(it) },
                                 modifier = androidx.compose.ui.Modifier
                                     .fillMaxWidth()
                                     .height(40.dp),
                                 singleLine = true,
-                                maxCharacters = 24,
                                 textStyle = androidx.compose.ui.text.TextStyle(
                                     fontSize = 10.sp,
                                     color = Color(0xFFFEF3C7),
                                     fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif
                                 ),
-                                colors = TextFieldDefaults.textFieldColors(
-                                    containerColor = Stone900.copy(alpha = 0.9f),
+                                colors = TextFieldDefaults.colors(
+                                    unfocusedContainerColor = Stone900.copy(alpha = 0.9f),
                                     focusedContainerColor = Stone900.copy(alpha = 0.9f),
                                     unfocusedIndicatorColor = Champagne500.copy(alpha = 0.2f),
                                     focusedIndicatorColor = Champagne400,
-                                    textColor = Color(0xFFFEF3C7),
-                                    placeholderColor = Color(0xFFFEF3C7).copy(alpha = 0.2f),
+                                    unfocusedTextColor = Color(0xFFFEF3C7),
+                                    focusedTextColor = Color(0xFFFEF3C7),
+                                    unfocusedPlaceholderColor = Color(0xFFFEF3C7).copy(alpha = 0.2f),
+                                    focusedPlaceholderColor = Color(0xFFFEF3C7).copy(alpha = 0.2f),
                                     cursorColor = Champagne400
                                 )
                             )
@@ -310,7 +316,7 @@ private fun SettingsSection(
 }
 
 @Composable
-private fun ClassOptionCard(
+private fun RowScope.ClassOptionCard(
     icon: String,
     name: String,
     bonus: String,
@@ -335,7 +341,7 @@ private fun ClassOptionCard(
             .border(if (isSelected) 1.dp else 0.5.dp, borderColor, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .clickable { onClick() }
-            .opacity(opacity)
+            .alpha(opacity)
     ) {
         Column(
             modifier = androidx.compose.ui.Modifier
@@ -382,7 +388,7 @@ private fun ClassOptionCard(
 }
 
 @Composable
-private fun OrbConceptOptionCard(
+private fun RowScope.OrbConceptOptionCard(
     concept: OrbConcept,
     emoji: String,
     name: String,
@@ -407,7 +413,7 @@ private fun OrbConceptOptionCard(
             .border(if (isSelected) 1.dp else 0.5.dp, borderColor, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .clickable { onClick() }
-            .opacity(opacity)
+            .alpha(opacity)
     ) {
         Column(
             modifier = androidx.compose.ui.Modifier
