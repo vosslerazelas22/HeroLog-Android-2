@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -39,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -169,7 +170,7 @@ fun StatsScreen(state: CharacterState, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "ESTATÍSTICAS DO HERÓI",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 13.sp,
                 letterSpacing = 0.10.em,
@@ -210,9 +211,9 @@ private fun StatCard(stat: StatCardData) {
         ) {
             Text(
                 text = stat.label,
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontSize = 10.sp,
-                letterSpacing = 0.08.em,
+                letterSpacing = 0.05.em,
                 color = Amber100.copy(alpha = 0.40f)
             )
             Icon(
@@ -225,7 +226,7 @@ private fun StatCard(stat: StatCardData) {
         Column {
             Text(
                 text = stat.value,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 color = Amber100

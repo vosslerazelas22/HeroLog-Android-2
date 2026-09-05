@@ -82,6 +82,7 @@ import com.iurispraecepta.herolog.ui.focus.IncursionModeModal
 import com.iurispraecepta.herolog.ui.focus.ModeDescriptionModal
 import com.iurispraecepta.herolog.ui.focus.QuickActionsBar
 import com.iurispraecepta.herolog.ui.focus.TimerSettingsModal
+import com.iurispraecepta.herolog.ui.focus.AmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.rememberAmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.RaidMode
 import com.iurispraecepta.herolog.ui.focus.RaidModeHelpContent
@@ -157,6 +158,13 @@ class MainActivity : ComponentActivity() {
                 val characterState by heroLogViewModel.characterState.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
+                val coroutineScope = rememberCoroutineScope()
+
+                // Controller de som ambiente no escopo raiz do HeroLogTheme (acima do Scaffold)
+                // para sobreviver a trocas de aba (recomposição do content do Scaffold).
+                // O DisposableEffect(Unit) em rememberAmbientSoundController só libera ao
+                // desmontar o composable raiz, não ao trocar de aba.
+                val ambientController = rememberAmbientSoundController()
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
@@ -364,7 +372,8 @@ class MainActivity : ComponentActivity() {
                                 FocusOrbPreviewScreen(
                                     viewModel = heroLogViewModel,
                                     characterState = characterState,
-                                    orbConcept = characterState?.orbConcept ?: OrbConcept.D
+                                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
+                                    ambientController = ambientController
                                 )
                             }
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
@@ -497,6 +506,7 @@ class MainActivity : ComponentActivity() {
 fun FocusOrbPreviewScreen(
     viewModel: HeroLogViewModel,
     characterState: CharacterState?,
+    ambientController: AmbientSoundController,
     orbConcept: OrbConcept = OrbConcept.D,
     modifier: Modifier = Modifier
 ) {
@@ -529,7 +539,6 @@ fun FocusOrbPreviewScreen(
     var selectedSkillIdx by remember { mutableStateOf(0) }
     var isFocusMode by remember { mutableStateOf(false) }
     var isAmbientModalOpen by remember { mutableStateOf(false) }
-    val ambientController = rememberAmbientSoundController()
 
     var isConfirmingAbandon by remember { mutableStateOf(false) }
     var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
