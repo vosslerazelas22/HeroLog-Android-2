@@ -2152,7 +2152,7 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { 1000000L }
+            clock = { testDispatcher.scheduler.currentTime }
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -2193,7 +2193,7 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { 1000000L }
+            clock = { testDispatcher.scheduler.currentTime }
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
