@@ -425,37 +425,55 @@ private fun getColorsD(mode: FocusMode): ColorSet = when (mode) {
         textColor = ConceptDColors.WorkText,
         liquid = ConceptDColors.WorkLiquid,
         back = ConceptDColors.WorkBack,
-        glow = ConceptDColors.WorkGlow
+        glow = ConceptDColors.WorkGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
     FocusMode.DUNGEON -> ColorSet(
         textColor = ConceptDColors.DungeonText,
         liquid = ConceptDColors.DungeonLiquid,
         back = ConceptDColors.DungeonBack,
-        glow = ConceptDColors.DungeonGlow
+        glow = ConceptDColors.DungeonGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
     FocusMode.WILDERNESS -> ColorSet(
         textColor = ConceptDColors.WildernessText,
         liquid = ConceptDColors.WildernessLiquid,
         back = ConceptDColors.WildernessBack,
-        glow = ConceptDColors.WildernessGlow
+        glow = ConceptDColors.WildernessGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
     FocusMode.BREAK -> ColorSet(
         textColor = ConceptDColors.BreakText,
         liquid = ConceptDColors.BreakLiquid,
         back = ConceptDColors.BreakBack,
-        glow = ConceptDColors.BreakGlow
+        glow = ConceptDColors.BreakGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
     FocusMode.URGENT -> ColorSet(
         textColor = ConceptDColors.UrgentText,
         liquid = ConceptDColors.UrgentLiquid,
         back = ConceptDColors.UrgentBack,
-        glow = ConceptDColors.UrgentGlow
+        glow = ConceptDColors.UrgentGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
     FocusMode.PAUSED -> ColorSet(
         textColor = ConceptDColors.PausedText,
         liquid = ConceptDColors.PausedLiquid,
         back = ConceptDColors.PausedBack,
-        glow = ConceptDColors.PausedGlow
+        glow = ConceptDColors.PausedGlow,
+        octagonStroke = ConceptDColors.OctagonStroke,
+        ringWhite = ConceptDColors.RingWhite,
+        highlightWhite = ConceptDColors.HighlightWhite
     )
 }
 
