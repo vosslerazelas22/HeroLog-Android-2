@@ -47,6 +47,7 @@ import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.LogEntry
+import com.iurispraecepta.herolog.model.OrbConcept
 import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -968,5 +969,16 @@ class HeroLogViewModel(
                 )
             )
         }
+    }
+
+    fun updateCharacterProfile(name: String, charClass: CharClass) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(charName = name, charClass = charClass))
+    }
+
+    fun updateOrbConcept(concept: OrbConcept) {
+        val current = _characterState.value ?: return
+        saveCharacterState(current.copy(orbConcept = concept))
+        addSystemLog("🔮 Formato do Núcleo de Foco atualizado: Conceito ${concept.name}", true)
     }
 }

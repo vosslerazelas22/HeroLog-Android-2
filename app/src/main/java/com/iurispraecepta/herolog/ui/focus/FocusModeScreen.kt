@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iurispraecepta.herolog.model.OrbConcept
 
 // Cores transcritas do FocusModeScreen.tsx real
 private val Stone950 = Color(0xFF0C0A09)
@@ -70,6 +71,7 @@ fun FocusModeScreen(
     isPlayerDead: Boolean = false,
     onReturnToFocusCap: () -> Unit = {},
     onRespawn: () -> Unit = {},
+    orbConcept: OrbConcept = OrbConcept.D,
     modifier: Modifier = Modifier
 ) {
     // Pulso radial de fundo — reflexo mágico. Ver PARIDADE.md: chuva de partículas cintilantes
@@ -161,6 +163,9 @@ fun FocusModeScreen(
                     totalSeconds = totalSeconds,
                     isRunning = isRunning,
                     isPaused = isPaused,
+                    isDungeonMode = isDungeonMode,
+                    isWildernessMode = isWildernessChecked,
+                    orbConcept = orbConcept,
                     size = FocusOrbSize.FULLSCREEN
                 )
             }
