@@ -10,9 +10,16 @@ import androidx.compose.ui.unit.em
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,8 +33,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -510,8 +519,6 @@ private fun OrbConceptA(
     val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, 1f, 100f, 100f)
 
     val radius = 46f
-    val circumference = 2 * PI.toFloat() * radius
-    val strokeDashoffset = circumference * (1 - progress)
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
     val percentSizeSp = if (size == FocusOrbSize.FULLSCREEN) 14.sp else if (size == FocusOrbSize.STANDARD) 9.sp else 7.sp
@@ -548,18 +555,26 @@ private fun OrbConceptA(
                 }
             }
 
-            // Progress ring
-            drawCircle(
-                color = Color.Transparent,
-                radius = radius * scale,
-                center = center,
-                style = Stroke(
-                    width = 2.2f * scale,
-                    pathEffect = PathEffect.cornerPathEffect(0f)
-                )
+            // Progress ring with sweep gradient — drawArc for proportional sweep
+            val ringGrad = Brush.sweepGradient(
+                colors = colors.ringGrad!!,
+                center = center
             )
-                // We can't easily do strokeDashoffset with gradient in Compose Canvas
-                // So we'll use a simpler approach with sweep gradient or just solid color
+            val sweepAngle = progress * 360f
+            if (sweepAngle > 0f) {
+                drawArc(
+                    brush = ringGrad,
+                    startAngle = -90f,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    topLeft = Offset(center.x - radius * scale, center.y - radius * scale),
+                    size = Size(radius * 2f * scale, radius * 2f * scale),
+                    style = Stroke(
+                        width = 2.2f * scale,
+                        cap = StrokeCap.Round
+                    )
+                )
+            }
 
             // Inner circle
             drawCircle(color = Color(0xFF09090B), radius = 40f * scale, center = center)
@@ -607,12 +622,28 @@ private fun OrbConceptA(
             drawPath(path = highlightPath, color = Color.White.copy(alpha = 0.12f))
         }
 
-        androidx.compose.material3.Text(
-            text = formatOrbTime(timeLeftSeconds),
-            color = colors.accent,
-            fontWeight = FontWeight.Black,
-            fontSize = textSizeSp
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = formatOrbTime(timeLeftSeconds),
+                color = colors.accent,
+                fontWeight = FontWeight.Black,
+                fontSize = textSizeSp,
+                letterSpacing = (-0.5f).sp,
+                modifier = Modifier.padding(vertical = 0.5.dp)
+            )
+            Text(
+                text = "${Math.round(progress * 100)}% Restante",
+                color = Color(0xFF9CA3AF),
+                fontWeight = FontWeight.Bold,
+                fontSize = percentSizeSp,
+                letterSpacing = 0.2f.em,
+                modifier = Modifier.padding(top = 0.5.dp)
+            )
+        }
     }
 }
 
@@ -640,6 +671,17 @@ private fun OrbConceptB(
             }
         }
     }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "bubblePulse")
+    val bubbleAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.45f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bubbleAlpha"
+    )
 
     val baseY = 100f - progress * 100f
     val amplitude = if (isRunning && mode != FocusMode.PAUSED && progress > 0.02f && progress < 0.98f) {
@@ -712,9 +754,9 @@ private fun OrbConceptB(
                     strokeWidth = 1f * scale
                 )
                 // Bubbles with pulse animation
-                drawCircle(color = Color.White.copy(alpha = 0.4f), radius = 1.2f * scale, center = Offset(38f * scale, 62f * scale))
-                drawCircle(color = Color.White.copy(alpha = 0.25f), radius = 1.5f * scale, center = Offset(64f * scale, 74f * scale))
-                drawCircle(color = Color.White.copy(alpha = 0.3f), radius = 0.9f * scale, center = Offset(48f * scale, 82f * scale))
+                drawCircle(color = Color.White.copy(alpha = bubbleAlpha), radius = 1.2f * scale, center = Offset(38f * scale, 62f * scale))
+                drawCircle(color = Color.White.copy(alpha = bubbleAlpha * 0.65f), radius = 1.5f * scale, center = Offset(64f * scale, 74f * scale))
+                drawCircle(color = Color.White.copy(alpha = bubbleAlpha * 0.8f), radius = 0.9f * scale, center = Offset(48f * scale, 82f * scale))
             }
 
             // Vignette
@@ -763,12 +805,40 @@ private fun OrbConceptB(
             drawCircle(color = Color.White.copy(alpha = 0.08f), radius = 2.5f * scale, center = Offset(75f * scale, 75f * scale))
         }
 
-        androidx.compose.material3.Text(
-            text = formatOrbTime(timeLeftSeconds).let { it.substringBefore(":") + ":" + it.substringAfter(":") },
-            color = colors.accent,
-            fontWeight = FontWeight.Black,
-            fontSize = textSizeSp
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(top = 2.dp)
+        ) {
+            Text(
+                text = formatOrbTime(timeLeftSeconds).let { it.substringBefore(":") + ":" + it.substringAfter(":") },
+                color = colors.accent,
+                fontWeight = FontWeight.Black,
+                fontSize = textSizeSp,
+                letterSpacing = 2.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.95f),
+                        offset = Offset(0f, 4f),
+                        blurRadius = 16f
+                    )
+                )
+            )
+            val modeLabel = when (mode) {
+                FocusMode.WORK -> "⚔\uFE0F Foco Puro"
+                FocusMode.DUNGEON -> "🗝\uFE0F Masmorra"
+                FocusMode.WILDERNESS -> "💀 Selvagem"
+                else -> "☕ Pausa"
+            }
+            val labelSizeSp = if (size == FocusOrbSize.FULLSCREEN) 12.sp else if (size == FocusOrbSize.STANDARD) 9.sp else 7.sp
+            Text(
+                text = modeLabel,
+                color = Color(0xFFA1A1AA),
+                fontWeight = FontWeight.Bold,
+                fontSize = labelSizeSp,
+                letterSpacing = 3.sp,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
     }
 }
 
@@ -787,8 +857,6 @@ private fun OrbConceptC(
     val colors = getColorsC(mode)
 
     val radius = 43f
-    val circumference = 2 * PI.toFloat() * radius
-    val strokeDashoffset = circumference * (1 - progress)
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
     val labelSizeSp = if (size == FocusOrbSize.FULLSCREEN) 14.sp else if (size == FocusOrbSize.STANDARD) 10.sp else 8.sp
@@ -823,7 +891,7 @@ private fun OrbConceptC(
             // Track background
             drawCircle(color = colors.trackBg!!, radius = radius * scale, center = center, style = Stroke(width = 3f * scale))
 
-            // Progress ring with gradient
+            // Progress ring with gradient — drawArc for proportional sweep
             val trackGrad = Brush.linearGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0.8f),
@@ -833,40 +901,65 @@ private fun OrbConceptC(
                 start = Offset(0f, 0f),
                 end = Offset(radius * 2f * scale, radius * 2f * scale)
             )
-            drawCircle(
-                radius = radius * scale,
-                center = center,
-                brush = trackGrad,
-                style = Stroke(
-                    width = 3.2f * scale,
+            val sweepAngle = progress * 360f
+            if (sweepAngle > 0f) {
+                drawArc(
+                    brush = trackGrad,
+                    startAngle = -90f,
+                    sweepAngle = sweepAngle,
+                    useCenter = false,
+                    topLeft = Offset(center.x - radius * scale, center.y - radius * scale),
+                    size = Size(radius * 2f * scale, radius * 2f * scale),
+                    style = Stroke(
+                        width = 3.2f * scale,
+                        cap = StrokeCap.Round
+                    )
                 )
-            )
+            }
 
             // Inner circle
             drawCircle(color = Color(0xFF0C0C10), radius = 36f * scale, center = center)
             drawCircle(color = Color(0xFF1F1F23), radius = 36f * scale, center = center, style = Stroke(width = 0.75f * scale))
         }
 
-        androidx.compose.material3.Text(
-            text = if (mode == FocusMode.BREAK) "Recuperação" else "Cronômetro",
-            color = Color(0xFF71717A),
-            fontWeight = FontWeight.Bold,
-            fontSize = labelSizeSp,
-            letterSpacing = 0.25f.em
-        )
-        androidx.compose.material3.Text(
-            text = formatOrbTime(timeLeftSeconds),
-            color = colors.textColor!!,
-            fontWeight = FontWeight.Black,
-            fontSize = textSizeSp,
-            letterSpacing = -0.5.sp
-        )
-        androidx.compose.material3.Text(
-            text = "${Math.round(progress * 100)}%",
-            color = Color(0xFF9CA3AF),
-            fontWeight = FontWeight.Bold,
-            fontSize = percentSizeSp
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = if (mode == FocusMode.BREAK) "Recuperação" else "Cronômetro",
+                color = Color(0xFF71717A),
+                fontWeight = FontWeight.Bold,
+                fontSize = labelSizeSp,
+                letterSpacing = 0.25f.em
+            )
+            Text(
+                text = formatOrbTime(timeLeftSeconds),
+                color = colors.textColor!!,
+                fontWeight = FontWeight.Black,
+                fontSize = textSizeSp,
+                letterSpacing = (-0.5f).sp,
+                modifier = Modifier.padding(vertical = 0.5.dp)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 0.5.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(5.dp)
+                        .background(colors.track!!, shape = CircleShape)
+                )
+                Spacer(modifier = Modifier.size(4.dp))
+                Text(
+                    text = "${Math.round(progress * 100)}%",
+                    color = Color(0xFF9CA3AF),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = percentSizeSp
+                )
+            }
+        }
     }
 }
 
@@ -922,7 +1015,9 @@ private fun OrbConceptD(
             .size(boxSizeDp)
             .graphicsLayer {
                 if (isRunning && mode != FocusMode.PAUSED) {
-                    // Apply subtle scale animation for pulse effect
+                    val scale = 1f + (pulseAlpha - 0.15f) * 0.15f
+                    scaleX = scale
+                    scaleY = scale
                 }
             },
         contentAlignment = Alignment.Center
@@ -1009,19 +1104,34 @@ private fun OrbConceptD(
             drawPath(path = highlightPath, color = colors.highlightWhite!!.copy(alpha = 0.2f))
         }
 
-        androidx.compose.material3.Text(
-            text = formatOrbTime(timeLeftSeconds),
-            color = colors.textColor!!,
-            fontWeight = FontWeight.Black,
-            fontSize = textSizeSp
-        )
-        androidx.compose.material3.Text(
-            text = "Ritmo de Foco",
-            color = Color(0xFF9CA3AF),
-            fontWeight = FontWeight.Bold,
-            fontSize = labelSizeSp,
-            letterSpacing = 0.2.em
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = formatOrbTime(timeLeftSeconds),
+                color = colors.textColor!!,
+                fontWeight = FontWeight.Black,
+                fontSize = textSizeSp,
+                letterSpacing = 2.sp,
+                style = androidx.compose.ui.text.TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.9f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 12f
+                    )
+                )
+            )
+            Text(
+                text = "Ritmo de Foco",
+                color = Color(0xFFA1A1AA),
+                fontWeight = FontWeight.Bold,
+                fontSize = labelSizeSp,
+                letterSpacing = 0.2.em,
+                modifier = Modifier.padding(top = 0.5.dp)
+            )
+        }
     }
 }
 
@@ -1041,11 +1151,15 @@ fun FocusOrb(
     size: FocusOrbSize = FocusOrbSize.STANDARD,
     modifier: Modifier = Modifier
 ) {
-    val isWideScreen = LocalConfiguration.current.screenWidthDp >= 390
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
     val boxSizeDp = when (size) {
         FocusOrbSize.COMPACT -> 172.dp
-        FocusOrbSize.STANDARD -> if (isWideScreen) 256.dp else 172.dp
-        FocusOrbSize.FULLSCREEN -> 253.dp
+        FocusOrbSize.STANDARD -> 256.dp
+        FocusOrbSize.FULLSCREEN -> when {
+            screenWidthDp >= 840 -> 437.dp
+            screenWidthDp >= 600 -> 345.dp
+            else -> 253.dp
+        }
     }
 
     val progress = if (totalSeconds > 0) timeLeft.toFloat() / totalSeconds.toFloat() else 0f
