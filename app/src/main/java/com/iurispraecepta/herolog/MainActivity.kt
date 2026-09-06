@@ -148,6 +148,7 @@ import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import com.iurispraecepta.herolog.model.CharacterState
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.wrapContentSize
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -849,76 +850,81 @@ fun FocusOrbPreviewScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 // Header banner — equivale ao div de App.tsx:2338-2381
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    // Banner (without tooltip — tooltip floats above via sibling Box)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
+                                )
                             )
-                        )
-                        .border(1.dp, Color(0x1AF59E0B))
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Left: QuestFab button (absolute)
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                            .clickable { isQuestFabOpen = true },
+                            .border(1.dp, Color(0x1AF59E0B))
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_ic_scroll),
-                            contentDescription = "Ver Contratos Ativos",
-                            tint = Champagne400,
-                            modifier = Modifier.size(11.dp)
-                        )
+                        // Left: QuestFab button (absolute)
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                                .clickable { isQuestFabOpen = true },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.lucide_ic_scroll),
+                                contentDescription = "Ver Contratos Ativos",
+                                tint = Champagne400,
+                                modifier = Modifier.size(11.dp)
+                            )
+                        }
+
+                        // Center: Timer icon + title
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.lucide_ic_timer),
+                                contentDescription = null,
+                                tint = Champagne500,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "CÂMARA DE FOCO",
+                                fontFamily = Cinzel,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 12.sp,
+                                color = Champagne400,
+                                letterSpacing = 1.sp
+                            )
+                        }
+
+                        // Right: Tooltip button (absolute)
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                                .clickable { showFocusTooltip = !showFocusTooltip },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "?",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Champagne400.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.wrapContentSize(Alignment.Center)
+                            )
+                        }
                     }
 
-                    // Center: Timer icon + title
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_ic_timer),
-                            contentDescription = null,
-                            tint = Champagne500,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "CÂMARA DE FOCO",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 12.sp,
-                            color = Champagne400,
-                            letterSpacing = 1.sp
-                        )
-                    }
-
-                    // Right: Tooltip button (absolute)
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                            .clickable { showFocusTooltip = !showFocusTooltip },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "?",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Champagne400.copy(alpha = 0.8f)
-                        )
-                    }
-
-                    // Tooltip popup
+                    // Tooltip popup — floats above banner, does not affect its height
                     Box(modifier = Modifier.align(Alignment.TopEnd)) {
                         androidx.compose.animation.AnimatedVisibility(
                             visible = showFocusTooltip,
@@ -927,7 +933,7 @@ fun FocusOrbPreviewScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .padding(top = 28.dp)
+                                    .padding(top = 44.dp, end = 14.dp)
                                     .widthIn(max = 280.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(Color(0xF20C0A09))
