@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding).hazeSource(hazeState)) {
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(
