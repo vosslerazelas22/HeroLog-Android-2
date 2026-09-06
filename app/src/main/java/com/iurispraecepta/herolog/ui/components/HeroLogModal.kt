@@ -68,9 +68,10 @@ private val Stone900 = Color(0xFF1C1917)
 private val Stone800 = Color(0xFF292524)
 private val Stone400 = Color(0xFFA8A29E)
 
-private val Amber600 = Color(0xFFD97706)
-private val Amber500 = Color(0xFFF59E0B)
-private val Amber400 = Color(0xFFFBBF24)
+// Champagne palette (React fonte de verdade: index.css lines 3-19)
+private val Champagne600 = Color(0xFFB48C26)
+private val Champagne500 = Color(0xFFD4AF37)
+private val Champagne400 = Color(0xFFE5C158)
 
 private val Purple600 = Color(0xFF9333EA)
 private val Purple500 = Color(0xFFA855F7)
@@ -124,10 +125,10 @@ fun HeroLogModal(
 
     val (borderColor, topGradient, glowColor, titleColor) = when (variant) {
         ModalVariant.Amber -> Quadruple(
-            Color(0x4DF59E0B), // amber-500/30
-            listOf(Amber600, Amber400, Amber600),
-            Color(0x05F59E0B), // amber-500/[0.02]
-            Amber400
+            Color(0x4DD4AF37), // champagne-500/30
+            listOf(Champagne600, Champagne400, Champagne600),
+            Color(0x05D4AF37), // champagne-500/[0.02]
+            Champagne400
         )
         ModalVariant.Purple -> Quadruple(
             Color(0x4DA855F7), // purple-500/30
