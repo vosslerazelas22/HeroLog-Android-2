@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +28,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -49,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -671,7 +672,6 @@ fun FocusOrbPreviewScreen(
             // fonte real (App.tsx renderiza o orb direto na aba Foco enquanto roda; "Tela Cheia"
             // é ação separada, não automática).
             val config = focusState.config
-            val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
             val currentRaidModeRunning = raidModeFrom(config?.isDungeonMode ?: false, config?.isWildernessChecked ?: false)
 
             Column(
@@ -681,12 +681,14 @@ fun FocusOrbPreviewScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = selectedSkillForSession?.name ?: "Habilidade",
-                    color = Color(0xFFFCD34D),
-                    style = MaterialTheme.typography.titleMedium
+                SkillInlineCarousel(
+                    skills = characterState.skills,
+                    selectedIndex = config?.selectedSkillIdx ?: 0,
+                    onSelectIndex = { selectedSkillIdx = it },
+                    disabled = true,
+                    onOpenSkillsManager = { isSkillSelectorOpen = true }
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 FocusOrb(
                     timeLeft = focusState.timeLeft,
                     totalSeconds = focusState.totalSeconds,
@@ -705,6 +707,21 @@ fun FocusOrbPreviewScreen(
                 ) {
                     OutlinedButton(
                         onClick = { viewModel.togglePauseQuest() },
+                        colors = if (focusState.isPaused) {
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFF581C87).copy(alpha = 0.1f),
+                                contentColor = Color(0xFFD8B4FE)
+                            )
+                        } else {
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFF0C0A09).copy(alpha = 0.4f),
+                                contentColor = Color(0xFFF5DFA0)
+                            )
+                        },
+                        border = BorderStroke(
+                            1.dp,
+                            if (focusState.isPaused) Color(0xFFA855F7) else Color(0xFFE5C158).copy(alpha = 0.3f)
+                        ),
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
@@ -715,7 +732,11 @@ fun FocusOrbPreviewScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (focusState.isPaused) "Retomar" else "Pausar")
+                        Text(
+                            if (focusState.isPaused) "RETOMAR MISSÃO" else "PAUSAR MISSÃO",
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.8.sp
+                        )
                     }
                     OutlinedButton(
                         onClick = {
@@ -742,10 +763,14 @@ fun FocusOrbPreviewScreen(
                             )
                         } else {
                             ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFF450A0A).copy(alpha = 0.4f),
                                 contentColor = Color(0xFFF87171)
                             )
                         },
-                        modifier = Modifier.weight(1f)
+                        border = BorderStroke(
+                            1.dp,
+                            if (isConfirmingAbandon) Color(0xFFF87171) else Color(0xFFEF4444).copy(alpha = 0.3f)
+                        )
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.lucide_ic_x),
@@ -753,11 +778,27 @@ fun FocusOrbPreviewScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isConfirmingAbandon) "Confirmar?" else "Abandonar", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal)
+                        Text(if (isConfirmingAbandon) "CONFIRMAR?" else "ABANDONAR", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+
+                RaidModeInfoBox(
+                    mode = currentRaidModeRunning,
+                    dungeonSessions = dungeonSessionsProgress,
+                    dungeonOnCooldown = false,
+                    lootChancePercent = lootChancePercentFrom(
+                        studiedMinutes = focusDuration,
+                        isDungeon = config?.isDungeonMode ?: false,
+                        equippedTitleId = characterState.equippedTitle
+                    ),
+                    onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                    onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                    onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 QuickActionsBar(
                     isDungeonMode = config?.isDungeonMode ?: false,
@@ -805,19 +846,35 @@ fun FocusOrbPreviewScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                    onClick = {
-                        val config = FocusSessionConfig(
-                            selectedSkillIdx = validSkillIdx,
-                            isWildernessChecked = isWildernessPreview,
-                            isDungeonMode = isDungeonModePreview,
-                            dungeonSessions = dungeonSessionsProgress
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
+                            )
                         )
-                        viewModel.startSession(config, durationMinutes = focusDuration)
-                    },
-                    modifier = Modifier.fillMaxWidth()
+                        .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(6.dp))
+                        .clickable {
+                            val config = FocusSessionConfig(
+                                selectedSkillIdx = validSkillIdx,
+                                isWildernessChecked = isWildernessPreview,
+                                isDungeonMode = isDungeonModePreview,
+                                dungeonSessions = dungeonSessionsProgress
+                            )
+                            viewModel.startSession(config, durationMinutes = focusDuration)
+                        }
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text("▶ Iniciar Missão de Foco")
+                    Text(
+                        text = "▶ INICIAR MISSÃO DE FOCO",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 13.sp,
+                        letterSpacing = 1.2.sp,
+                        color = Color(0xFF0C0A09)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -851,41 +908,6 @@ fun FocusOrbPreviewScreen(
                 )
             }
 
-            val helpBlocks = when (activeHelpMode) {
-                RaidMode.PADRAO -> buildStandardLootHelpBlocks(
-                    studiedMinutes = focusDuration,
-                    equippedTitleId = characterState.equippedTitle,
-                    titleLookup = { id ->
-                        com.iurispraecepta.herolog.data.TITLE_CATALOG.find { it.id == id }?.let {
-                            TitleDisplay(it.emoji, it.name)
-                        }
-                    }
-                )
-                RaidMode.MASMORRA -> RaidModeHelpContent.MASMORRA
-                RaidMode.SELVAGEM -> RaidModeHelpContent.SELVAGEM
-                null -> emptyList()
-            }
-            val helpVariant = when (activeHelpMode) {
-                RaidMode.PADRAO -> ModalVariant.Amber
-                RaidMode.MASMORRA -> ModalVariant.Purple
-                RaidMode.SELVAGEM -> ModalVariant.Red
-                null -> ModalVariant.Amber
-            }
-            val helpTitle = when (activeHelpMode) {
-                RaidMode.PADRAO -> "Modo Padrão & Saques"
-                RaidMode.MASMORRA -> "Incursão por Masmorra"
-                RaidMode.SELVAGEM -> "Terra Selvagem"
-                null -> ""
-            }
-
-            ModeDescriptionModal(
-                isOpen = activeHelpMode != null,
-                onClose = { activeHelpMode = null },
-                title = helpTitle,
-                variant = helpVariant,
-                blocks = helpBlocks
-            )
-
             IncursionModeModal(
                 isOpen = isIncursionModalOpen,
                 onClose = { isIncursionModalOpen = false },
@@ -918,6 +940,41 @@ fun FocusOrbPreviewScreen(
                 onToggleAutoStartFocus = { viewModel.toggleAutoStartFocus() }
             )
         }
+
+        val helpBlocks = when (activeHelpMode) {
+            RaidMode.PADRAO -> buildStandardLootHelpBlocks(
+                studiedMinutes = focusDuration,
+                equippedTitleId = characterState.equippedTitle,
+                titleLookup = { id ->
+                    com.iurispraecepta.herolog.data.TITLE_CATALOG.find { it.id == id }?.let {
+                        TitleDisplay(it.emoji, it.name)
+                    }
+                }
+            )
+            RaidMode.MASMORRA -> RaidModeHelpContent.MASMORRA
+            RaidMode.SELVAGEM -> RaidModeHelpContent.SELVAGEM
+            null -> emptyList()
+        }
+        val helpVariant = when (activeHelpMode) {
+            RaidMode.PADRAO -> ModalVariant.Amber
+            RaidMode.MASMORRA -> ModalVariant.Purple
+            RaidMode.SELVAGEM -> ModalVariant.Red
+            null -> ModalVariant.Amber
+        }
+        val helpTitle = when (activeHelpMode) {
+            RaidMode.PADRAO -> "Modo Padrão & Saques"
+            RaidMode.MASMORRA -> "Incursão por Masmorra"
+            RaidMode.SELVAGEM -> "Terra Selvagem"
+            null -> ""
+        }
+
+        ModeDescriptionModal(
+            isOpen = activeHelpMode != null,
+            onClose = { activeHelpMode = null },
+            title = helpTitle,
+            variant = helpVariant,
+            blocks = helpBlocks
+        )
 
         AmbientSoundModal(
             isOpen = isAmbientModalOpen,
