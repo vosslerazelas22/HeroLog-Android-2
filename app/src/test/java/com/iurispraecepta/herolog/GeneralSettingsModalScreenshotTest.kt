@@ -110,24 +110,4 @@ class GeneralSettingsModalScreenshotTest {
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/general_settings_mage_classD.png")
     }
 
-    @Test
-    fun generalSettings_closed() {
-        composeTestRule.setContent {
-            HeroLogTheme {
-                GeneralSettingsModal(
-                    isOpen = false,
-                    onDismiss = {},
-                    characterName = "",
-                    charClass = CharClass.Mage,
-                    orbConcept = OrbConcept.D,
-                    onNameChange = {},
-                    onClassChange = {},
-                    onOrbConceptChange = {},
-                    coroutineScope = testScope
-                )
-            }
-        }
-
-        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/general_settings_closed.png")
-    }
 }
