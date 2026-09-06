@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -942,7 +943,7 @@ private fun OrbConceptB(
                     fontWeight = FontWeight.Black,
                     fontSize = textSizeSp,
                     letterSpacing = (textSizeSp.value * 0.025f).sp,
-                    alpha = colonAlpha,
+                    modifier = Modifier.alpha(colonAlpha),
                     style = TextStyle(
                         shadow = Shadow(
                             color = Color.Black.copy(alpha = 0.95f),
