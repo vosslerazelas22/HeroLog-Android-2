@@ -48,10 +48,14 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.OrbConcept
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import androidx.compose.animation.core.CubicBezierEasing
 import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 enum class FocusOrbSize { COMPACT, STANDARD, FULLSCREEN }
 
@@ -268,6 +272,64 @@ private fun buildWavePath(baseY: Float, phase: Float, amplitude: Float, scale: F
     path.lineTo(110f * scale, 110f * scale)
     path.close()
     return path
+}
+
+/**
+ * Converte um comando de arco elíptico no formato SVG `A rx,ry x-rot large-arc,sweep x,y`
+ * (endpoint parameterization, ver spec SVG 1.1 F.6.5) para os parâmetros de centro
+ * exigidos pelo `Path.arcTo` do Compose. Assume x-axis-rotation = 0, que é suficiente
+ * para todos os paths estáticos de highlight/decoração do FocusOrb (Conceitos A/B/D).
+ *
+ * Sem essa conversão, arcos "A" do React acabam sendo aproximados a olho (ex.: circulo
+ * centrado no meio do orb), o que desloca visualmente o highlight de vidro.
+ */
+private fun Path.svgArcTo(
+    startX: Float, startY: Float,
+    endX: Float, endY: Float,
+    rx: Float, ry: Float,
+    largeArcFlag: Boolean,
+    sweepFlag: Boolean
+) {
+    val x1p = (startX - endX) / 2f
+    val y1p = (startY - endY) / 2f
+
+    var rxAdj = rx
+    var ryAdj = ry
+    val lambda = (x1p * x1p) / (rxAdj * rxAdj) + (y1p * y1p) / (ryAdj * ryAdj)
+    if (lambda > 1f) {
+        val s = sqrt(lambda)
+        rxAdj *= s
+        ryAdj *= s
+    }
+
+    val sign = if (largeArcFlag == sweepFlag) -1f else 1f
+    val num = rxAdj * rxAdj * ryAdj * ryAdj - rxAdj * rxAdj * y1p * y1p - ryAdj * ryAdj * x1p * x1p
+    val den = rxAdj * rxAdj * y1p * y1p + ryAdj * ryAdj * x1p * x1p
+    val coef = sign * sqrt(max(0f, num / den))
+
+    val cxp = coef * (rxAdj * y1p / ryAdj)
+    val cyp = coef * (-ryAdj * x1p / rxAdj)
+
+    val cx = cxp + (startX + endX) / 2f
+    val cy = cyp + (startY + endY) / 2f
+
+    val startAngle = Math.toDegrees(
+        atan2(((startY - cy) / ryAdj).toDouble(), ((startX - cx) / rxAdj).toDouble())
+    ).toFloat()
+    val endAngle = Math.toDegrees(
+        atan2(((endY - cy) / ryAdj).toDouble(), ((endX - cx) / rxAdj).toDouble())
+    ).toFloat()
+
+    var sweep = endAngle - startAngle
+    if (!sweepFlag && sweep > 0f) sweep -= 360f
+    if (sweepFlag && sweep < 0f) sweep += 360f
+
+    arcTo(
+        rect = androidx.compose.ui.geometry.Rect(cx - rxAdj, cy - ryAdj, cx + rxAdj, cy + ryAdj),
+        startAngleDegrees = startAngle,
+        sweepAngleDegrees = sweep,
+        forceMoveTo = false
+    )
 }
 
 private data class ColorSet(
@@ -988,16 +1050,17 @@ private fun OrbConceptD(
         }
     }
 
-    // Pulse animation for container
+    // Pulse: no React é `animate-pulse` do Tailwind (opacidade 1 -> 0.5 -> 1, 4s,
+    // cubic-bezier(0.4,0,0.6,1)) aplicado ao container inteiro — não é um scale.
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.40f,
+    val pulseOpacity by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
+            animation = tween(2000, easing = CubicBezierEasing(0.4f, 0f, 0.6f, 1f)),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "pulseAlpha"
+        label = "pulseOpacity"
     )
 
     val baseY = 100f - progress * 100f
@@ -1008,17 +1071,16 @@ private fun OrbConceptD(
     val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, 1f, 100f, 100f)
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
-    val labelSizeSp = if (size == FocusOrbSize.FULLSCREEN) 12.sp else if (size == FocusOrbSize.STANDARD) 8.5.sp else 7.sp
+    // React: label "Ritmo de Foco" usa `text-[8.5px]` fixo — NÃO escala com o tamanho
+    // do orb (diferente do valor do tempo, que usa TEXT_SIZES). O código anterior
+    // variava esse valor por FocusOrbSize (7/8.5/12sp), o que diverge da fonte.
+    val labelSizeSp = 8.5.sp
 
     Box(
         modifier = androidx.compose.ui.Modifier
             .size(boxSizeDp)
             .graphicsLayer {
-                if (isRunning && mode != FocusMode.PAUSED) {
-                    val scale = 1f + (pulseAlpha - 0.15f) * 0.15f
-                    scaleX = scale
-                    scaleY = scale
-                }
+                alpha = if (isRunning && mode != FocusMode.PAUSED) pulseOpacity else 1f
             },
         contentAlignment = Alignment.Center
     ) {
@@ -1028,7 +1090,18 @@ private fun OrbConceptD(
             val scale = min(w, h) / 100f
             val center = Offset(w / 2f, h / 2f)
 
-            drawCircle(color = colors.glow, radius = 48f * scale, center = center)
+            // React usa `blur-2xl` (CSS gaussian blur) no glow — Canvas não tem blur nativo
+            // barato aqui, então aproxima com um radial gradient (halo suave) em vez de
+            // um disco sólido de borda dura, que é o que havia antes.
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(colors.glow, colors.glow.copy(alpha = 0f)),
+                    center = center,
+                    radius = 48f * scale
+                ),
+                radius = 48f * scale,
+                center = center
+            )
 
             // Base circle
             drawCircle(color = Color(0xFF09090B), radius = 45f * scale, center = center)
@@ -1084,21 +1157,26 @@ private fun OrbConceptD(
                 style = Stroke(width = 1.2f * scale)
             )
 
-            // Highlight
+            // Highlight (React: `M 18,34 A 36,36 0 0,1 82,34 A 40,40 0 0,0 18,34 Z`)
+            // A versão anterior centrava os dois arcos no centro do orb (50,50) com
+            // sweep de 180° cada, o que criava uma lente atravessando o meio do círculo.
+            // A fonte real usa dois arcos elípticos "A" cujo centro geométrico não é
+            // (50,50) — o resultado correto é um crescente fino perto do topo do orb
+            // (efeito de brilho de vidro), não uma lente central. Usamos svgArcTo para
+            // reproduzir a geometria exata do SVG.
+            fun pt(x: Float, y: Float) = Offset(center.x + (x - 50f) * scale, center.y + (y - 50f) * scale)
+            val s0 = pt(18f, 34f)
+            val s1 = pt(82f, 34f)
             val highlightPath = Path().apply {
-                moveTo(18f * scale, 34f * scale)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 36f * scale,
-                    top = center.y - 36f * scale,
-                    right = center.x + 36f * scale,
-                    bottom = center.y + 36f * scale
-                ), 0f, 180f, false)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 40f * scale,
-                    top = center.y - 40f * scale,
-                    right = center.x + 40f * scale,
-                    bottom = center.y + 40f * scale
-                ), 180f, -180f, false)
+                moveTo(s0.x, s0.y)
+                svgArcTo(
+                    startX = s0.x, startY = s0.y, endX = s1.x, endY = s1.y,
+                    rx = 36f * scale, ry = 36f * scale, largeArcFlag = false, sweepFlag = true
+                )
+                svgArcTo(
+                    startX = s1.x, startY = s1.y, endX = s0.x, endY = s0.y,
+                    rx = 40f * scale, ry = 40f * scale, largeArcFlag = false, sweepFlag = false
+                )
                 close()
             }
             drawPath(path = highlightPath, color = colors.highlightWhite!!.copy(alpha = 0.2f))
@@ -1114,7 +1192,10 @@ private fun OrbConceptD(
                 color = colors.textColor!!,
                 fontWeight = FontWeight.Black,
                 fontSize = textSizeSp,
-                letterSpacing = 2.sp,
+                // React usa `tracking-wider` (0.025em) — proporcional ao tamanho da
+                // fonte, não um valor fixo em sp (2.sp ficava desproporcional no
+                // COMPACT/FULLSCREEN).
+                letterSpacing = (textSizeSp.value * 0.025f).sp,
                 style = androidx.compose.ui.text.TextStyle(
                     shadow = Shadow(
                         color = Color.Black.copy(alpha = 0.9f),
