@@ -96,6 +96,8 @@ dependencies {
   implementation("com.composables:icons-lucide-android:2.2.1") {
     isTransitive = false
   }
+  implementation(libs.haze)
+  implementation(libs.haze.materials)
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
   // implementation(libs.accompanist.permissions)
