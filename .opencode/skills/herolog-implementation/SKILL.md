@@ -1,6 +1,6 @@
 ---
 name: herolog-implementation
-description: Implementa uma mudança de código no HeroLog Android seguindo workflow obrigatório de requisitos, inspeção da fonte React e do PARIDADE.md, plano, implementação e diff — com build/teste explicitamente delegados ao Android Studio, nunca executados ou presumidos nesta sessão. Use ao portar uma feature do React, corrigir um bug, ou fazer qualquer alteração de código Kotlin/Compose.
+description: Implementa uma mudança de código no HeroLog Android seguindo workflow obrigatório de requisitos, inspeção da fonte React e do PARIDADE.md, plano, implementação e diff — com build/teste executados localmente via ./gradlew ou delegados ao Android Studio. Use ao portar uma feature do React, corrigir um bug, ou fazer qualquer alteração de código Kotlin/Compose.
 license: MIT
 compatibility: opencode
 ---
@@ -9,12 +9,18 @@ compatibility: opencode
 
 ## Princípio central
 
-**Este ambiente (WSL/OpenCode) não tem toolchain Android configurado.** Gradle, JDK e
-Android SDK não estão disponíveis aqui. Build e testes são responsabilidade exclusiva
-do Android Studio, do lado do Windows, depois de um `git pull`. Nunca declarar uma
-mudança como "testada", "buildada" ou "funcionando" a partir desta sessão — qualquer
-alegação de "BUILD SUCCESSFUL" ou "testes passaram" feita aqui, sem o round-trip pelo
-Android Studio, é presumidamente falsa.
+**Este ambiente (WSL/OpenCode) tem toolchain Android completa.** JDK 17 (compilação) e
+JDK 21 (testes Robolectric), Gradle 9.3.1 com wrapper, Android SDK 36 em `~/Android/Sdk`,
+e Roborazzi 1.59.0 estão instalados e versionados no repo (`gradlew`, `gradle-wrapper.jar`,
+`local.properties`, configurações em `gradle.properties` e `app/build.gradle.kts`).
+
+Build e testes **podem ser executados diretamente aqui** via `./gradlew assembleDebug` e
+`./gradlew testDebugUnitTest`. Porém, a validação visual (inspeção de UI, screenshots em
+device/emulador) continua sendo responsabilidade do Android Studio — esta sessão não tem
+acesso a emulador/dispositivo real.
+
+**Regra**: não declarar "visual validado" sem inspeção humana real. Build e testes unitários
+podem ser validados aqui via XML bruto.
 
 ## Workflow obrigatório
 
@@ -36,10 +42,10 @@ Android Studio, é presumidamente falsa.
 4. **IMPLEMENT** — implementar apenas o necessário. Não alterar arquitetura existente
    sem justificar explicitamente a razão.
 
-5. **BUILD/TEST (delegado, não executado)** — ao terminar a implementação, não tentar
-   compilar ou testar. Preparar a instrução exata para o round-trip: commit local,
-   confirmação do hash, e o que o Android Studio deve validar (build, testes
-   específicos, comportamento visual).
+5. **BUILD/TEST** — executar `./gradlew assembleDebug` e `./gradlew testDebugUnitTest`
+   para validar build e lógica. Verificar XML bruto em
+   `app/build/test-results/testDebugUnitTest/` para resultado nominal. A validação visual
+   (UI em device/emulador) continua pendente até inspeção no Android Studio.
 
 6. **DIFF** — `git diff` completo das mudanças, arquivo por arquivo.
 
@@ -48,8 +54,8 @@ Android Studio, é presumidamente falsa.
 
 ## Regras obrigatórias (herdadas do AGENTS.md)
 
-- Nunca aceitar resumo em prosa como prova de teste — só existe prova depois do
-  build real no Android Studio, com resultado nominal.
+- Nunca aceitar resumo em prosa como prova de teste — exigir XML bruto ou saída nominal
+  por método. Rodar `./gradlew testDebugUnitTest` e verificar o XML real.
 - Nunca aceitar "o arquivo/tela/função não existe" sem grep real.
 - Catálogos e dados literais extensos: sempre transcritos da fonte real, nunca
   inventados; verificar campo a campo contra a fonte após a escrita.
@@ -77,13 +83,15 @@ inclua arquivos fora da intenção original do bloco)
 
 Resumo: <o que mudou e por quê, incluindo qualquer decisão de divergência do React>
 
-Validação: PENDENTE — aguardando build/teste no Android Studio (commit: <hash>)
+Validação: <resultado de build/teste — BUILD SUCCESSFUL + XML bruto nominal, ou PENDENTE>
+Visual: PENDENTE — aguardando inspeção em device/emulador
 
 Desvios de escopo: <se houver, com justificativa>
 
 ## Quando um bloco pode ser considerado fechado
 
-Só depois que o resultado real do build/teste no Android Studio for reportado de volta
-a esta sessão. Até lá, mesmo com a implementação completa, o bloco permanece aberto —
-e a entrada correspondente no DEV_LOG_ANDROID.md não deve ser lançada com "Validação:
-PENDENTE" como estado final.
+- **Código + build + testes**: fechados quando build e testes unitários passam com
+  resultado nominal confirmado (XML bruto).
+- **Visual**: permanece pendente até inspeção humana em device/emulador real (Android Studio).
+- A entrada no DEV_LOG_ANDROID.md deve refletir o estado real: "FECHADO (código + build +
+  testes); visual pendente" quando aplicável.

@@ -117,8 +117,16 @@ com.iurispraecepta.herolog/
 
 ### Estado atual conhecido
 
-- Fontes Cinzel/JetBrains Mono ainda são placeholders (`FontFamily.Serif`/`.Monospace`) —
-  projeto não tem pasta `res/font/` ainda. Isto é uma pendência, não uma decisão arquitetural.
+- **Toolchain Android completa disponível no WSL**: JDK 17 (`~/jdk-17`, compilação),
+  JDK 21 (`~/jdk-21`, testes Robolectric), Gradle 9.3.1 com wrapper, Android SDK 36
+  (`~/Android/Sdk`), Roborazzi 1.59.0. Build (`./gradlew assembleDebug`) e testes
+  (`./gradlew testDebugUnitTest`) rodam diretamente nesta sessão. Validação visual
+  (device/emulador) continua sendo responsabilidade do Android Studio.
+- Fontes Cinzel/JetBrains Mono definidas em `Type.kt` com arquivos `.ttf` em `res/font/`
+  (`cinzel_regular/semibold/bold/extrabold`, `jetbrains_mono_regular/semibold`).
+  **Porém, muitos componentes ainda usam `FontFamily.Serif`/`.Monospace` do sistema** em vez
+  de `Cinzel`/`JetBrainsMono` — ver `specs/002b-kingdom-visual-audit-addendum.md` para a
+  lista completa de ocorrências. Pendência de wiring, não de existência de fontes.
 
 ## 5. Regras para alterações de código
 
@@ -159,11 +167,13 @@ Cada alteração é feita em "Blocos" (Bloco 0, Bloco 0.1, Bloco 1, ...). Cada b
    ./gradlew assembleDebug
    ./gradlew testDebugUnitTest
    ```
-   Confirmar resultado nominal (não só "BUILD SUCCESSFUL"). Preferencialmente executar a
-   suíte completa. Se a suíte completa não puder ser executada por limitações conhecidas do
-   ambiente (ex: memória insuficiente — o AI Studio travou consistentemente em suítes grandes),
-   executar subconjuntos relevantes por classe e registrar explicitamente como **validação
-   parcial** — nunca declarar "validado" quando a validação foi apenas parcial.
+   Confirmar resultado nominal (não só "BUILD SUCCESSFUL"). Verificar XML bruto em
+   `app/build/test-results/testDebugUnitTest/` para resultado nominal por método.
+   Preferencialmente executar a suíte completa. Se a suíte completa não puder ser executada
+   por limitações conhecidas (ex: memória insuficiente), executar subconjuntos relevantes
+   por classe e registrar explicitamente como **validação parcial** — nunca declarar
+   "validado" quando a validação foi apenas parcial.
+   **Visual**: a validação de UI continua pendente até inspeção em device/emulador real.
 
 8. **Nunca alterar o schema do Room** sem criar `Migration` explícita. Ver `HeroLogDatabase.kt`
    e os schemas versionados em `app/schemas/`.
@@ -255,8 +265,8 @@ As seguintes armadilhas foram confirmadas durante o desenvolvimento e devem ser 
    com contagens e nomes de teste fabricados que não batiam com o XML bruto real. Sempre exigir
    a saída nominal por método (XML ou `--info`).
 
-2. **A suíte completa pode travar em ambientes com pouca memória.** O AI Studio travou
-   consistentemente ao executar todas as ~34 classes de teste de uma vez (`-Xmx1536m` não
+2. **A suíte completa pode travar em ambientes com pouca memória.** Já houve travamentos
+   consistentes ao executar todas as ~34 classes de teste de uma vez (`-Xmx1536m` não
    foi suficiente). Quando isso ocorrer, rodar subconjuntos filtrados por classe e registrar
    como validação parcial.
 

@@ -4025,7 +4025,7 @@ mexer, sem adivinhar nome de variável):
 
 **Bloco `AppHeader` — regressão resolvida.** Ainda não fechado por completo:
 1. `git log`/`git pull` não confirmados nesta sessão (push real ainda não verificado).
-2. Fontes Cinzel/JetBrains Mono seguem placeholder (`res/font/` não existe no projeto).
+2. Fontes Cinzel/JetBrains Mono definidas em `Type.kt` com arquivos `.ttf` em `res/font/`, mas muitos componentes ainda usam `FontFamily.Serif`/`.Monospace` do sistema — ver `specs/002b-kingdom-visual-audit-addendum.md`.
 3. Validação visual real (device/emulador, comparação com o React) — 0% feita até agora.
 
 **Lição pro processo**: o AI Studio, quando perguntado "existe tela de Ajustes de Campanha?",
@@ -4415,3 +4415,44 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - `debug.keystore` gerado e mantido localmente (não commitável — está no `.gitignore`)
 
 **Status: FECHADO.**
+
+## [2026-09-06] Bloco D: HeroLogModal amber→champagne palette
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/HeroLogModal.kt`
+
+**Resumo:**
+- `ModalVariant.Amber` cores trocadas de amber padrão (`Amber600`/`Amber500`/`Amber400`) para champagne (`Champagne600`/`Champagne500`/`Champagne400`), fidelidade visual com o React (`Modal.tsx:53-75`)
+- Commit: `6cb474a`
+
+**Validação:**
+- Visual: aguardando pull + inspeção em device
+
+**Status: FECHADO.**
+
+## [2026-09-06] Bloco A+B+C: Header "CÂMARA DE FOCO" + Tooltip "?" + QuestFab com contratos
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+387, -76)
+
+**Resumo:**
+- **Bloco A — Header banner**: Box com gradiente `Color(0x0DF59E0B)`→`Color(0x0DA855F7)` (amber→purple 5% opacidade), borda `Color(0x1AF59E0B)`. Centralizado: ícone `lucide_ic_timer` + texto "CÂMARA DE FOCO" (Cinzel, Bold, 12sp, `Champagne400`).
+- **Bloco B — Tooltip "?"**: Botão circular com `?` no canto direito (`Alignment.CenterEnd`), toggle `showFocusTooltip`. Popup via `androidx.compose.animation.AnimatedVisibility` (fix: `ColumnScope.AnimatedVisibility` resolvia incorretamente dentro de `BoxScope`) com `fadeIn`/`fadeOut`. Conteúdo: título "Câmera de Foco (POMODORO)" + descrição + botão "x" pra fechar.
+- **Bloco C — QuestFab**: Botão circular com `lucide_ic_scroll` no canto esquerdo (`Alignment.CenterStart`), abre `HeroLogModal(variant = Amber)` com:
+  - **Contratos Diários**: `viewModel.dailyQuests()` com progresso, descrição, estilo de claim (opacidade reduzida quando resgatado)
+  - **Marcos da Jornada**: `viewModel.guildQuestsProcessed()` com barra de progresso (`Brush.horizontalGradient`), "Todas as teses conquistadas!" quando vazio
+  - Botão "Ir para Painel de Contratos →" que fecha o modal e navega via `onNavigateToTab("quests")`
+- **Novo parâmetro** em `FocusOrbPreviewScreen`: `onNavigateToTab: (String) -> Unit = {}`
+- Corrigido: `heroLogViewModel` não existia no escopo → substituído por `viewModel` (parâmetro da composable)
+- Corrigido: import duplicado de `HeroLogViewModel` removido
+- Adicionados imports: `CircleShape`, `Champagne400`, `Champagne500`, `Cinzel`, `AnimatedVisibility`, `fadeIn`, `fadeOut`, `FontFamily`, `ProcessedQuest`, `widthIn`, `HeroLogModal`
+
+**Validação:**
+- Build: `assembleDebug` — BUILD SUCCESSFUL
+- Testes: 464 testes, 458 PASSED, 6 FAILED (screenshot tests pré-existentes, Roborazzi)
+- Visual: **PENDENTE** — aguardando pull + validação em device
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+**Status: FECHADO (código + build + testes); visual pendente.**
