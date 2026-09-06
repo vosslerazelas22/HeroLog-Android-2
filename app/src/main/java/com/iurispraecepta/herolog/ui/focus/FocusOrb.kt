@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.em
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -42,10 +43,14 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.OrbConcept
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import androidx.compose.animation.core.CubicBezierEasing
@@ -94,8 +99,8 @@ private object ConceptAColors {
     val BreakTick = Color(0xFF10B981)
 
     val UrgentAccent = Color(0xFFF43F5E)
-    val UrgentRingGrad = listOf(Color(0xFFDC2626), Color(0xFFF43F5E), Color(0xFFFEDD))
-    val UrgentFrontGrad = listOf(Color(0xFFFEDD), Color(0xFFEF4444), Color(0xFF7F1D1D))
+    val UrgentRingGrad = listOf(Color(0xFFDC2626), Color(0xFFF43F5E), Color(0xFFFECDD3))
+    val UrgentFrontGrad = listOf(Color(0xFFFECDD3), Color(0xFFEF4444), Color(0xFF7F1D1D))
     val UrgentBackGrad = listOf(Color(0xFFB91C1C), Color(0xFF450A0A))
     val UrgentGlow = Color(0xFFF43F5E).copy(alpha = 0.4f)
     val UrgentTick = Color(0xFFF43F5E)
@@ -134,8 +139,8 @@ private object ConceptBColors {
     val BreakGlow = Color(0xFF10B981).copy(alpha = 0.2f)
     val BreakRune = Color(0xFF10B981)
 
-    val UrgentAccent = Color(0xFFFEDD)
-    val UrgentLiquidFront = listOf(Color(0xFFFEDD), Color(0xFFEF4444), Color(0xFF450A0A))
+    val UrgentAccent = Color(0xFFFECDD3)
+    val UrgentLiquidFront = listOf(Color(0xFFFECDD3), Color(0xFFEF4444), Color(0xFF450A0A))
     val UrgentLiquidBack = listOf(Color(0xFFB91C1C), Color(0xFF200404))
     val UrgentGlow = Color(0xFFEF4444).copy(alpha = 0.35f)
     val UrgentRune = Color(0xFFEF4444)
@@ -180,7 +185,7 @@ private object ConceptCColors {
     val UrgentTrack = Color(0xFFF43F5E)
     val UrgentTrackBg = Color(0xFF450A0A)
     val UrgentBgGlow = Color(0xFFF43F5E).copy(alpha = 0.3f)
-    val UrgentText = Color(0xFFFEDD)
+    val UrgentText = Color(0xFFFECDD3)
 
     val PausedTrack = Color(0xFF71717A)
     val PausedTrackBg = Color(0xFF18181B)
@@ -210,8 +215,8 @@ private object ConceptDColors {
     val BreakBack = listOf(Color(0xFF059669), Color(0xFF022C22))
     val BreakGlow = Color(0xFF10B981).copy(alpha = 0.25f)
 
-    val UrgentText = Color(0xFFFEDD)
-    val UrgentLiquid = listOf(Color(0xFFFEDD), Color(0xFFEF4444), Color(0xFF7F1D1D))
+    val UrgentText = Color(0xFFFECDD3)
+    val UrgentLiquid = listOf(Color(0xFFFECDD3), Color(0xFFEF4444), Color(0xFF7F1D1D))
     val UrgentBack = listOf(Color(0xFFB91C1C), Color(0xFF450A0A))
     val UrgentGlow = Color(0xFFEF4444).copy(alpha = 0.35f)
 
@@ -577,10 +582,15 @@ private fun OrbConceptA(
     val amplitude = if (isRunning && mode != FocusMode.PAUSED && progress > 0.02f && progress < 0.98f) {
         3.5f * sin(progress * PI.toFloat())
     } else 0f
-    val frontPath = buildWavePath(baseY, phase, amplitude, 1f, 100f, 100f)
-    val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, 1f, 100f, 100f)
 
     val radius = 46f
+
+    // React usa `transition-all duration-300` no progress ring — animação suave de 300ms
+    val animatedSweepAngle by animateFloatAsState(
+        targetValue = progress * 360f,
+        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
+        label = "sweepAngleA"
+    )
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
     val percentSizeSp = if (size == FocusOrbSize.FULLSCREEN) 14.sp else if (size == FocusOrbSize.STANDARD) 9.sp else 7.sp
@@ -595,6 +605,13 @@ private fun OrbConceptA(
             val scale = min(w, h) / 100f
             val center = Offset(w / 2f, h / 2f)
 
+            // O path da onda precisa ser construído AQUI, com o `scale` real em px —
+            // construí-lo fora do Canvas deixava as coordenadas em unidades 0-100 "cruas",
+            // nunca multiplicadas pelo scale de pixels, então o líquido era desenhado como
+            // um patch minúsculo perto do canto (0,0) do canvas, fora da área visível do círculo.
+            val frontPath = buildWavePath(baseY, phase, amplitude, scale, 100f, 100f)
+            val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, scale, 100f, 100f)
+
             drawCircle(color = colors.glow, radius = 50f * scale, center = center)
 
             // Background circles
@@ -602,14 +619,15 @@ private fun OrbConceptA(
             drawCircle(color = Color(0xFF27272A), radius = 48.5f * scale, center = center, style = Stroke(width = 0.8f * scale)) // contorno
             drawCircle(color = Color(0xFF18181B), radius = 46f * scale, center = center, style = Stroke(width = 3f * scale))
 
-            // Ticks
+            // Ticks — React: x1="50" y1="2.5" rotacionado ao redor de (50,50).
+            // Coordenadas relativas ao topo do viewBox (y=0), não ao centro.
             for (i in 0..11) {
                 val angle = (i * 360f) / 12
                 val isMajor = i % 3 == 0
                 rotate(angle, pivot = center) {
                     drawLine(
-                        start = Offset(center.x, center.y - 2.5f * scale),
-                        end = Offset(center.x, center.y - (if (isMajor) 6.5f else 5f) * scale),
+                        start = Offset(center.x, center.y - (50f - 2.5f) * scale),
+                        end = Offset(center.x, center.y - (50f - (if (isMajor) 6.5f else 5f)) * scale),
                         color = colors.tickColor!!,
                         strokeWidth = (if (isMajor) 1.2f else 0.6f) * scale,
                         alpha = if (isMajor) 0.9f else 0.4f
@@ -617,17 +635,16 @@ private fun OrbConceptA(
                 }
             }
 
-            // Progress ring with sweep gradient — drawArc for proportional sweep
+            // Progress ring with sweep gradient — animação suave de 300ms
             val ringGrad = Brush.sweepGradient(
                 colors = colors.ringGrad!!,
                 center = center
             )
-            val sweepAngle = progress * 360f
-            if (sweepAngle > 0f) {
+            if (animatedSweepAngle > 0f) {
                 drawArc(
                     brush = ringGrad,
                     startAngle = -90f,
-                    sweepAngle = sweepAngle,
+                    sweepAngle = animatedSweepAngle,
                     useCenter = false,
                     topLeft = Offset(center.x - radius * scale, center.y - radius * scale),
                     size = Size(radius * 2f * scale, radius * 2f * scale),
@@ -664,21 +681,22 @@ private fun OrbConceptA(
                 drawCircle(color = Color.White.copy(alpha = 0.25f), radius = 1.1f * scale, center = Offset(50f * scale, 78f * scale))
             }
 
-            // Highlight
+            // Highlight (React: `M 20,30 A 32,32 0 0,1 80,30 A 35,35 0 0,0 20,30 Z`)
+            // Dois arcos elípticos "A" cujo centro geométrico não é (50,50) —
+            // o resultado correto é um crescente fino perto do topo do orb (brilho de vidro).
+            fun pt(x: Float, y: Float) = Offset(center.x + (x - 50f) * scale, center.y + (y - 50f) * scale)
+            val s0 = pt(20f, 30f)
+            val s1 = pt(80f, 30f)
             val highlightPath = Path().apply {
-                moveTo(20f * scale, 30f * scale)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 32f * scale,
-                    top = center.y - 32f * scale,
-                    right = center.x + 32f * scale,
-                    bottom = center.y + 32f * scale
-                ), 0f, 180f, false)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 35f * scale,
-                    top = center.y - 35f * scale,
-                    right = center.x + 35f * scale,
-                    bottom = center.y + 35f * scale
-                ), 180f, -180f, false)
+                moveTo(s0.x, s0.y)
+                svgArcTo(
+                    startX = s0.x, startY = s0.y, endX = s1.x, endY = s1.y,
+                    rx = 32f * scale, ry = 32f * scale, largeArcFlag = false, sweepFlag = true
+                )
+                svgArcTo(
+                    startX = s1.x, startY = s1.y, endX = s0.x, endY = s0.y,
+                    rx = 35f * scale, ry = 35f * scale, largeArcFlag = false, sweepFlag = false
+                )
                 close()
             }
             drawPath(path = highlightPath, color = Color.White.copy(alpha = 0.12f))
@@ -692,14 +710,23 @@ private fun OrbConceptA(
             Text(
                 text = formatOrbTime(timeLeftSeconds),
                 color = colors.accent,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Black,
                 fontSize = textSizeSp,
                 letterSpacing = (-0.5f).sp,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.9f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 12f
+                    )
+                ),
                 modifier = Modifier.padding(vertical = 0.5.dp)
             )
             Text(
                 text = "${Math.round(progress * 100)}% Restante",
                 color = Color(0xFF9CA3AF),
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = percentSizeSp,
                 letterSpacing = 0.2f.em,
@@ -749,8 +776,6 @@ private fun OrbConceptB(
     val amplitude = if (isRunning && mode != FocusMode.PAUSED && progress > 0.02f && progress < 0.98f) {
         4.2f * sin(progress * PI.toFloat())
     } else 0f
-    val frontPath = buildWavePath(baseY, phase, amplitude, 1f, 100f, 100f)
-    val backPath = buildWavePath(baseY, -phase * 0.75f + PI.toFloat(), amplitude * 0.75f, 1f, 100f, 100f)
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
 
@@ -763,6 +788,10 @@ private fun OrbConceptB(
             val h = this.size.height
             val scale = min(w, h) / 100f
             val center = Offset(w / 2f, h / 2f)
+
+            // O path da onda precisa ser construído AQUI, com o `scale` real em px.
+            val frontPath = buildWavePath(baseY, phase, amplitude, scale, 100f, 100f)
+            val backPath = buildWavePath(baseY, -phase * 0.75f + PI.toFloat(), amplitude * 0.75f, scale, 100f, 100f)
 
             drawCircle(color = colors.glow, radius = 48f * scale, center = center)
 
@@ -846,21 +875,22 @@ private fun OrbConceptB(
                 style = Stroke(width = 0.5f * scale)
             )
 
-            // Highlight
+            // Highlight (React: `M 16,36 A 38,38 0 0,1 84,36 A 42,42 0 0,0 16,36 Z`)
+            // Dois arcos elípticos "A" cujo centro geométrico não é (50,50) —
+            // o resultado correto é um crescente fino perto do topo do orb (brilho de vidro).
+            fun pt(x: Float, y: Float) = Offset(center.x + (x - 50f) * scale, center.y + (y - 50f) * scale)
+            val s0 = pt(16f, 36f)
+            val s1 = pt(84f, 36f)
             val highlightPath = Path().apply {
-                moveTo(16f * scale, 36f * scale)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 38f * scale,
-                    top = center.y - 38f * scale,
-                    right = center.x + 38f * scale,
-                    bottom = center.y + 38f * scale
-                ), 0f, 180f, false)
-                arcTo(androidx.compose.ui.geometry.Rect(
-                    left = center.x - 42f * scale,
-                    top = center.y - 42f * scale,
-                    right = center.x + 42f * scale,
-                    bottom = center.y + 42f * scale
-                ), 180f, -180f, false)
+                moveTo(s0.x, s0.y)
+                svgArcTo(
+                    startX = s0.x, startY = s0.y, endX = s1.x, endY = s1.y,
+                    rx = 38f * scale, ry = 38f * scale, largeArcFlag = false, sweepFlag = true
+                )
+                svgArcTo(
+                    startX = s1.x, startY = s1.y, endX = s0.x, endY = s0.y,
+                    rx = 42f * scale, ry = 42f * scale, largeArcFlag = false, sweepFlag = false
+                )
                 close()
             }
             drawPath(path = highlightPath, color = Color.White.copy(alpha = 0.22f))
@@ -871,20 +901,72 @@ private fun OrbConceptB(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(top = 2.dp)
         ) {
-            Text(
-                text = formatOrbTime(timeLeftSeconds).let { it.substringBefore(":") + ":" + it.substringAfter(":") },
-                color = colors.accent,
-                fontWeight = FontWeight.Black,
-                fontSize = textSizeSp,
-                letterSpacing = 2.sp,
-                style = androidx.compose.ui.text.TextStyle(
-                    shadow = Shadow(
-                        color = Color.Black.copy(alpha = 0.95f),
-                        offset = Offset(0f, 4f),
-                        blurRadius = 16f
+            // React: colon com `animate-pulse` (opacidade 1↔0.5, CSS keyframes).
+            // Separar horas/colon/minutos para animar só o colon.
+            val timeStr = formatOrbTime(timeLeftSeconds)
+            val hours = timeStr.substringBefore(":")
+            val rest = timeStr.substringAfter(":")
+            val minutes = rest
+            val colonAlpha by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 0.3f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "colonAlpha"
+            )
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = hours,
+                    color = colors.accent,
+                    fontFamily = JetBrainsMono,
+                    fontWeight = FontWeight.Black,
+                    fontSize = textSizeSp,
+                    letterSpacing = (textSizeSp.value * 0.025f).sp,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.95f),
+                            offset = Offset(0f, 4f),
+                            blurRadius = 16f
+                        )
                     )
                 )
-            )
+                Text(
+                    text = ":",
+                    color = colors.accent,
+                    fontFamily = JetBrainsMono,
+                    fontWeight = FontWeight.Black,
+                    fontSize = textSizeSp,
+                    letterSpacing = (textSizeSp.value * 0.025f).sp,
+                    alpha = colonAlpha,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.95f),
+                            offset = Offset(0f, 4f),
+                            blurRadius = 16f
+                        )
+                    )
+                )
+                Text(
+                    text = minutes,
+                    color = colors.accent,
+                    fontFamily = JetBrainsMono,
+                    fontWeight = FontWeight.Black,
+                    fontSize = textSizeSp,
+                    letterSpacing = (textSizeSp.value * 0.025f).sp,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.95f),
+                            offset = Offset(0f, 4f),
+                            blurRadius = 16f
+                        )
+                    )
+                )
+            }
             val modeLabel = when (mode) {
                 FocusMode.WORK -> "⚔\uFE0F Foco Puro"
                 FocusMode.DUNGEON -> "🗝\uFE0F Masmorra"
@@ -895,6 +977,7 @@ private fun OrbConceptB(
             Text(
                 text = modeLabel,
                 color = Color(0xFFA1A1AA),
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Bold,
                 fontSize = labelSizeSp,
                 letterSpacing = 3.sp,
@@ -919,6 +1002,13 @@ private fun OrbConceptC(
     val colors = getColorsC(mode)
 
     val radius = 43f
+
+    // React usa `transition-all duration-300` no progress ring — animação suave de 300ms
+    val animatedSweepAngle by animateFloatAsState(
+        targetValue = progress * 360f,
+        animationSpec = tween(durationMillis = 300, easing = LinearEasing),
+        label = "sweepAngleC"
+    )
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
     val labelSizeSp = if (size == FocusOrbSize.FULLSCREEN) 14.sp else if (size == FocusOrbSize.STANDARD) 10.sp else 8.sp
@@ -953,7 +1043,7 @@ private fun OrbConceptC(
             // Track background
             drawCircle(color = colors.trackBg!!, radius = radius * scale, center = center, style = Stroke(width = 3f * scale))
 
-            // Progress ring with gradient — drawArc for proportional sweep
+            // Progress ring with gradient — animação suave de 300ms
             val trackGrad = Brush.linearGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0.8f),
@@ -963,12 +1053,11 @@ private fun OrbConceptC(
                 start = Offset(0f, 0f),
                 end = Offset(radius * 2f * scale, radius * 2f * scale)
             )
-            val sweepAngle = progress * 360f
-            if (sweepAngle > 0f) {
+            if (animatedSweepAngle > 0f) {
                 drawArc(
                     brush = trackGrad,
                     startAngle = -90f,
-                    sweepAngle = sweepAngle,
+                    sweepAngle = animatedSweepAngle,
                     useCenter = false,
                     topLeft = Offset(center.x - radius * scale, center.y - radius * scale),
                     size = Size(radius * 2f * scale, radius * 2f * scale),
@@ -992,6 +1081,7 @@ private fun OrbConceptC(
             Text(
                 text = if (mode == FocusMode.BREAK) "Recuperação" else "Cronômetro",
                 color = Color(0xFF71717A),
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = labelSizeSp,
                 letterSpacing = 0.25f.em
@@ -999,9 +1089,17 @@ private fun OrbConceptC(
             Text(
                 text = formatOrbTime(timeLeftSeconds),
                 color = colors.textColor!!,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Black,
                 fontSize = textSizeSp,
                 letterSpacing = (-0.5f).sp,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.8f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 12f
+                    )
+                ),
                 modifier = Modifier.padding(vertical = 0.5.dp)
             )
             Row(
@@ -1017,6 +1115,7 @@ private fun OrbConceptC(
                 Text(
                     text = "${Math.round(progress * 100)}%",
                     color = Color(0xFF9CA3AF),
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold,
                     fontSize = percentSizeSp
                 )
@@ -1057,7 +1156,7 @@ private fun OrbConceptD(
         initialValue = 1f,
         targetValue = 0.5f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = CubicBezierEasing(0.4f, 0f, 0.6f, 1f)),
+            animation = tween(4000, easing = CubicBezierEasing(0.4f, 0f, 0.6f, 1f)),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulseOpacity"
@@ -1196,6 +1295,7 @@ private fun OrbConceptD(
             Text(
                 text = formatOrbTime(timeLeftSeconds),
                 color = colors.textColor!!,
+                fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Black,
                 fontSize = textSizeSp,
                 // React usa `tracking-wider` (0.025em) — proporcional ao tamanho da
@@ -1213,6 +1313,7 @@ private fun OrbConceptD(
             Text(
                 text = "Ritmo de Foco",
                 color = Color(0xFFA1A1AA),
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = labelSizeSp,
                 letterSpacing = 0.2.em,
