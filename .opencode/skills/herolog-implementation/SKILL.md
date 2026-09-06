@@ -71,6 +71,9 @@ podem ser validados aqui via XML bruto.
 - Ao commitar, use `git add <arquivo específico>` para cada arquivo alterado —
   nunca `git add -A` ou `git add .` — para evitar incluir mudanças não relacionadas
   ao escopo do bloco.
+- **Em branches secundárias (worktrees)**: NÃO atualizar `AGENTS.md`, `PARIDADE.md`
+  nem `DEV_LOG_ANDROID.md` diretamente. Entregar ao usuário o diff do código + sugestão
+  de entrada para cada documento, pronta para colar ao voltar à main.
 
 ## Formato do relatório final
 

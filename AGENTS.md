@@ -270,21 +270,15 @@ As seguintes armadilhas foram confirmadas durante o desenvolvimento e devem ser 
    foi suficiente). Quando isso ocorrer, rodar subconjuntos filtrados por classe e registrar
    como validação parcial.
 
-3. **Minimizar a janela do AI Studio não equivale necessariamente a um `ON_STOP` real.** O
-   preview do AI Studio roda num iframe/WebView dentro do navegador — minimizar a janela do
-   navegador não dispara o ciclo de vida `ON_STOP`/`ON_PAUSE` da Activity Android. A
-   validação de fluxos que dependem de lifecycle (ex: Morte Cognitiva) requer um APK de debug
-   instalado num device/emulator real.
-
-4. **"O arquivo não existe" deve ser verificado com grep, não aceito de imediato.** Já ocorreu
+3. **"O arquivo não existe" deve ser verificado com grep, não aceito de imediato.** Já ocorreu
    de um componente ter dependências escondidas em outros arquivos que não foram consultados
    (ex: entry point do RestoreSaveDialog vivia em AppHeader.kt, não em arquivo dedicado).
 
-5. **Nunca presumir que dois sistemas de jogo usam a mesma lógica.** Cada módulo (Foco, Habit,
+4. **Nunca presumir que dois sistemas de jogo usam a mesma lógica.** Cada módulo (Foco, Habit,
    Daily, Todo) tem sua própria fórmula e regras — verificar sempre o trecho literal da fonte
    React correspondente, não supor por analogia com outro módulo já portado.
 
-6. **Imports silenciosos podem ligar a tipos errados.** Verificar sempre se os tipos importados
+5. **Imports silenciosos podem ligar a tipos errados.** Verificar sempre se os tipos importados
    são de `model.*` (os reais) e não de algum pacote paralelo/morto (ex: `logic.quests.*`
    continha uma cópia duplicada dos tipos que nunca foi usada pelo estado real).
 
@@ -314,3 +308,23 @@ As seguintes armadilhas foram confirmadas durante o desenvolvimento e devem ser 
    padrão (arquivos, resumo, validação, desvios aprovados).
 
 8. **Atualizar o `PARIDADE.md`** se o bloco mudou o estado de paridade de algum módulo.
+
+## 11. Trabalho com branches/worktrees
+
+Quando esta sessão estiver operando numa **branch secundária** (worktree, feature branch,
+etc.), as regras de documentação mudam:
+
+- **NÃO atualizar `AGENTS.md`, `PARIDADE.md` nem `DEV_LOG_ANDROID.md`** diretamente.
+  Esses arquivos são compartilhados entre branches e atualizá-los na branch secundária
+  gera risco de conflito com trabalho simultâneo na main.
+- **Em vez disso**, ao fechar um bloco, entregar ao usuário:
+  - O diff do código implementado (arquivo por arquivo)
+  - Uma sugestão de entrada para cada documento (`DEV_LOG_ANDROID.md`, `PARIDADE.md`),
+    pronta para ser colada pelo usuário ao voltar para a main
+  - Se o bloco mudou o estado de paridade, indicar qual linha do `PARIDADE.md` deve
+    ser atualizada e com qual conteúdo
+- O usuário é responsável por integrar as atualizações de documentação quando voltar
+  à main (ou num momento seguro).
+- **Exceção**: `AGENTS.md` pode ser atualizado se a mudança for exclusiva da branch
+  (ex: nova armadilha descoberta que só se aplica ao módulo sendo trabalhado) — mas
+  apenas após confirmação explícita do usuário.
