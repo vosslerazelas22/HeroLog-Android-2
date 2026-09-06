@@ -221,6 +221,21 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding).hazeSource(hazeState)) {
+                        // Background celestial particles reflection effect
+                        // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0x332E1065), // purple-950 #2E1065 a 20% opacity
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                        )
+
                         when (activeTab) {
                             "skills" -> {
                                 val state = characterState
