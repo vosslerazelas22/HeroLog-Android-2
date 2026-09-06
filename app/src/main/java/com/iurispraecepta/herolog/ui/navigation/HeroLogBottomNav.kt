@@ -16,27 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Backpack
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Castle
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.MilitaryTech
-import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -49,15 +29,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.HazeMaterials
 
 /**
  * Porte fiel de `BottomNav.tsx` (fonte React). 5 módulos top-level: Foco, Herói, Skills,
@@ -87,18 +76,22 @@ private val Cyan400 = Color(0xFF22D3EE)
 private val Yellow500 = Color(0xFFEAB308)
 private val Stone300 = Color(0xFFD6D3D1)
 private val Red400 = Color(0xFFF87171)
+private val Zinc300 = Color(0xFFD4D4D8)
+private val Zinc400 = Color(0xFF9CA3AF)
+private val White10 = Color(0x1AFFFFFF)
+private val trackingWider = 0.05.em
 
 data class SubTabOption(
     val value: String,
     val label: String,
-    val icon: ImageVector,
+    val iconRes: Int,
     val color: Color
 )
 
 private data class NavItem(
     val id: String,
     val label: String,
-    val icon: ImageVector,
+    val iconRes: Int,
     val targetTab: String
 )
 
@@ -122,33 +115,33 @@ val MODULE_TITLES: Map<String, String> = mapOf(
 
 val SUB_TABS: Map<String, List<SubTabOption>> = mapOf(
     "character" to listOf(
-        SubTabOption("character", "Status", Icons.Filled.AccountCircle, Sky400), // UserCircle
-        SubTabOption("inventory", "Inventário", Icons.Filled.Backpack, Rose400)
+        SubTabOption("character", "Status", R.drawable.lucide_ic_circle_user, Sky400),
+        SubTabOption("inventory", "Inventário", R.drawable.lucide_ic_backpack, Rose400)
     ),
     "missions" to listOf(
-        SubTabOption("habits", "Capela de Hábitos", Icons.Filled.Repeat, Emerald400),
-        SubTabOption("dailies", "Tarefas Diárias", Icons.Filled.DateRange, Blue400), // Calendar
-        SubTabOption("todos", "Missões Avulsas", Icons.Filled.Checklist, Slate300), // ClipboardList
-        SubTabOption("quests", "CONTRATOS", Icons.Filled.Description, Amber300), // ScrollText
-        SubTabOption("history", "Crônicas Diárias", Icons.Filled.History, Orange400)
+        SubTabOption("habits", "Capela de Hábitos", R.drawable.lucide_ic_repeat, Emerald400),
+        SubTabOption("dailies", "Tarefas Diárias", R.drawable.lucide_ic_calendar, Blue400),
+        SubTabOption("todos", "Missões Avulsas", R.drawable.lucide_ic_clipboard_list, Slate300),
+        SubTabOption("quests", "CONTRATOS", R.drawable.lucide_ic_scroll_text, Amber300),
+        SubTabOption("history", "Crônicas Diárias", R.drawable.lucide_ic_history, Orange400)
     ),
     "kingdom" to listOf(
-        SubTabOption("shop", "Bazar de Mystara", Icons.Filled.MonetizationOn, Yellow400), // Coins
-        SubTabOption("titles", "TÍTULOS", Icons.Filled.MilitaryTech, Violet400), // Medal
-        SubTabOption("heatmap", "Heatmap", Icons.Filled.GridView, Blue400), // Grid3x3
-        SubTabOption("stats", "ESTATÍSTICAS DO HERÓI", Icons.Filled.BarChart, Cyan400), // ChartColumn
-        SubTabOption("achievements", "CONQUISTAS", Icons.Filled.EmojiEvents, Yellow500), // Trophy
-        SubTabOption("logs", "REGISTROS", Icons.Filled.Description, Stone300), // FileText
-        SubTabOption("guide", "Tutorial", Icons.AutoMirrored.Filled.HelpOutline, Red400) // HelpCircle
+        SubTabOption("shop", "Bazar de Mystara", R.drawable.lucide_ic_coins, Yellow400),
+        SubTabOption("titles", "TÍTULOS", R.drawable.lucide_ic_medal, Violet400),
+        SubTabOption("heatmap", "Heatmap", R.drawable.lucide_ic_grid_3x3, Blue400),
+        SubTabOption("stats", "ESTATÍSTICAS DO HERÓI", R.drawable.lucide_ic_chart_column, Cyan400),
+        SubTabOption("achievements", "CONQUISTAS", R.drawable.lucide_ic_trophy, Yellow500),
+        SubTabOption("logs", "REGISTROS", R.drawable.lucide_ic_file_text, Stone300),
+        SubTabOption("guide", "Tutorial", R.drawable.lucide_ic_circle_question_mark, Red400)
     )
 )
 
 private val NAV_ITEMS = listOf(
-    NavItem("focus", "Foco", Icons.Filled.Timer, "focus"),
-    NavItem("character", "Herói", Icons.Filled.Shield, "character"), // ShieldUser
-    NavItem("skills", "Skills", Icons.AutoMirrored.Filled.MenuBook, "skills"), // BookOpen
-    NavItem("missions", "Missões", Icons.Filled.Explore, "habits"), // Compass
-    NavItem("kingdom", "Reino", Icons.Filled.Castle, "shop")
+    NavItem("focus", "Foco", R.drawable.lucide_ic_timer, "focus"),
+    NavItem("character", "Herói", R.drawable.lucide_ic_shield_user, "character"),
+    NavItem("skills", "Skills", R.drawable.lucide_ic_book_open, "skills"),
+    NavItem("missions", "Missões", R.drawable.lucide_ic_compass, "habits"),
+    NavItem("kingdom", "Reino", R.drawable.lucide_ic_castle, "shop")
 )
 
 private val MODULES_WITH_SUBTABS = setOf("character", "missions", "kingdom")
@@ -158,17 +151,22 @@ private val MODULES_WITH_SUBTABS = setOf("character", "missions", "kingdom")
 fun HeroLogBottomNav(
     activeTab: String,
     onChangeTab: (String) -> Unit,
+    hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
     var openDropdown by remember { mutableStateOf<String?>(null) }
     val activeModule = getActiveModule(activeTab)
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier
+        .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin(containerColor = Stone950.copy(alpha = 0.7f)))
+        .shadow(12.dp, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
+        .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Stone950)
-                .border(width = 2.dp, color = Amber500.copy(alpha = 0.20f))
+                .border(width = 2.dp, color = White10)
                 .navigationBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -198,14 +196,19 @@ fun HeroLogBottomNav(
                                 onChangeTab(item.targetTab)
                             }
                         }
-                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                        .padding(vertical = 4.dp, horizontal = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.graphicsLayer {
+                            scaleX = if (isActive) 1.05f else 1f
+                            scaleY = if (isActive) 1.05f else 1f
+                        }
+                    ) {
                         Icon(
-                            imageVector = item.icon,
+                            painter = painterResource(item.iconRes),
                             contentDescription = item.label,
-                            tint = if (isActive) Amber400 else Amber400.copy(alpha = 0.40f),
+                            tint = if (isActive) Amber400 else Zinc300.copy(alpha = 0.40f),
                             modifier = Modifier.size(20.dp)
                         )
                         if (isActive) {
@@ -214,7 +217,9 @@ fun HeroLogBottomNav(
                                 text = item.label.uppercase(),
                                 color = Amber400,
                                 fontSize = 10.sp,
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Bold,
+                                letterSpacing = trackingWider,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1
                             )
@@ -242,10 +247,23 @@ fun HeroLogBottomNav(
                     Text(
                         text = (MODULE_TITLES[dropdown] ?: "").uppercase(),
                         color = Amber400,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
+                        letterSpacing = trackingWider
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.lucide_ic_x),
+                        contentDescription = "Fechar",
+                        tint = Zinc400,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable { openDropdown = null }
+                            .padding(2.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider(color = White10, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     (SUB_TABS[dropdown] ?: emptyList()).forEach { sub ->
@@ -264,13 +282,13 @@ fun HeroLogBottomNav(
                                     onChangeTab(sub.value)
                                     openDropdown = null
                                 }
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = sub.icon,
+                                    painter = painterResource(sub.iconRes),
                                     contentDescription = null,
                                     tint = sub.color,
                                     modifier = Modifier.size(14.dp)
@@ -278,14 +296,16 @@ fun HeroLogBottomNav(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = sub.label.uppercase(),
-                                    color = if (isSelected) Amber300 else Amber400.copy(alpha = 0.60f),
+                                    color = if (isSelected) Amber300 else Zinc300.copy(alpha = 0.60f),
+                                    fontFamily = Cinzel,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    letterSpacing = trackingWider,
                                     fontSize = 11.sp
                                 )
                             }
                             if (isSelected) {
                                 Icon(
-                                    imageVector = Icons.Filled.Check,
+                                    painter = painterResource(R.drawable.lucide_ic_check),
                                     contentDescription = null,
                                     tint = Amber400,
                                     modifier = Modifier.size(14.dp)

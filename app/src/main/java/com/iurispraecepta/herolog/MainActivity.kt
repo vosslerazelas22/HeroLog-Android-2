@@ -121,6 +121,8 @@ import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -155,6 +157,9 @@ class MainActivity : ComponentActivity() {
                 val characterState by heroLogViewModel.characterState.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
+
+                // HazeState para backdrop-blur no BottomNav (estilo React backdrop-blur-md)
+                val hazeState = remember { HazeState() }
 
                 // Controller de som ambiente no escopo raiz do HeroLogTheme (acima do Scaffold)
                 // para sobreviver a trocas de aba (recomposição do content do Scaffold).
@@ -191,7 +196,8 @@ class MainActivity : ComponentActivity() {
                     bottomBar = {
                         HeroLogBottomNav(
                             activeTab = activeTab,
-                            onChangeTab = { activeTab = it }
+                            onChangeTab = { activeTab = it },
+                            hazeState = hazeState
                         )
                     },
                     floatingActionButton = {
@@ -209,7 +215,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.padding(innerPadding)) {
+                    Box(modifier = Modifier.padding(innerPadding).hazeSource(hazeState)) {
                         when (activeTab) {
                             "skills" -> {
                                 val state = characterState
