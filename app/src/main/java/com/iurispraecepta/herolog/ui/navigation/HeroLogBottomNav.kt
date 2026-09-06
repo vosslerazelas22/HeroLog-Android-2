@@ -42,8 +42,13 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.HazeMaterials
@@ -76,7 +81,6 @@ private val Cyan400 = Color(0xFF22D3EE)
 private val Yellow500 = Color(0xFFEAB308)
 private val Stone300 = Color(0xFFD6D3D1)
 private val Red400 = Color(0xFFF87171)
-private val Zinc300 = Color(0xFFD4D4D8)
 private val Zinc400 = Color(0xFF9CA3AF)
 private val White10 = Color(0x1AFFFFFF)
 private val trackingWider = 0.05.em
@@ -182,8 +186,8 @@ fun HeroLogBottomNav(
                         .then(
                             if (isActive) {
                                 Modifier
-                                    .background(Amber500.copy(alpha = 0.05f))
-                                    .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
+                                    .background(Champagne500.copy(alpha = 0.05f))
+                                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
                             } else {
                                 Modifier
                             }
@@ -208,14 +212,14 @@ fun HeroLogBottomNav(
                         Icon(
                             painter = painterResource(item.iconRes),
                             contentDescription = item.label,
-                            tint = if (isActive) Amber400 else Zinc300.copy(alpha = 0.40f),
+                            tint = if (isActive) Champagne400 else Zinc300.copy(alpha = 0.40f),
                             modifier = Modifier.size(20.dp)
                         )
                         if (isActive) {
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = item.label.uppercase(),
-                                color = Amber400,
+                                color = Champagne400,
                                 fontSize = 10.sp,
                                 fontFamily = Cinzel,
                                 fontWeight = FontWeight.Bold,
@@ -246,7 +250,7 @@ fun HeroLogBottomNav(
                 ) {
                     Text(
                         text = (MODULE_TITLES[dropdown] ?: "").uppercase(),
-                        color = Amber400,
+                        color = Champagne400,
                         fontFamily = Cinzel,
                         fontWeight = FontWeight.Black,
                         fontSize = 12.sp,
@@ -272,10 +276,10 @@ fun HeroLogBottomNav(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) Amber500.copy(alpha = 0.15f) else Stone950.copy(alpha = 0.6f))
+                                .background(if (isSelected) Champagne500.copy(alpha = 0.15f) else Stone900.copy(alpha = 0.6f))
                                 .border(
                                     width = 1.dp,
-                                    color = if (isSelected) Amber500.copy(alpha = 0.5f) else Color.Transparent,
+                                    color = if (isSelected) Champagne500.copy(alpha = 0.5f) else Color.Transparent,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 .clickable {
@@ -296,7 +300,7 @@ fun HeroLogBottomNav(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = sub.label.uppercase(),
-                                    color = if (isSelected) Amber300 else Zinc300.copy(alpha = 0.60f),
+                                    color = if (isSelected) Champagne300 else Zinc300.copy(alpha = 0.60f),
                                     fontFamily = Cinzel,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     letterSpacing = trackingWider,
@@ -307,7 +311,7 @@ fun HeroLogBottomNav(
                                 Icon(
                                     painter = painterResource(R.drawable.lucide_ic_check),
                                     contentDescription = null,
-                                    tint = Amber400,
+                                    tint = Champagne400,
                                     modifier = Modifier.size(14.dp)
                                 )
                             }

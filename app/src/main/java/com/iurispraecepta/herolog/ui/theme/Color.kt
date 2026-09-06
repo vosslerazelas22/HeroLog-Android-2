@@ -14,6 +14,12 @@ val Amber500 = Color(0xFFF59E0B)
 val Amber400 = Color(0xFFFBBF24)
 val Amber100 = Color(0xFFFEF3C7)
 
+val Champagne300 = Color(0xFFF5DFA0)
+val Champagne400 = Color(0xFFE5C158)
+val Champagne500 = Color(0xFFD4AF37)
+
+val Zinc300 = Color(0xFFCBD5E1)
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)

@@ -15,9 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -211,33 +212,35 @@ fun AppHeader(
             // Pill de fase do relógio omitida — ver decisão consciente
             // no cabeçalho do arquivo (item 2).
 
-            IconButton(
-                onClick = onToggleSfx,
+            Box(
                 modifier = Modifier
-                    .size(32.dp) // w-8 h-8
+                    .size(32.dp)
+                    .clickable(onClick = onToggleSfx)
                     .background(Stone900.copy(alpha = 0.40f), RoundedCornerShape(4.dp))
-                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
+                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(if (isSfxMuted) R.drawable.lucide_ic_volume_x else R.drawable.lucide_ic_volume_2),
                     contentDescription = if (isSfxMuted) "Som mutado" else "Som ativo",
                     tint = if (isSfxMuted) Red500 else Champagne400,
-                    modifier = Modifier.size(16.dp) // w-4 h-4
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
-            IconButton(
-                onClick = onOpenSettings,
+            Box(
                 modifier = Modifier
-                    .size(32.dp) // w-8 h-8
+                    .size(32.dp)
+                    .clickable(onClick = onOpenSettings)
                     .background(Stone900.copy(alpha = 0.40f), RoundedCornerShape(4.dp))
-                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(4.dp)),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = painterResource(R.drawable.lucide_ic_settings),
                     contentDescription = "Ajustes de Campanha",
-                    tint = Zinc400, // hover vira ice-400 na fonte — N/A em touch
-                    modifier = Modifier.size(16.dp) // w-4 h-4
+                    tint = Zinc400,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }
