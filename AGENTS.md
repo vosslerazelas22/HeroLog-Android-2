@@ -178,6 +178,9 @@ Cada alteração é feita em "Blocos" (Bloco 0, Bloco 0.1, Bloco 1, ...). Cada b
 8. **Nunca alterar o schema do Room** sem criar `Migration` explícita. Ver `HeroLogDatabase.kt`
    e os schemas versionados em `app/schemas/`.
 
+9. **Nunca executar `git push` sem autorização explícita do usuário.** Committar
+   quando pedido, mas push só após confirmação direta.
+
 ## 6. Testes obrigatórios
 
 ### Tipos de teste
