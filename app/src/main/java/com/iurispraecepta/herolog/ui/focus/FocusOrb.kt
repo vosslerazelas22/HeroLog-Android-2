@@ -1067,8 +1067,6 @@ private fun OrbConceptD(
     val amplitude = if (isRunning && mode != FocusMode.PAUSED && progress > 0.02f && progress < 0.98f) {
         3.8f * sin(progress * PI.toFloat())
     } else 0f
-    val frontPath = buildWavePath(baseY, phase, amplitude, 1f, 100f, 100f)
-    val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, 1f, 100f, 100f)
 
     val textSizeSp = if (size == FocusOrbSize.FULLSCREEN) 44.sp else if (size == FocusOrbSize.STANDARD) 26.sp else 18.sp
     // React: label "Ritmo de Foco" usa `text-[8.5px]` fixo — NÃO escala com o tamanho
@@ -1089,6 +1087,14 @@ private fun OrbConceptD(
             val h = this.size.height
             val scale = min(w, h) / 100f
             val center = Offset(w / 2f, h / 2f)
+
+            // O path da onda precisa ser construído AQUI, com o `scale` real em px —
+            // construí-lo fora do Canvas (como antes) deixava as coordenadas em unidades
+            // 0-100 "cruas", nunca multiplicadas pelo scale de pixels, então o líquido
+            // era desenhado como um patch minúsculo perto do canto (0,0) do canvas,
+            // fora da área visível do círculo (por isso o orb aparecia sem preenchimento).
+            val frontPath = buildWavePath(baseY, phase, amplitude, scale, 100f, 100f)
+            val backPath = buildWavePath(baseY, -phase * 0.8f + PI.toFloat(), amplitude * 0.7f, scale, 100f, 100f)
 
             // React usa `blur-2xl` (CSS gaussian blur) no glow — Canvas não tem blur nativo
             // barato aqui, então aproxima com um radial gradient (halo suave) em vez de
