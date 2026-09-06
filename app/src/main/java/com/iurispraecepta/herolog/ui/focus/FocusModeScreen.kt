@@ -163,6 +163,8 @@ fun FocusModeScreen(
                     totalSeconds = totalSeconds,
                     isRunning = isRunning,
                     isPaused = isPaused,
+                    isDungeonMode = isDungeonMode,
+                    isWildernessMode = isWildernessChecked,
                     orbConcept = orbConcept,
                     size = FocusOrbSize.FULLSCREEN
                 )

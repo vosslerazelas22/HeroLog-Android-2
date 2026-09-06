@@ -686,6 +686,8 @@ fun FocusOrbPreviewScreen(
                     totalSeconds = focusState.totalSeconds,
                     isRunning = focusState.isRunning,
                     isPaused = focusState.isPaused,
+                    isDungeonMode = config?.isDungeonMode ?: false,
+                    isWildernessMode = config?.isWildernessChecked ?: false,
                     orbConcept = orbConcept,
                     size = FocusOrbSize.STANDARD
                 )
@@ -789,6 +791,8 @@ fun FocusOrbPreviewScreen(
                     isRunning = false,
                     isPaused = false,
                     isBreakActive = false,
+                    isDungeonMode = isDungeonModePreview,
+                    isWildernessMode = isWildernessPreview,
                     orbConcept = orbConcept,
                     size = FocusOrbSize.STANDARD
                 )

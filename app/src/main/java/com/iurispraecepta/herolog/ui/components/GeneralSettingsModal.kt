@@ -92,22 +92,28 @@ fun GeneralSettingsModal(
     val springSpec: AnimationSpec<Float> = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .then(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    Modifier.blur(8.dp)
-                } else {
-                    Modifier
-                }
-            )
-            .background(Color.Black.copy(alpha = 0.8f))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onDismiss() },
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        // Backdrop (leaf — no children, blur only affects this)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Modifier.blur(8.dp)
+                    } else {
+                        Modifier
+                    }
+                )
+                .background(Color.Black.copy(alpha = 0.8f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { onDismiss() }
+        )
+
+        // Content (sibling of backdrop — NOT blurred)
         Box(
             modifier = Modifier
                 .padding(16.dp)
