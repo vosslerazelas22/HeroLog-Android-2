@@ -5,12 +5,17 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -72,6 +78,7 @@ import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
+import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.focus.AMBIENT_SOUNDS
 import com.iurispraecepta.herolog.ui.focus.AmbientSoundModal
@@ -119,7 +126,12 @@ import com.iurispraecepta.herolog.ui.components.GeneralSettingsModal
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
+import com.iurispraecepta.herolog.ui.HeroLogViewModel
+import com.iurispraecepta.herolog.ui.ProcessedQuest
 import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -130,7 +142,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.iurispraecepta.herolog.logic.toSummary
-import com.iurispraecepta.herolog.ui.HeroLogViewModel
 import com.iurispraecepta.herolog.ui.HeroLogViewModelFactory
 import com.iurispraecepta.herolog.ui.focus.FocusCompletionFlow
 import com.iurispraecepta.herolog.logic.quests.QuestLogic
@@ -395,7 +406,8 @@ class MainActivity : ComponentActivity() {
                                     viewModel = heroLogViewModel,
                                     characterState = characterState,
                                     orbConcept = characterState?.orbConcept ?: OrbConcept.D,
-                                    ambientController = ambientController
+                                    ambientController = ambientController,
+                                    onNavigateToTab = { tab -> activeTab = tab }
                                 )
                             }
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
@@ -530,6 +542,7 @@ fun FocusOrbPreviewScreen(
     characterState: CharacterState?,
     ambientController: AmbientSoundController,
     orbConcept: OrbConcept = OrbConcept.D,
+    onNavigateToTab: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (characterState == null) {
@@ -561,6 +574,8 @@ fun FocusOrbPreviewScreen(
     var selectedSkillIdx by remember { mutableStateOf(0) }
     var isFocusMode by remember { mutableStateOf(false) }
     var isAmbientModalOpen by remember { mutableStateOf(false) }
+    var showFocusTooltip by remember { mutableStateOf(false) }
+    var isQuestFabOpen by remember { mutableStateOf(false) }
 
     var isConfirmingAbandon by remember { mutableStateOf(false) }
     var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
@@ -831,96 +846,392 @@ fun FocusOrbPreviewScreen(
             val currentRaidMode = raidModeFrom(isDungeonModePreview, isWildernessPreview)
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxSize()
             ) {
-                SkillInlineCarousel(
-                    skills = characterState.skills,
-                    selectedIndex = validSkillIdx,
-                    onSelectIndex = { selectedSkillIdx = it },
-                    disabled = focusState.isRunning,
-                    onOpenSkillsManager = { isSkillSelectorOpen = true }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                FocusOrb(
-                    timeLeft = focusDuration * 60,
-                    totalSeconds = focusDuration * 60,
-                    isRunning = false,
-                    isPaused = false,
-                    isBreakActive = false,
-                    isDungeonMode = isDungeonModePreview,
-                    isWildernessMode = isWildernessPreview,
-                    orbConcept = orbConcept,
-                    size = FocusOrbSize.STANDARD
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+                // Header banner — equivale ao div de App.tsx:2338-2381
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
                         .background(
                             Brush.horizontalGradient(
-                                listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
+                                listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
                             )
                         )
-                        .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(6.dp))
-                        .clickable {
-                            val config = FocusSessionConfig(
-                                selectedSkillIdx = validSkillIdx,
-                                isWildernessChecked = isWildernessPreview,
-                                isDungeonMode = isDungeonModePreview,
-                                dungeonSessions = dungeonSessionsProgress
-                            )
-                            viewModel.startSession(config, durationMinutes = focusDuration)
-                        }
-                        .padding(vertical = 14.dp),
+                        .border(1.dp, Color(0x1AF59E0B))
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "▶ INICIAR MISSÃO DE FOCO",
-                        fontWeight = FontWeight.Black,
-                        fontSize = 13.sp,
-                        letterSpacing = 1.2.sp,
-                        color = Color(0xFF0C0A09)
-                    )
+                    // Left: QuestFab button (absolute)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                            .clickable { isQuestFabOpen = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_ic_scroll),
+                            contentDescription = "Ver Contratos Ativos",
+                            tint = Champagne400,
+                            modifier = Modifier.size(11.dp)
+                        )
+                    }
+
+                    // Center: Timer icon + title
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.lucide_ic_timer),
+                            contentDescription = null,
+                            tint = Champagne500,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "CÂMARA DE FOCO",
+                            fontFamily = Cinzel,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 12.sp,
+                            color = Champagne400,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    // Right: Tooltip button (absolute)
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                            .clickable { showFocusTooltip = !showFocusTooltip },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "?",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Champagne400.copy(alpha = 0.8f)
+                        )
+                    }
+
+                    // Tooltip popup
+                    Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showFocusTooltip,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 28.dp)
+                                    .widthIn(max = 280.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xF20C0A09))
+                                    .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                    .padding(14.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Câmera de Foco (POMODORO)",
+                                            fontFamily = Cinzel,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            color = Champagne400,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .clickable { showFocusTooltip = false }
+                                                .padding(2.dp)
+                                        ) {
+                                            Text(
+                                                text = "x",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0x66A8A29E)
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
+                                        fontSize = 11.sp,
+                                        color = Color(0xCCD6D3D1),
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // Content (existing focus tab UI)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    SkillInlineCarousel(
+                        skills = characterState.skills,
+                        selectedIndex = validSkillIdx,
+                        onSelectIndex = { selectedSkillIdx = it },
+                        disabled = focusState.isRunning,
+                        onOpenSkillsManager = { isSkillSelectorOpen = true }
+                    )
 
-                RaidModeInfoBox(
-                    mode = currentRaidMode,
-                    dungeonSessions = dungeonSessionsProgress,
-                    dungeonOnCooldown = false,
-                    lootChancePercent = lootChancePercentFrom(
-                        studiedMinutes = focusDuration,
-                        isDungeon = isDungeonModePreview,
-                        equippedTitleId = characterState.equippedTitle
-                    ),
-                    onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                    onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                    onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    FocusOrb(
+                        timeLeft = focusDuration * 60,
+                        totalSeconds = focusDuration * 60,
+                        isRunning = false,
+                        isPaused = false,
+                        isBreakActive = false,
+                        isDungeonMode = isDungeonModePreview,
+                        isWildernessMode = isWildernessPreview,
+                        orbConcept = orbConcept,
+                        size = FocusOrbSize.STANDARD
+                    )
 
-                QuickActionsBar(
-                    isDungeonMode = isDungeonModePreview,
-                    isWildernessMode = isWildernessPreview,
-                    isRunning = false,
-                    onOpenModeModal = { isIncursionModalOpen = true },
-                    activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
-                    onOpenAmbientModal = { isAmbientModalOpen = true },
-                    isSettingsEnabled = true,
-                    onOpenSettingsModal = { isTimerSettingsOpen = true },
-                    onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
+                                )
+                            )
+                            .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(6.dp))
+                            .clickable {
+                                val config = FocusSessionConfig(
+                                    selectedSkillIdx = validSkillIdx,
+                                    isWildernessChecked = isWildernessPreview,
+                                    isDungeonMode = isDungeonModePreview,
+                                    dungeonSessions = dungeonSessionsProgress
+                                )
+                                viewModel.startSession(config, durationMinutes = focusDuration)
+                            }
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "▶ INICIAR MISSÃO DE FOCO",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 13.sp,
+                            letterSpacing = 1.2.sp,
+                            color = Color(0xFF0C0A09)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    RaidModeInfoBox(
+                        mode = currentRaidMode,
+                        dungeonSessions = dungeonSessionsProgress,
+                        dungeonOnCooldown = false,
+                        lootChancePercent = lootChancePercentFrom(
+                            studiedMinutes = focusDuration,
+                            isDungeon = isDungeonModePreview,
+                            equippedTitleId = characterState.equippedTitle
+                        ),
+                        onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                        onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                        onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    QuickActionsBar(
+                        isDungeonMode = isDungeonModePreview,
+                        isWildernessMode = isWildernessPreview,
+                        isRunning = false,
+                        onOpenModeModal = { isIncursionModalOpen = true },
+                        activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                        onOpenAmbientModal = { isAmbientModalOpen = true },
+                        isSettingsEnabled = true,
+                        onOpenSettingsModal = { isTimerSettingsOpen = true },
+                        onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
+                    )
+                }
+            }
+
+            // QuestFab Modal — contratos ativos (port de QuestFab.tsx)
+            if (characterState != null) {
+                val dailyQuests: List<ProcessedQuest> = viewModel.dailyQuests(characterState!!)
+                val guildQuests: List<ProcessedQuest> = viewModel.guildQuestsProcessed(characterState!!)
+                val closestGuild = guildQuests
+                    .filter { !it.isClaimed }
+                    .maxByOrNull { it.progress.toFloat() / it.target.coerceAtLeast(1) }
+
+                HeroLogModal(
+                    isOpen = isQuestFabOpen,
+                    onClose = { isQuestFabOpen = false },
+                    title = "CONTRATOS ATIVOS",
+                    variant = ModalVariant.Amber
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        // Contratos Diários
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "CONTRATOS DIÁRIOS",
+                                fontFamily = Cinzel,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = Champagne400,
+                                letterSpacing = 0.5.sp
+                            )
+                            dailyQuests.forEachIndexed { idx, q ->
+                                Column(
+                                    modifier = Modifier
+                                        .then(
+                                            if (idx < dailyQuests.lastIndex) Modifier.border(
+                                                1.dp, Color(0x0DFFFFFF)
+                                            ) else Modifier
+                                        )
+                                        .padding(vertical = 6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = q.name,
+                                            fontSize = 12.sp,
+                                            color = if (q.isClaimed) Color(0x40E5C158)
+                                            else if (q.isCompleted) Champagne400
+                                            else Color(0xCCD6D3D1),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "${q.progress}/${q.target}",
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = if (q.isCompleted) Champagne400 else Color(0x99A8A29E),
+                                            fontWeight = if (q.isCompleted) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                    Text(
+                                        text = q.desc,
+                                        fontSize = 9.sp,
+                                        color = Color(0x66D6D3D1),
+                                        fontFamily = FontFamily.Serif,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Marcos da Jornada
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "MARCOS DA JORNADA",
+                                fontFamily = Cinzel,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = Champagne400,
+                                letterSpacing = 0.5.sp
+                            )
+                            if (closestGuild != null) {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = closestGuild.name,
+                                            fontSize = 12.sp,
+                                            color = Champagne400,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "${closestGuild.progress}/${closestGuild.target}",
+                                            fontSize = 11.sp,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = if (closestGuild.isCompleted) Champagne400 else Color(0x99A8A29E),
+                                            fontWeight = if (closestGuild.isCompleted) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                    Text(
+                                        text = closestGuild.desc,
+                                        fontSize = 9.sp,
+                                        color = Color(0x66D6D3D1),
+                                        fontFamily = FontFamily.Serif
+                                    )
+                                    // Progress bar
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(8.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color(0x1A1C1917))
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(
+                                                    (closestGuild.progress.toFloat() / closestGuild.target.coerceAtLeast(1)).coerceIn(0f, 1f)
+                                                )
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(
+                                                    Brush.horizontalGradient(
+                                                        listOf(Champagne500, Color(0xFFF5DFA0))
+                                                    )
+                                                )
+                                        )
+                                    }
+                                }
+                            } else {
+                                Text(
+                                    text = "Todas as teses conquistadas!",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF10B981),
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Navigation button
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .border(1.dp, Champagne500.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                                .background(Color(0x1A1C1917))
+                                .clickable {
+                                    isQuestFabOpen = false
+                                    onNavigateToTab("quests")
+                                }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Ir para Painel de Contratos →",
+                                fontFamily = Cinzel,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = Champagne400,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+                }
             }
 
             IncursionModeModal(
