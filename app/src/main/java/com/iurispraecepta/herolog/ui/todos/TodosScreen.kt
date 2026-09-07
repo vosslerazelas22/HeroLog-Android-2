@@ -82,6 +82,8 @@ import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import java.util.Date
 
+private val Champagne400 = Color(0xFFE5C158)
+private val Champagne300 = Color(0xFFF5DFA0)
 private val Stone700 = Color(0xFF44403C)
 private val Stone600 = Color(0xFF57534E)
 private val Stone500 = Color(0xFF78716C)
@@ -208,8 +210,8 @@ fun TodosScreen(
                 text = "🗒️ Missões Avulsas",
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = Amber400,
+                fontSize = 16.sp,
+                color = Champagne400,
                 letterSpacing = 1.sp
             )
 
@@ -217,8 +219,8 @@ fun TodosScreen(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x26F59E0B))
-                        .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(6.dp))
+                        .background(Color(0x0DD4AF37))
+                        .border(1.dp, Color(0x4DD4AF37), RoundedCornerShape(6.dp))
                         .clickable { openCreateModal() }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -227,7 +229,7 @@ fun TodosScreen(
                     Icon(
                         imageVector = Icons.Default.AddCircle,
                         contentDescription = "Novo Afazer",
-                        tint = Amber300,
+                        tint = Champagne400,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
@@ -235,7 +237,7 @@ fun TodosScreen(
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Amber200
+                        color = Champagne400
                     )
                 }
             }
@@ -265,14 +267,14 @@ fun TodosScreen(
                         .clip(RoundedCornerShape(6.dp))
                         .background(
                             when {
-                                isSelected -> Color(0x26F59E0B)
+                                isSelected -> Color(0x26D4AF37)
                                 else -> Color.Transparent
                             }
                         )
                         .border(
                             1.dp,
                             when {
-                                isSelected -> Amber400
+                                isSelected -> Champagne400
                                 else -> Color.Transparent
                             },
                             RoundedCornerShape(6.dp)
@@ -288,9 +290,9 @@ fun TodosScreen(
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = when {
-                            isDisabled -> Amber100.copy(alpha = 0.2f)
-                            isSelected -> Amber300
-                            else -> Amber100.copy(alpha = 0.4f)
+                            isDisabled -> Color(0x8052525B)
+                            isSelected -> Champagne300
+                            else -> Color(0xFF71717A)
                         }
                     )
                 }
@@ -305,7 +307,7 @@ fun TodosScreen(
                     .padding(vertical = 24.dp)
                     .drawBehind {
                         drawRoundRect(
-                            color = Color(0x33FBBF24),
+                            color = Color(0x1AF59E0B),
                             style = Stroke(
                                 width = 1.dp.toPx(),
                                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
@@ -313,7 +315,7 @@ fun TodosScreen(
                             cornerRadius = CornerRadius(8.dp.toPx())
                         )
                     }
-                    .background(Color(0x1A1C1917), RoundedCornerShape(8.dp))
+                    .background(Color(0x330C0A09), RoundedCornerShape(8.dp))
                     .padding(horizontal = 20.dp, vertical = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -322,8 +324,8 @@ fun TodosScreen(
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
                         fontFamily = FontFamily.Serif,
-                        color = Stone400,
-                        fontSize = 14.sp,
+                        color = Amber100.copy(alpha = 0.4f),
+                        fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )

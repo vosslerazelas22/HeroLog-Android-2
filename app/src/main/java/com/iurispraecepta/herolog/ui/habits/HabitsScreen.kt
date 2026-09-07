@@ -75,6 +75,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private val Champagne400 = Color(0xFFE5C158)
 private val Stone600 = Color(0xFF57534E)
 private val Stone500 = Color(0xFF78716C)
 private val Amber300 = Color(0xFFFCD34D)
@@ -171,8 +172,8 @@ fun HabitsScreen(
                 text = "⚡ CAPELA DE HÁBITOS",
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = Amber400,
+                fontSize = 16.sp,
+                color = Champagne400,
                 letterSpacing = 1.sp
             )
 
@@ -180,8 +181,8 @@ fun HabitsScreen(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x26F59E0B))
-                        .border(1.dp, Amber400, RoundedCornerShape(6.dp))
+                        .background(Color(0x0DD4AF37))
+                        .border(1.dp, Color(0x4DD4AF37), RoundedCornerShape(6.dp))
                         .clickable { openCreateModal() }
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -190,7 +191,7 @@ fun HabitsScreen(
                     Icon(
                         imageVector = Icons.Default.AddCircle,
                         contentDescription = "Novo Hábito",
-                        tint = Amber300,
+                        tint = Champagne400,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
@@ -198,7 +199,7 @@ fun HabitsScreen(
                         fontFamily = FontFamily.Serif,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = Amber200
+                        color = Champagne400
                     )
                 }
             }
@@ -212,7 +213,7 @@ fun HabitsScreen(
                     .padding(vertical = 24.dp)
                     .drawBehind {
                         drawRoundRect(
-                            color = Color(0x33FBBF24),
+                            color = Color(0x1AF59E0B),
                             style = Stroke(
                                 width = 1.dp.toPx(),
                                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
@@ -220,7 +221,7 @@ fun HabitsScreen(
                             cornerRadius = CornerRadius(8.dp.toPx())
                         )
                     }
-                    .background(Color(0x1A1C1917), RoundedCornerShape(8.dp))
+                    .background(Color(0x330C0A09), RoundedCornerShape(8.dp))
                     .padding(horizontal = 20.dp, vertical = 32.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -229,8 +230,8 @@ fun HabitsScreen(
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
                         fontFamily = FontFamily.Serif,
-                        color = Stone400,
-                        fontSize = 14.sp,
+                        color = Amber100.copy(alpha = 0.4f),
+                        fontSize = 12.sp,
                         textAlign = TextAlign.Center,
                         lineHeight = 22.sp
                     )
@@ -836,7 +837,7 @@ private fun HabitCardItem(
             if (habit.notes.isNotBlank()) {
                 Text(
                     text = habit.notes,
-                    color = Stone400,
+                    color = Amber100.copy(alpha = 0.65f),
                     fontSize = 12.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -853,25 +854,28 @@ private fun HabitCardItem(
                         text = "✓ Feito hoje",
                         color = Amber400,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Medium
                     )
                 } else {
                     Text(
                         text = "○ Pendente hoje",
                         color = Stone500,
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace
                     )
                 }
 
                 Text(
                     text = "•",
-                    color = Stone600,
-                    fontSize = 11.sp
+                    color = Amber500.copy(alpha = 0.2f),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily.Monospace
                 )
 
                 Text(
                     text = "(+${habit.upCount} | -${habit.downCount})",
-                    color = Stone400,
+                    color = Amber100.copy(alpha = 0.4f),
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace
                 )
