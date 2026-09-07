@@ -4570,3 +4570,30 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Modo debug: `importFileLauncher` não é destruído se o usuário girar a tela (sem `rememberSaveable` no `Uri` retornado) — a app não trata rotação de tela especialmente em outros lugares também, então é consistente. Se virar problema, refatorar depois.
 
 **Status: FECHADO (código + build + testes); visual pendente.**
+
+## [2026-09-07] Bloco Visual: Quick Actions Bar - Correções de Paridade
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/QuickActionsBar.kt` (+87, -17)
+
+**Resumo:**
+- Auditoria de paridade identificou 8 divergências visuais entre Quick Actions Bar (Android) e Quick Actions Row (React `App.tsx:3026-3080` + `AmbientSoundButton.tsx:27-61`)
+- **Container** (#1): adicionado `padding(top = 8.dp)` + `border(1.dp, White/10%)` + `spacedBy(4.dp)` (React: `pt-2 border-t border-white/10 gap-1`)
+- **Botões** (#2): adicionado `clip(RoundedCornerShape(8.dp))` (React: `rounded-lg`)
+- **Press feedback** (#3): adicionado `interactionSource` + `indication = ripple()` + background condicional `stone-900/40` (React: `hover:bg-stone-900/40 transition-all`)
+- **Label** (#4+#5): adicionado `fontFamily = Cinzel` + `letterSpacing = 0.05.em` (React: `font-serif tracking-wider`)
+- **Ícone fullscreen** (#6): mantido `lucide_ic_maximize` (divergência aceitável vs Unicode `⛶` do React)
+- **Dot verde** (#7): adicionado `Box` com `CircleShape` + `Emerald400` quando trilha ativa (React: `bg-emerald-400 rounded-full animate-pulse`)
+- **Largura botão** (#8): trocado `width(64.dp)` por `weight(1f)` (React: `grid grid-cols-4`)
+- Imports adicionados: `BorderStroke`, `background`, `border`, `MutableInteractionSource`, `collectIsPressedAsState`, `Box`, `height`, `offset`, `size`, `CircleShape`, `RoundedCornerShape`, `ripple`, `getValue`, `remember`, `clip`, `TextStyle`, `FontFamily`, `em`, `Cinzel`
+
+**Validação:**
+- Build: `BUILD SUCCESSFUL in 1m 7s`
+- Testes: 484 testes, 478 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado)
+- Visual: **PENDENTE** — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Ícone fullscreen mantido como `lucide_ic_maximize` (React usa Unicode `⛶`, mas lucide_ic_maximize é consistente com a lib de ícones do app)
+- Dot verde usa `Box` estático em vez de `animate-pulse` (animação de pulso pode ser adicionada futuramente se necessário)
+
+**Status: FECHADO (código + build + testes); visual pendente.**
