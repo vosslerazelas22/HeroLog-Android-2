@@ -263,7 +263,7 @@ fun CharacterScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "🔥 SEQUÊNCIA",
+                        text = "🔥 Sequência",
                         style = TextStyle(
                             fontFamily = FontFamily.Serif,
                             fontSize = 10.sp,
@@ -272,7 +272,7 @@ fun CharacterScreen(
                         )
                     )
                     Text(
-                        text = "${character.streak} dia(s)",
+                        text = "${character.streak} ${if (character.streak == 1) "dia" else "dias"}",
                         style = TextStyle(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold,
@@ -301,7 +301,7 @@ fun CharacterScreen(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "⚔️ NÍVEL DE COMBATE",
+                        text = "⚔️ Nível",
                         style = TextStyle(
                             fontFamily = FontFamily.Serif,
                             fontSize = 10.sp,
@@ -321,7 +321,16 @@ fun CharacterScreen(
                     val reqXp = CombatLogic.requiredXpForCombatLevel(character.combatLevel)
                     val progress = (character.combatXP.toFloat() / reqXp.coerceAtLeast(1).toFloat()).coerceIn(0f, 1f)
                     Text(
-                        text = "${character.combatXP} / ${reqXp} XP",
+                        text = "✨ XP (Experiência de Combate)",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Serif,
+                            fontSize = 9.sp,
+                            color = Color(0xFFFEF3C7).copy(alpha = 0.5f),
+                            letterSpacing = 0.05.em
+                        )
+                    )
+                    Text(
+                        text = "${character.combatXP} / ${reqXp}",
                         style = TextStyle(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 9.sp,
@@ -463,12 +472,12 @@ fun CharacterScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "🛡️ EQUIPAMENTOS EQUIPADOS (3 SLOTS)",
+                text = "🛡️ Itens Equipados (3 Slots)",
                 style = TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color(0xFFFCD34D), // amber-300
+                    fontSize = 10.sp,
+                    color = Color(0xFFFEF3C7).copy(alpha = 0.5f),
                     letterSpacing = 0.05.em
                 )
             )
@@ -535,7 +544,7 @@ fun CharacterScreen(
                                     val charges = item.charges ?: 0
                                     val maxCharges = item.maxCharges ?: 8
                                     Text(
-                                        text = "$charges/$maxCharges Cargas",
+                                        text = "🔋 $charges/$maxCharges",
                                         style = TextStyle(
                                             fontFamily = FontFamily.Monospace,
                                             fontSize = 9.sp,
@@ -581,12 +590,12 @@ fun CharacterScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "BÊNÇÃOS & ELIXIRES ATIVOS",
+                text = "Bênçãos & Elixires Ativos",
                 style = TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = Color(0xFFFCD34D), // amber-300
+                    fontSize = 10.sp,
+                    color = Color(0xFFFEF3C7).copy(alpha = 0.5f),
                     letterSpacing = 0.05.em
                 )
             )

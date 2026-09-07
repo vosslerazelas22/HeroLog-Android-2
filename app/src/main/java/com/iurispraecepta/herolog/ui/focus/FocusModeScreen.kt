@@ -118,7 +118,7 @@ fun FocusModeScreen(
                     Text(text = skillEmoji, fontSize = 24.sp)
                     Column(modifier = Modifier.padding(start = 12.dp)) {
                         Text(
-                            text = "CÂMARA DE FOCO ATIVA",
+                            text = "Câmara de Foco Ativa",
                             color = AmberHeader,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Black,

@@ -4456,3 +4456,36 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Nenhum.
 
 **Status: FECHADO (código + build + testes); visual pendente.**
+
+## [2026-09-07] Bloco A+B: Headers de Subtabs + Correção de Copys
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+84, -18)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/character/CharacterScreen.kt` (+22, -12)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusModeScreen.kt` (+1, -1)
+
+**Resumo:**
+- **Bloco A — Headers das Subtabs**:
+  - Header "🛡️ FICHA DO HERÓI" adicionado na subtab Status (`CharacterScreen` é envolvido por um `Column` com header contendo ícone `lucide_ic_shield`, fonte Cinzel/Black/12sp, `Champagne400`, border bottom). Equivale ao `div` de `App.tsx:3206-3216`.
+  - Header "💰 EQUIPAMENTOS" adicionado na subtab Inventário (`InventoryScreen` é envolvido por `Column` equivalente com ícone `lucide_ic_coins`). Equivale ao `div` de `App.tsx:3242-3245`.
+  - Botão "+ Gerenciar Habilidades" (presente no React) não portado — requer `onOpenSkillsManager` que não existe no `CharacterScreen` Android.
+- **Bloco B — Correções de Copys** (9 correções):
+  - B1: Pluralização streak `"dia(s)"` → `"${if (streak == 1) "dia" else "dias"}"` (fidelidade com `CharacterScreen.tsx:142`)
+  - B2: XP label `"${combatXP} / ${reqXp} XP"` → label `"✨ XP (Experiência de Combate)"` + valor `"${combatXP} / ${reqXp}"` (fidelidade com `CharacterScreen.tsx:306-309`)
+  - B3: Equipment header `"EQUIPAMENTOS EQUIPADOS (3 SLOTS)"` → `"Itens Equipados (3 Slots)"` (fidelidade com `CharacterScreen.tsx:345`)
+  - B4: Charges display `"$charges/$maxCharges Cargas"` → `"🔋 $charges/$maxCharges"` (fidelidade com `CharacterScreen.tsx:370`)
+  - B5: Tooltip `"Câmera de Foco"` → `"Câmara de Foco"` (fidelidade com `App.tsx:2367`)
+  - B6: Tile Sequência `"🔥 SEQUÊNCIA"` (ALL CAPS) → `"🔥 Sequência"` (mixed case, fidelidade com `CharacterScreen.tsx:139`)
+  - B7: Tile Nível `"⚔️ NÍVEL DE COMBATE"` (ALL CAPS) → `"⚔️ Nível"` (mixed case, fidelidade com `CharacterScreen.tsx:152`)
+  - B8: Buffs header `"BÊNÇÃOS & ELIXIRES ATIVOS"` (ALL CAPS) → `"Bênçãos & Elixires Ativos"` (mixed case, fidelidade com `CharacterScreen.tsx:398`)
+  - B9: Focus fullscreen `"CÂMARA DE FOCO ATIVA"` (ALL CAPS) → `"Câmara de Foco Ativa"` (mixed case, fidelidade com `FocusModeScreen.tsx:161`)
+
+**Validação:**
+- Build: `BUILD SUCCESSFUL in 2m 7s`
+- Testes: 464 testes, 458 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado)
+- Visual: **PENDENTE** — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Botão "+ Gerenciar Habilidades" omitido — depende de callback inexistente no `CharacterScreen` Android atual
+
+**Status: FECHADO (código + build + testes); visual pendente.**
