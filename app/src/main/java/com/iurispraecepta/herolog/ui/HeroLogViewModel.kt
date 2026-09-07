@@ -507,13 +507,56 @@ class HeroLogViewModel(
     }
 
     fun importSaveFromPastedText(rawJson: String): SaveImportOutcome {
-        return when (val result = SaveMigrationLogic.normalizeGameState(rawJson)) {
+        return importSaveFromJson(rawJson)
+    }
+
+    /**
+     * Importa um save a partir de uma string JSON arbitrária.
+     *
+     * Centraliza o que já existia no [importSaveFromPastedText] (texto colado)
+     * e reusa o mesmo caminho para o import por arquivo. A detecção de
+     * `ExportPayload` vs `CharacterState` cru é feita pelo
+     * [com.iurispraecepta.herolog.data.export.GameStateImporter.parsePayload]
+     * — esta função só persiste o resultado e devolve a [SaveImportOutcome]
+     * traduzida pra UI.
+     */
+    fun importSaveFromJson(rawJson: String): SaveImportOutcome {
+        return when (val result = com.iurispraecepta.herolog.data.export.GameStateImporter.parsePayload(rawJson)) {
             is SaveImportResult.Success -> {
                 saveCharacterState(result.characterState, suppressLevelUpDetection = true)
                 SaveImportOutcome.Restored(result.characterState.charName)
             }
             is SaveImportResult.InvalidJson -> SaveImportOutcome.Failed
         }
+    }
+
+    /**
+     * Constrói o [com.iurispraecepta.herolog.data.export.ExportPayload] a
+     * partir do estado atual (personagem + sessão de foco ativa, se houver).
+     *
+     * Retorna `null` se o personagem ainda não foi carregado (banco vazio e
+     * estado inicial não criado — improvável em produção, mas defensivo).
+     */
+    suspend fun buildExportPayload(): com.iurispraecepta.herolog.data.export.ExportPayload? {
+        val character = _characterState.value ?: return null
+        val activeFocus = focusSessionRepository.getSession()
+        return com.iurispraecepta.herolog.data.export.GameStateExporter.buildPayload(
+            character = character,
+            activeFocus = activeFocus
+        )
+    }
+
+    /**
+     * Serializa o save atual em string JSON pretty (mesmo formato do
+     * arquivo exportado, sem a parte de `writeToCache`). Usado pelo
+     * export por clipboard.
+     */
+    suspend fun exportSaveAsJsonString(): String? {
+        val payload = buildExportPayload() ?: return null
+        return com.iurispraecepta.herolog.data.export.GameStateExporter.encodePayload(
+            payload,
+            com.iurispraecepta.herolog.data.JsonConfig.pretty
+        )
     }
 
     fun addCustomSkill(nameInput: String, emoji: String): SkillOperationResult {

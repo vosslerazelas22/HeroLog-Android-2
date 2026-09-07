@@ -110,4 +110,29 @@ class GeneralSettingsModalScreenshotTest {
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/general_settings_mage_classD.png")
     }
 
+    @Test
+    fun generalSettings_backup_section_showsAllFourActions() {
+        composeTestRule.setContent {
+            HeroLogTheme {
+                GeneralSettingsModal(
+                    isOpen = true,
+                    onDismiss = {},
+                    characterName = "Thorin",
+                    charClass = CharClass.Warrior,
+                    orbConcept = OrbConcept.B,
+                    onNameChange = {},
+                    onClassChange = {},
+                    onOrbConceptChange = {},
+                    coroutineScope = testScope,
+                    onExportToFile = {},
+                    onCopyToClipboard = {},
+                    onImportFromFile = {},
+                    onOpenImportDialog = {}
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/general_settings_backup_section.png")
+    }
+
 }

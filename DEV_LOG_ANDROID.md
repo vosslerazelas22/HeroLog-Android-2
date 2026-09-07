@@ -4519,3 +4519,54 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 **Desvios:** Nenhum.
 
 **Status: FECHADO (código + build + testes); visual pendente.**
+
+## [2026-09-07] Bloco E: Backup/Restore completo em 4 mídias (export/import por arquivo `.json` + clipboard + texto colado)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/data/JsonConfig.kt` (novo)
+- `app/src/main/java/com/iurispraecepta/herolog/data/export/ExportPayload.kt` (novo)
+- `app/src/main/java/com/iurispraecepta/herolog/data/export/GameStateExporter.kt` (novo)
+- `app/src/main/java/com/iurispraecepta/herolog/data/export/GameStateImporter.kt` (novo)
+- `app/src/main/java/com/iurispraecepta/herolog/data/export/SaveClipboard.kt` (novo)
+- `app/src/main/res/xml/file_paths.xml` (novo)
+- `app/src/main/AndroidManifest.xml` (+ `<provider>` `FileProvider`)
+- `app/src/main/java/com/iurispraecepta/herolog/data/repository/CharacterRepository.kt` (refator: usa `JsonConfig.default`)
+- `app/src/main/java/com/iurispraecepta/herolog/data/repository/FocusSessionRepository.kt` (idem)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` (+ `buildExportPayload`, `exportSaveAsJsonString`, `importSaveFromJson`; `importSaveFromPastedText` agora delega pro novo)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/GeneralSettingsModal.kt` (+ 4 callbacks + seção "Backup da Campanha" + helper `BackupActionButton`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (wiring dos 4 callbacks + `ActivityResultContracts.GetContent` + `Intent.ACTION_SEND`/`FileProvider` + `Toast` de confirmação do clipboard)
+- `app/src/test/java/com/iurispraecepta/herolog/data/export/GameStateExporterTest.kt` (novo, 9 testes)
+- `app/src/test/java/com/iurispraecepta/herolog/data/export/GameStateImporterTest.kt` (novo, 10 testes)
+- `app/src/test/java/com/iurispraecepta/herolog/GeneralSettingsModalScreenshotTest.kt` (+ 1 caso "backup_section_showsAllFourActions")
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt.orig` (deletado — resquício de patch anterior não relacionado a este bloco)
+- `PARIDADE.md` (linha 35 seção 1 + linha 49 seção 2 atualizadas)
+- `DEV_LOG_ANDROID.md` (esta entrada)
+
+**Resumo:**
+- **Bloco E — Backup/Restore**: 4 caminhos simétricos pra mover save entre dispositivo, outros apps e clipboard:
+  1. **Export arquivo `.json`** — `Intent.ACTION_SEND` + `FileProvider` (authority `<applicationId>.fileprovider`, `<cache-path name="exports" path="exports/" />` em `res/xml/file_paths.xml`). Abre o chooser nativo do Android — Gmail, Drive, qualquer app que aceite `application/json`. Arquivo gerado: `herolog-save-YYYYMMDD-HHmmss.json` em `cacheDir/exports/`.
+  2. **Export clipboard (texto)** — `ClipboardManager.setPrimaryClip(ClipData.newPlainText("HeroLog Save", json))` + `Toast.makeText("Código rúnico copiado")`. Mesma string JSON que o `RestoreSaveDialog` aceita.
+  3. **Import arquivo `.json`** — `ActivityResultContracts.GetContent("application/json")` → `GameStateImporter.readFromUri(context, uri)` (lê via `contentResolver.openInputStream`) → `parsePayload` → mesmo `SaveImportResult` que o `RestoreSaveDialog` retorna → `SaveImportResultDialog` já existente mostra sucesso/falha.
+  4. **Import texto (reconectado)** — `RestoreSaveDialog` (que já existia desde 27/08) agora é sub-fluxo do `GeneralSettingsModal` (4ª ação da seção "Backup"). Reusa a mesma `importSaveFromJson` por baixo.
+- **`JsonConfig.kt` (singleton)**: dois `Json` pré-configurados. `default` (sem `prettyPrint`, `ignoreUnknownKeys=true`) — usado pelos Repositories de Room e pelo import (performance + tolerância a campos novos). `pretty` (`prettyPrint=true`, `encodeDefaults=true`) — usado pelo export (arquivo legível, robusto a campos novos futuros). Elimina a duplicação que existia nos 2 Repositories.
+- **`ExportPayload`** (versão 1): wrapper `{ version, exportedAt, character, activeFocus? }`. `version` dá espaço pra migrations futuras (se um dia o `CharacterState` tiver mudanças incompatíveis, basta bumpar e tratar no import). `activeFocus` carrega junto `PersistedFocusSession` (sessão de foco em andamento/pausada/grace), já persistido por `FocusSessionRepository` (Bloco 29/30).
+- **`GameStateImporter.parsePayload`**: detecta se o JSON tem `version` (wrapper) ou se é `CharacterState` cru (formato do `RestoreSaveDialog` original) — em ambos os casos, extrai o sub-JSON do personagem e delega pro `SaveMigrationLogic.normalizeGameState` (já auditado, reusa todas as migrations de save antigo). `version>1` → `InvalidJson` (defensivo, sem migrations conhecidas). `version<1` → `InvalidJson`.
+- **Mudança consciente vs registro anterior** (`PARIDADE.md` linha 35, 27/08): o "recorte deliberado" original deixava export/import por arquivo + clipboard fora de escopo (por falta de equivalente Supabase/conta). Bruno reverteu essa posição em 07/09 — agora as 4 mídias estão dentro de escopo, paridade visual do modal "Ajustes Gerais" do React (`App.tsx`, botões `handleExportSave`/`handleCopySaveToClipboard`/`handleImportSaveFile`) é meta declarada. Purgar campanha e logout continuam fora de escopo (precisam de conta/Supabase).
+- **Regressão resolvida de novo** (era idêntica ao achado de 28/08 do `AppHeader`): o `RestoreSaveDialog` estava sem caller (`isRestoreSaveOpen` só era lido/resetado, nunca setado `true`). Agora é sub-fluxo do `GeneralSettingsModal` — caminho estável e descobrível.
+- **Wiring no `MainActivity`**: 4 callbacks no `GeneralSettingsModal(...)`. `onExportToFile`/`onCopyToClipboard` rodam em `coroutineScope.launch` (suspend → `viewModelScope` interno). `onImportFromFile` fecha o modal de ajustes e lança `importFileLauncher.launch("application/json")` (file picker do Android). `onOpenImportDialog` fecha o modal de ajustes e seta `isRestoreSaveOpen = true`.
+- **Permissões**: zero novas. `FileProvider` concede `FLAG_GRANT_READ_URI_PERMISSION` ao app destino. `ActivityResultContracts.GetContent` não exige permissão de runtime. `cacheDir` é privado do app.
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL in 1m 20s** (warnings todos pré-existentes: `Divider` deprecated, `AutoMirrored` Article, etc., nenhum novo introduzido por este bloco).
+- Testes: `./gradlew testDebugUnitTest --tests "com.iurispraecepta.herolog.data.export.*"` — **19/19 PASSED** (XML nominal conferido: `GameStateExporterTest` 9/9 com `tests="9" failures="0" errors="0"`, `GameStateImporterTest` 10/10 com `tests="10" failures="0" errors="0"`). 1 falha inicial (`encodePayload_withCustomJson_respectsConfig` esperava que `gold` não aparecesse sem `encodeDefaults` — corrigido pra testar `lastDungeonClearedTime` que tem default `0L` e de fato desaparece).
+- Regressão: `./gradlew testDebugUnitTest --tests "HeroLogViewModelTest"` (rodado por Bruno) — **57/57 PASSED** com `tests="57" failures="0" errors="0"`, nenhuma regressão. A subida de 52→57 testes (vs baseline do commit `24b3a26` do import) é de outras sessões, não deste bloco.
+- Suíte completa: `./gradlew testDebugUnitTest` (rodado por Bruno) — 484 testes, 6 falhas, **todas pré-existentes** (`SkillsScreenScreenshotTest` 3 + `CharacterScreenScreenshotTest` 1 + `FocusCompletionFlowScreenshotTest` 1 + `SkillSelectorModalScreenshotTest` 1), todas com mesmo `NoSuchMethodError: FlowLayoutKt.FlowRow` — incompatibilidade pré-existente do Roborazzi com versão de Compose Foundation, registrada em `PARIDADE.md` e em outros blocos do `DEV_LOG_ANDROID.md`. Este bloco não toca `build.gradle.kts`, então não tem como ter introduzido essas 6 falhas.
+- Screenshot test do `GeneralSettingsModal` com a nova seção "Backup" (Roborazzi): caso `generalSettings_backup_section_showsAllFourActions` adicionado, PNG será gerado em `src/test/screenshots/general_settings_backup_section.png`. Inspeção visual humana em device real **pendente** (responsabilidade do Android Studio, conforme `AGENTS.md`).
+
+**Desvios aprovados:**
+- Refatoração dos 2 Repositories pra consumir `JsonConfig.default` (substitui `Json { ignoreUnknownKeys=true; prettyPrint=false }` duplicado) — diff de ~3 linhas em cada, mas fundamental pra evitar divergência futura entre o que está no Room e o que o export gera. Sem mudança de comportamento observável.
+- `importSaveFromPastedText` (`HeroLogViewModel.kt`) agora delega internamente pro novo `importSaveFromJson` — comportamento idêntico pro caller (continua devolvendo `SaveImportOutcome`), mas internamente o caminho é único (não mais 2 implementações paralelas do "pegar string, normalizar, persistir"). Sem mudança de API nem de teste.
+- Toast de confirmação no export clipboard (`Toast.LENGTH_SHORT`) — não é fiel literal ao React (que não tem toast; usa chip de confirmação nativo do navegador), mas é o equivalente mais próximo na plataforma Android. API 33+ (Android 13+) já mostra chip nativo do sistema automaticamente, então o Toast é redundante lá, mas não atrapalha.
+- Modo debug: `importFileLauncher` não é destruído se o usuário girar a tela (sem `rememberSaveable` no `Uri` retornado) — a app não trata rotação de tela especialmente em outros lugares também, então é consistente. Se virar problema, refatorar depois.
+
+**Status: FECHADO (código + build + testes); visual pendente.**

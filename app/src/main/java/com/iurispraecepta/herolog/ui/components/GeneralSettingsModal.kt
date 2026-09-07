@@ -84,7 +84,11 @@ fun GeneralSettingsModal(
     onNameChange: (String) -> Unit,
     onClassChange: (CharClass) -> Unit,
     onOrbConceptChange: (OrbConcept) -> Unit,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    onExportToFile: () -> Unit = {},
+    onCopyToClipboard: () -> Unit = {},
+    onImportFromFile: () -> Unit = {},
+    onOpenImportDialog: () -> Unit = {}
 ) {
     if (!isOpen) return
 
@@ -295,6 +299,39 @@ fun GeneralSettingsModal(
                                 onClick = { onOrbConceptChange(OrbConcept.D) }
                             )
                         }
+                    }
+                }
+
+                // Section 3: Backup — export/import do save (4 caminhos: arquivo/texto)
+                SettingsSection(
+                    title = "Backup da Campanha",
+                    description = "Exporte seu progresso para um arquivo .json ou código rúnico, ou restaure um save anterior."
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        BackupActionButton(
+                            icon = "💾",
+                            label = "Exportar arquivo .json",
+                            subtitle = "Compartilhar via Drive, Gmail, etc.",
+                            onClick = onExportToFile
+                        )
+                        BackupActionButton(
+                            icon = "📜",
+                            label = "Copiar código rúnico",
+                            subtitle = "Colar em qualquer lugar (mesmo formato do import por texto)",
+                            onClick = onCopyToClipboard
+                        )
+                        BackupActionButton(
+                            icon = "📂",
+                            label = "Importar arquivo .json",
+                            subtitle = "Selecionar arquivo do dispositivo",
+                            onClick = onImportFromFile
+                        )
+                        BackupActionButton(
+                            icon = "🔮",
+                            label = "Restaurar código rúnico",
+                            subtitle = "Colar texto de save exportado",
+                            onClick = onOpenImportDialog
+                        )
                     }
                 }
 
@@ -512,4 +549,46 @@ private fun VStack(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing), content = content)
+}
+
+@Composable
+private fun BackupActionButton(
+    icon: String,
+    label: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = androidx.compose.ui.Modifier
+            .fillMaxWidth()
+            .background(Stone900.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
+            .border(0.5.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(text = icon, fontSize = 18.sp)
+            Column(modifier = androidx.compose.ui.Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    color = Color(0xFFFDE68A),
+                    letterSpacing = 0.12.em
+                )
+                Text(
+                    text = subtitle,
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 8.sp,
+                    color = Color(0xFFFEF3C7).copy(alpha = 0.55f)
+                )
+            }
+        }
+    }
 }

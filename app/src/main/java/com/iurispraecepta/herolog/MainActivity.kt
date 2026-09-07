@@ -1,10 +1,14 @@
 package com.iurispraecepta.herolog
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -126,6 +130,10 @@ import com.iurispraecepta.herolog.ui.components.GeneralSettingsModal
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
+import com.iurispraecepta.herolog.data.JsonConfig
+import com.iurispraecepta.herolog.data.export.GameStateExporter
+import com.iurispraecepta.herolog.data.export.GameStateImporter
+import com.iurispraecepta.herolog.data.export.SaveClipboard
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
 import com.iurispraecepta.herolog.ui.ProcessedQuest
 import com.iurispraecepta.herolog.ui.theme.Amber400
@@ -169,11 +177,24 @@ class MainActivity : ComponentActivity() {
                 var saveImportOutcome by remember { mutableStateOf<SaveImportOutcome?>(null) }
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
+                val context = LocalContext.current
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application))
                 val characterState by heroLogViewModel.characterState.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
+
+                // File picker para import por arquivo .json
+                val importFileLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.GetContent()
+                ) { uri ->
+                    if (uri != null) {
+                        val rawJson = GameStateImporter.readFromUri(context, uri)
+                        if (rawJson.isNotBlank()) {
+                            saveImportOutcome = heroLogViewModel.importSaveFromJson(rawJson)
+                        }
+                    }
+                }
 
                 // HazeState para backdrop-blur no BottomNav (estilo React backdrop-blur-md)
                 val hazeState = remember { HazeState() }
@@ -591,7 +612,34 @@ class MainActivity : ComponentActivity() {
                         onNameChange = { name -> heroLogViewModel.updateCharacterProfile(name, characterState?.charClass ?: CharClass.Mage) },
                         onClassChange = { cls -> heroLogViewModel.updateCharacterProfile(characterState?.charName ?: "", cls) },
                         onOrbConceptChange = { concept -> heroLogViewModel.updateOrbConcept(concept) },
-                        coroutineScope = coroutineScope
+                        coroutineScope = coroutineScope,
+                        onExportToFile = {
+                            coroutineScope.launch {
+                                val payload = heroLogViewModel.buildExportPayload() ?: return@launch
+                                val uri = GameStateExporter.writeToCache(context, payload, JsonConfig.pretty)
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/json"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(sendIntent, "Compartilhar save"))
+                            }
+                        },
+                        onCopyToClipboard = {
+                            coroutineScope.launch {
+                                val jsonText = heroLogViewModel.exportSaveAsJsonString() ?: return@launch
+                                SaveClipboard.copyToClipboard(context, jsonText)
+                                Toast.makeText(context, "Código rúnico copiado para a área de transferência", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onImportFromFile = {
+                            isGeneralSettingsOpen = false
+                            importFileLauncher.launch("application/json")
+                        },
+                        onOpenImportDialog = {
+                            isGeneralSettingsOpen = false
+                            isRestoreSaveOpen = true
+                        }
                     )
 
                     // Porte de `activeLevelUp` (useLevelUp.ts) -- popup global, visivel por cima de qualquer

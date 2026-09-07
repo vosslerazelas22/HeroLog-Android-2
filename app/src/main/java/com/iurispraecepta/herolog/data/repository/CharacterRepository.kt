@@ -1,5 +1,6 @@
 package com.iurispraecepta.herolog.data.repository
 
+import com.iurispraecepta.herolog.data.JsonConfig
 import com.iurispraecepta.herolog.data.dao.CharacterStateDao
 import com.iurispraecepta.herolog.data.entity.CharacterStateEntity
 import com.iurispraecepta.herolog.model.CharacterState
@@ -8,7 +9,7 @@ import kotlinx.serialization.json.Json
 
 class CharacterRepository(
     private val characterStateDao: CharacterStateDao,
-    private val json: Json = Json { ignoreUnknownKeys = true; prettyPrint = false }
+    private val json: Json = JsonConfig.default
 ) {
     suspend fun getCharacterState(): CharacterState? {
         val entity = characterStateDao.getState() ?: return null
