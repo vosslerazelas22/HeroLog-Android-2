@@ -85,8 +85,8 @@ fun AchievementsScreen(state: CharacterState, modifier: Modifier = Modifier) {
                 text = "CONQUISTAS",
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                letterSpacing = 0.10.em,
+                fontSize = 12.sp,
+                letterSpacing = 0.05.em,
                 color = Champagne400
             )
         }
@@ -132,7 +132,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
             contentAlignment = Alignment.Center
         ) {
             if (isUnlocked) {
-                Text(text = achievement.icon, fontSize = 28.sp)
+                Text(text = achievement.icon, fontSize = 30.sp)
             } else {
                 Icon(
                     imageVector = Icons.Filled.Lock,
@@ -148,7 +148,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                     text = achievement.name,
                     fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     letterSpacing = 0.025.em,
                     color = Amber100.copy(alpha = 0.90f)
                 )
@@ -166,14 +166,13 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                             imageVector = Icons.Filled.AutoAwesome,
                             contentDescription = null,
                             tint = Champagne400,
-                            modifier = Modifier.height(9.dp).width(9.dp)
+                            modifier = Modifier.height(10.dp).width(10.dp)
                         )
                         Text(
                             text = "DESBLOQUEADO",
                             fontFamily = Cinzel,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp,
-                            letterSpacing = 0.05.em,
                             color = Champagne400
                         )
                     }

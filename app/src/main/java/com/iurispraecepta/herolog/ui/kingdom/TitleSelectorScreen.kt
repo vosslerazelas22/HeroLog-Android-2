@@ -119,8 +119,8 @@ fun TitleSelectorScreen(
                 text = "TÍTULOS",
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                letterSpacing = 0.10.em,
+                fontSize = 12.sp,
+                letterSpacing = 0.05.em,
                 color = Champagne400
             )
         }

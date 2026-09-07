@@ -50,6 +50,7 @@ import com.iurispraecepta.herolog.ui.theme.Stone950
 
 // ─── Cores sem equivalente nomeado no tema global (mesmo padrão de GuideScreen.kt/ShopScreen.kt) ───
 private val Champagne400 = Color(0xFFE5C158)
+private val Champagne500 = Color(0xFFD4AF37)
 private val Amber200 = Color(0xFFFDE68A)
 private val Amber100Half = Color(0xFFFEF3C7)
 private val Amber300 = Color(0xFFFCD34D)
@@ -121,16 +122,16 @@ fun HeatmapScreen(
             Icon(
                 imageVector = Icons.Filled.LocalFireDepartment,
                 contentDescription = null,
-                tint = Champagne400,
-                modifier = Modifier.height(18.dp).width(18.dp)
+                tint = Champagne500,
+                modifier = Modifier.height(16.dp).width(16.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "HEATMAP",
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                letterSpacing = 0.12.em,
+                fontSize = 12.sp,
+                letterSpacing = 0.05.em,
                 color = Champagne400
             )
         }

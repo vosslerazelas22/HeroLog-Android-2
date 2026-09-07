@@ -106,15 +106,15 @@ fun ShopScreen(
                 imageVector = Icons.Filled.MonetizationOn,
                 contentDescription = null,
                 tint = Champagne500,
-                modifier = Modifier.height(18.dp).width(18.dp)
+                modifier = Modifier.height(16.dp).width(16.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "BAZAR DE MYSTARA",
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                letterSpacing = 0.12.em,
+                fontSize = 12.sp,
+                letterSpacing = 0.05.em,
                 color = Champagne400
             )
         }
