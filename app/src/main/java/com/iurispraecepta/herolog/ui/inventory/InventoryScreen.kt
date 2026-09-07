@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +42,8 @@ import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.components.ItemInspectAction
 import com.iurispraecepta.herolog.ui.components.ItemInspectModal
 import com.iurispraecepta.herolog.ui.components.ItemInspectVariant
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 
 @Composable
 fun InventoryScreen(
@@ -79,7 +82,9 @@ fun InventoryScreen(
     )
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (physicalItems.isNotEmpty()) {
@@ -150,7 +155,7 @@ fun InventoryScreen(
                                     Text(
                                         text = if (isEspecial) "Especial" else "Comum",
                                         style = TextStyle(
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = JetBrainsMono,
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 9.sp,
                                             color = badgeText,
@@ -164,7 +169,7 @@ fun InventoryScreen(
                         Text(
                             text = item.desc,
                             style = TextStyle(
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontSize = 11.sp,
                                 color = Color(0xFFA8A29E)
                             ),
@@ -187,7 +192,7 @@ fun InventoryScreen(
                 Text(
                     text = "Mochila vazia. Drops ocorrem ao concluir focos ou compre no Bazar.",
                     style = TextStyle(
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontSize = 10.sp,
                         fontStyle = FontStyle.Italic,
                         color = Color(0xFFFEF3C7).copy(alpha = 0.35f * pulseAlpha),

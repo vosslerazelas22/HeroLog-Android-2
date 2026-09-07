@@ -172,8 +172,8 @@ fun StatsScreen(state: CharacterState, modifier: Modifier = Modifier) {
                 text = "ESTATÍSTICAS DO HERÓI",
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 13.sp,
-                letterSpacing = 0.10.em,
+                fontSize = 12.sp,
+                letterSpacing = 0.05.em,
                 color = Champagne400
             )
         }
@@ -228,7 +228,7 @@ private fun StatCard(stat: StatCardData) {
                 text = stat.value,
                 fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
+                fontSize = 20.sp,
                 color = Amber100
             )
             Spacer(modifier = Modifier.height(2.dp))
