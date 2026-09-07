@@ -191,7 +191,7 @@ fun FocusModeScreen(
                             contentColor = PausedText
                         )
                     ) {
-                        Text("RETOMAR", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                        Text("Retomar", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
                     }
                 } else {
                     OutlinedButton(
@@ -201,7 +201,7 @@ fun FocusModeScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Amber500),
                         border = BorderStroke(1.dp, RunningBorder)
                     ) {
-                        Text("PAUSAR", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                        Text("Pausar", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
                     }
                 }
 

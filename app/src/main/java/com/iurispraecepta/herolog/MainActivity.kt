@@ -823,7 +823,9 @@ fun FocusOrbPreviewScreen(
                             1.dp,
                             if (focusState.isPaused) Color(0xFFA855F7) else Color(0xFFE5C158).copy(alpha = 0.3f)
                         ),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(4.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(
@@ -834,9 +836,10 @@ fun FocusOrbPreviewScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            if (focusState.isPaused) "RETOMAR MISSÃO" else "PAUSAR MISSÃO",
+                            if (focusState.isPaused) "Retomar Missão" else "Pausar Missão",
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 0.8.sp
+                            letterSpacing = 0.8.sp,
+                            fontSize = 14.sp
                         )
                     }
                     OutlinedButton(
@@ -871,7 +874,9 @@ fun FocusOrbPreviewScreen(
                         border = BorderStroke(
                             1.dp,
                             if (isConfirmingAbandon) Color(0xFFF87171) else Color(0xFFEF4444).copy(alpha = 0.3f)
-                        )
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.lucide_ic_x),
@@ -879,7 +884,7 @@ fun FocusOrbPreviewScreen(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isConfirmingAbandon) "CONFIRMAR?" else "ABANDONAR", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal)
+                        Text(if (isConfirmingAbandon) "Confirmar?" else "Abandonar", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal, fontSize = 12.sp)
                     }
                 }
 

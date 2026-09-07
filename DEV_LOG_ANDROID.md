@@ -4489,3 +4489,33 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Botão "+ Gerenciar Habilidades" omitido — depende de callback inexistente no `CharacterScreen` Android atual
 
 **Status: FECHADO (código + build + testes); visual pendente.**
+
+---
+
+## Bloco TextoBotõesFoco — Correção de caixa alta nos botões de sessão (07/09/2026)
+
+**Escopo:** Corrigir ALL CAPS → sentence case nos textos dos botões de sessão Foco (inline e tela cheia), alinhando com o React.
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (2 substituições)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusModeScreen.kt` (2 substituições)
+
+**Mudanças:**
+
+| Local | Antes (Android) | Depois (≈ React) | Ref React |
+|-------|-----------------|-------------------|-----------|
+| `MainActivity.kt:887` | `"RETOMAR MISSÃO"` / `"PAUSAR MISSÃO"` | `"Retomar Missão"` / `"Pausar Missão"` | `App.tsx:2775` |
+| `MainActivity.kt:935` | `"CONFIRMAR?"` / `"ABANDONAR"` | `"Confirmar?"` / `"Abandonar"` | `App.tsx:2785` |
+| `FocusModeScreen.kt:194` | `"RETOMAR"` | `"Retomar"` | `FocusModeScreen.tsx:215` |
+| `FocusModeScreen.kt:204` | `"PAUSAR"` | `"Pausar"` | `FocusModeScreen.tsx:215` |
+
+**Contexto:** O patch `patchB_focus_timer_buttons_visual_fidelity.patch` introduziu ALL CAPS deliberadamente, mas sem registro no PARIDADE.md como decisão consciente. Auditoria identificou que o React usa sentence case em todos os 4 textos. Padrão alinhado com correções B6-B9 já documentadas (ALL CAPS → mixed case).
+
+**Validação:**
+- Build: `BUILD SUCCESSFUL`
+- Testes: 484 executados, 6 falhas (todas `NoSuchMethodError` em screenshot tests Roborazzi, pré-existentes, não relacionadas)
+- Visual: PENDENTE — aguardando inspeção em device/emulador
+
+**Desvios:** Nenhum.
+
+**Status: FECHADO (código + build + testes); visual pendente.**
