@@ -4482,7 +4482,7 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 
 **Validação:**
 - Build: `BUILD SUCCESSFUL in 2m 7s`
-- Testes: 464 testes, 458 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado)
+- Testes: 464 testes, 458 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado a este bloco; → **resolvido em 08/09 via `FlowRowStable` (Bloco FS)**)
 - Visual: **PENDENTE** — aguardando inspeção em device/emulador
 
 **Desvios de escopo aprovados:**
@@ -4513,7 +4513,7 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 
 **Validação:**
 - Build: `BUILD SUCCESSFUL`
-- Testes: 484 executados, 6 falhas (todas `NoSuchMethodError` em screenshot tests Roborazzi, pré-existentes, não relacionadas)
+- Testes: 484 executados, 6 falhas (todas `NoSuchMethodError` em screenshot tests Roborazzi, pré-existentes, não relacionadas; → **resolvido em 08/09 via `FlowRowStable` (Bloco FS)**)
 - Visual: PENDENTE — aguardando inspeção em device/emulador
 
 **Desvios:** Nenhum.
@@ -4560,7 +4560,7 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL in 1m 20s** (warnings todos pré-existentes: `Divider` deprecated, `AutoMirrored` Article, etc., nenhum novo introduzido por este bloco).
 - Testes: `./gradlew testDebugUnitTest --tests "com.iurispraecepta.herolog.data.export.*"` — **19/19 PASSED** (XML nominal conferido: `GameStateExporterTest` 9/9 com `tests="9" failures="0" errors="0"`, `GameStateImporterTest` 10/10 com `tests="10" failures="0" errors="0"`). 1 falha inicial (`encodePayload_withCustomJson_respectsConfig` esperava que `gold` não aparecesse sem `encodeDefaults` — corrigido pra testar `lastDungeonClearedTime` que tem default `0L` e de fato desaparece).
 - Regressão: `./gradlew testDebugUnitTest --tests "HeroLogViewModelTest"` (rodado por Bruno) — **57/57 PASSED** com `tests="57" failures="0" errors="0"`, nenhuma regressão. A subida de 52→57 testes (vs baseline do commit `24b3a26` do import) é de outras sessões, não deste bloco.
-- Suíte completa: `./gradlew testDebugUnitTest` (rodado por Bruno) — 484 testes, 6 falhas, **todas pré-existentes** (`SkillsScreenScreenshotTest` 3 + `CharacterScreenScreenshotTest` 1 + `FocusCompletionFlowScreenshotTest` 1 + `SkillSelectorModalScreenshotTest` 1), todas com mesmo `NoSuchMethodError: FlowLayoutKt.FlowRow` — incompatibilidade pré-existente do Roborazzi com versão de Compose Foundation, registrada em `PARIDADE.md` e em outros blocos do `DEV_LOG_ANDROID.md`. Este bloco não toca `build.gradle.kts`, então não tem como ter introduzido essas 6 falhas.
+- Suíte completa: `./gradlew testDebugUnitTest` (rodado por Bruno) — 484 testes, 6 falhas, **todas pré-existentes** (`SkillsScreenScreenshotTest` 3 + `CharacterScreenScreenshotTest` 1 + `FocusCompletionFlowScreenshotTest` 1 + `SkillSelectorModalScreenshotTest` 1), todas com mesmo `NoSuchMethodError: FlowLayoutKt.FlowRow` — incompatibilidade pré-existente do Roborazzi com versão de Compose Foundation, registrada em `PARIDADE.md` e em outros blocos do `DEV_LOG_ANDROID.md`. Este bloco não toca `build.gradle.kts`, então não tem como ter introduzido essas 6 falhas. → **Causa raiz identificada em 08/09: `haze:1.6.10` força Compose 1.8.0 sobre BOM 1.7.0; resolvido via `FlowRowStable` (Bloco FS).**
 - Screenshot test do `GeneralSettingsModal` com a nova seção "Backup" (Roborazzi): caso `generalSettings_backup_section_showsAllFourActions` adicionado, PNG será gerado em `src/test/screenshots/general_settings_backup_section.png`. Inspeção visual humana em device real **pendente** (responsabilidade do Android Studio, conforme `AGENTS.md`).
 
 **Desvios aprovados:**
@@ -4589,7 +4589,7 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 
 **Validação:**
 - Build: `BUILD SUCCESSFUL in 1m 7s`
-- Testes: 484 testes, 478 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado)
+- Testes: 484 testes, 478 PASSED, 6 FAILED (screenshot tests Roborazzi pré-existentes, `NoSuchMethodError` em `FlowLayout` — incompatibilidade de dependência, não relacionado a este bloco; → **resolvido em 08/09 via `FlowRowStable` (Bloco FS)**)
 - Visual: **PENDENTE** — aguardando inspeção em device/emulador
 
 **Desvios de escopo aprovados:**
@@ -4628,3 +4628,26 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Botão "Continuar": gradiente `Brush.horizontalGradient(Amber500→Amber400)` em `Box` dentro de `Button` transparente (React usa `bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400`)
 
 **Status: FECHADO (código + build + testes + visual validado).
+
+## [2026-09-08] Bloco FS: Correção de crash `NoSuchMethodError` (FlowRow)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/FlowRowStable.kt` (novo, +110 — composable estável baseado em `Layout` + reflection)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/character/CharacterScreen.kt` (1 uso substituído, import + `@OptIn` removidos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/skills/SkillsScreen.kt` (3 usos substituídos, import + `@OptIn` removidos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/skills/SkillSelectorModal.kt` (1 uso substituído, import + `@OptIn` removidos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt` (1 uso substituído, import + `@OptIn` removidos)
+
+**Resumo:**
+- **Causa raiz**: `dev.chrisbanes.haze:haze:1.6.10` (dependência de produção) puxa `org.jetbrains.compose.ui:ui:1.8.0`, forçando Compose Foundation **1.8.0** sobre a **1.7.0** declarada pela BOM `compose-bom:2024.09.00`. A assinatura de `FlowLayoutKt.FlowRow` mudou entre 1.7.0 e 1.8.0 (adição de parâmetro `Alignment$Vertical`). O compilador compila contra 1.7.0 (BOM governa `compileClasspath`), mas o APK empacota 1.8.0 (resolved pelo Graal via `haze`) → `NoSuchMethodError` em runtime.
+- **Efeito**: crash no **device real** (logcat confirmou `FATAL EXCEPTION: main ... NoSuchMethodError: No static method FlowRow ... at CharacterScreenKt.CharacterScreen(CharacterScreen.kt:604)`) e nos **6 testes de screenshot Roborazzi** (`SkillsScreenScreenshotTest` 3 + `CharacterScreenScreenshotTest` 1 + `FocusCompletionFlowScreenshotTest` 1 + `SkillSelectorModalScreenshotTest` 1). Disparava ao renderizar chips via `FlowRow` — qualquer buff ativo (DoubleLoot, FocusElixir, CrystalClarity, RuneFortune, StreakShield) na Ficha do Herói, tags de skills, emoji picker, sugestões rápidas e tags de subskill.
+- **Correção**: substituição da API experimental `FlowRow` por `FlowRowStable` — composable próprio baseado em `Layout` (API estável do Compose UI) que invoca `Arrangement.Horizontal.arrange`/`Arrangement.Vertical.arrange` via Java reflection (os métodos da interface `Arrangement.Horizontal` têm nome JVM mascarado, inacessíveis diretamente do Kotlin neste setup). Comportamento de flow layout preservado: quebra de linha item-a-item, espaçamento extraído empiricamente dos offsets do `arrange`. Removidos todos os `@OptIn(ExperimentalLayoutApi::class)` e imports de `FlowRow`/`ExperimentalLayoutApi` dos 4 arquivos.
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL** (warnings todos pré-existentes)
+- Suíte completa: `./gradlew testDebugUnitTest` — **484/484 PASSED**, 0 falhas, 0 erros (os 6 testes que falhavam com `NoSuchMethodError` agora passam)
+- Visual/device: **VALIDADO POR BRUNO** — abrir ficha do herói com `StreakShield` ativo não crasha mais no device físico
+
+**Commit:** `0883527` — `fix: replace FlowRow with FlowRowStable to resolve NoSuchMethodError crash`
+
+**Status: FECHADO (código + build + testes + device validado).
