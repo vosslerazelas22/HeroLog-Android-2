@@ -45,6 +45,7 @@ import com.iurispraecepta.herolog.logic.focus.resolveCognitiveDeath
 import com.iurispraecepta.herolog.logic.focus.resolveRespawn
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.model.DailyReportData
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.LogEntry
 import com.iurispraecepta.herolog.model.OrbConcept
@@ -104,6 +105,9 @@ class HeroLogViewModel(
     private val _systemLogs = MutableStateFlow<List<LogEntry>>(emptyList())
     val systemLogs: StateFlow<List<LogEntry>> = _systemLogs.asStateFlow()
 
+    private val _dailyReport = MutableStateFlow<DailyReportData?>(null)
+    val dailyReport: StateFlow<DailyReportData?> = _dailyReport.asStateFlow()
+
     /** Porte de addSystemLog (App.tsx ~1223). Cap 51 (mais recente primeiro). */
     fun addSystemLog(text: String, highlighted: Boolean = false) {
         val timeStr = SimpleDateFormat("HH:mm:ss", Locale.forLanguageTag("pt-BR"))
@@ -149,6 +153,21 @@ class HeroLogViewModel(
                 }
             }
 
+            // Relatório Diário: calcula dados a partir do estado pré-update + resultado do rollover.
+            // Fonte: React App.tsx:1056-1097 — valores computados antes de mutar state.
+            if (stateToUse.todayDate != QuestLogic.toDateStringJs(Date(clock()))) {
+                val rewardAmount = if (stateToUse.charClass == CharClass.Warrior) 120 else 100
+                _dailyReport.value = DailyReportData(
+                    rewardAmount = rewardAmount,
+                    currentStreak = stateToUse.streak,
+                    streakLost = stateToUse.streak > 0 && rolloverResult.updatedState.streak == 0 && !rolloverResult.shieldConsumed,
+                    streakProtected = rolloverResult.shieldConsumed && stateToUse.streak > 0,
+                    missedDailiesCount = rolloverResult.missedCount,
+                    damageTaken = max(0, stateToUse.hp - rolloverResult.updatedState.hp),
+                    allDailiesCompleted = rolloverResult.missedCount == 0 && stateToUse.dailies.isNotEmpty()
+                )
+            }
+
             if (!finalState.hasClaimedLogin) {
                 val loginGold = if (finalState.charClass == com.iurispraecepta.herolog.model.CharClass.Warrior) 120 else 100
                 finalState = finalState.copy(
@@ -174,6 +193,10 @@ class HeroLogViewModel(
 
             recoverFocusSession()
         }
+    }
+
+    fun dismissDailyReport() {
+        _dailyReport.value = null
     }
 
     private suspend fun recoverFocusSession() {

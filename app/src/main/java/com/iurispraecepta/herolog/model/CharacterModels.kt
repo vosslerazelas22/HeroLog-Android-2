@@ -217,3 +217,13 @@ data class CharacterSummary(
     val isPlayerDead: Boolean = false
 )
 
+data class DailyReportData(
+    val rewardAmount: Int,
+    val currentStreak: Int,
+    val streakLost: Boolean,
+    val streakProtected: Boolean,
+    val missedDailiesCount: Int,
+    val damageTaken: Int,
+    val allDailiesCompleted: Boolean
+)
+

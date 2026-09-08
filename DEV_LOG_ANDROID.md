@@ -4597,3 +4597,34 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 - Dot verde usa `Box` estático em vez de `animate-pulse` (animação de pulso pode ser adicionada futuramente se necessário)
 
 **Status: FECHADO (código + build + testes); visual pendente.**
+
+## [2026-09-08] Bloco DR: Relatório Diário (D198) + Roborazzi Tests
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/model/CharacterModels.kt` (+10 — data class `DailyReportData`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` (+23 — StateFlow + cálculo no init + `dismissDailyReport()`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/daily/DailyReportModal.kt` (+534 — composable novo)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+11 — import + wiring overlay)
+- `app/src/test/java/com/iurispraecepta/herolog/DailyReportModalScreenshotTest.kt` (+171 — 7 cenários Roborazzi)
+- `app/src/test/screenshots/daily_report_*.png` (7 baselines novos)
+
+**Resumo:**
+- **D198 resolvido**: modal "RELATÓRIO DIÁRIO" ausente no Android agora implementado. React: `App.tsx:4319-4460` (popup fullscreen com sparkle particles, sun icon bounce, gold reward card, streak section 3 estados, tasks section 3 estados, botão Continuar). Android: `DailyReportModal.kt` com `AnimatedVisibility` (fadeIn+slideInVertically), `Modifier.blur(12.dp)` com guard API 31+ (padrão `HeroLogModal`/`ItemInspectModal`/`GeneralSettingsModal`), sparkle particles via `rememberInfiniteTransition`, bounce animation no ícone ☀️, fontes `Cinzel`/`JetBrainsMono`/`Inter` de `Type.kt`
+- **Data class `DailyReportData`** (7 campos): idêntico ao shape React `App.tsx:419-427` — `rewardAmount`, `currentStreak`, `streakLost`, `streakProtected`, `missedDailiesCount`, `damageTaken`, `allDailiesCompleted`. Não é `@Serializable` (estado efêmero de UI)
+- **Cálculo no ViewModel**: valores computados no `init` do `HeroLogViewModel.kt` **antes** de persistir o rollover, fiel ao React `App.tsx:1056-1097` (valores derivados do estado pré-update + `RolloverResult`). `streakLost`/`streakProtected` derivados de `shieldConsumed` + diff de streak (sem estender `RolloverResult` — mantém lógica pura sem acoplamento a apresentação)
+- **Wiring no `MainActivity.kt`**: overlay global observa `viewModel.dailyReport` via `collectAsState()`, renderiza `DailyReportModal` quando não-nulo (mesmo padrão do `LevelUpOverlay`)
+- **7 testes Roborazzi**: streak kept, streak lost, streak protected, warrior bonus 120gp, all completed, no dailies, ranger reduced damage
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL in 1m 8s** (warnings todos pré-existentes, nenhum novo)
+- Testes screenshot: `./gradlew app:recordRoborazziDebug --tests "com.iurispraecepta.herolog.DailyReportModalScreenshotTest"` — **7/7 PASSED**, XML bruto: `tests="7" failures="0" errors="0"`. Baselines gerados em `app/src/test/screenshots/daily_report_*.png`
+- Suíte completa: `./gradlew testDebugUnitTest` — **491/491 PASSED**, 0 falhas, 0 erros
+- Visual: **VALIDADO POR BRUNO** — 7 PNGs inspecionados, confirmados idênticos ao React
+
+**Desvios aprovados:**
+- `streakLost`/`streakProtected` são derivados no ViewModel a partir de `RolloverResult` (não extensão de `RolloverResult`) — mantém a lógica pura existente sem acoplamento a apresentação. Equivalente ao React que calcula `dailyReport` inline no `useEffect` antes de chamar `setGameState`
+- Partículas sparkle: 16 ✦ com `rememberInfiniteTransition` (React usa CSS `rising-spark` animation com `Math.random()`). Posições fixas em vez de aleatórias (evita flaky tests no Roborazzi)
+- `Modifier.blur(12.dp)` com guard API 31+ no container do modal (React usa `backdrop-blur-md`). Padrão já existente em 3 modais do projeto
+- Botão "Continuar": gradiente `Brush.horizontalGradient(Amber500→Amber400)` em `Box` dentro de `Button` transparente (React usa `bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400`)
+
+**Status: FECHADO (código + build + testes + visual validado).

@@ -82,6 +82,7 @@ import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
+import com.iurispraecepta.herolog.ui.daily.DailyReportModal
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.focus.AMBIENT_SOUNDS
@@ -649,6 +650,16 @@ class MainActivity : ComponentActivity() {
                         event = levelUpQueue.firstOrNull(),
                         onDismiss = { heroLogViewModel.dismissCurrentLevelUp() }
                     )
+
+                    // Relatório Diário: modal fullscreen ao detectar novo dia.
+                    // Fonte: React App.tsx:4319-4460 (dailyReport popup).
+                    val dailyReport by heroLogViewModel.dailyReport.collectAsState()
+                    dailyReport?.let { report ->
+                        DailyReportModal(
+                            data = report,
+                            onDismiss = { heroLogViewModel.dismissDailyReport() }
+                        )
+                    }
                 }
             }
         }
