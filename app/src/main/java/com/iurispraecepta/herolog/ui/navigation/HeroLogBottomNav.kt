@@ -1,5 +1,8 @@
 package com.iurispraecepta.herolog.ui.navigation
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateIntOffsetAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,9 +38,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -161,76 +169,103 @@ fun HeroLogBottomNav(
     var openDropdown by remember { mutableStateOf<String?>(null) }
     val activeModule = getActiveModule(activeTab)
 
+    var pillTargetX by remember { mutableFloatStateOf(0f) }
+    var pillWidth by remember { mutableFloatStateOf(0f) }
+
+    val animatedPillOffset by animateIntOffsetAsState(
+        targetValue = IntOffset(pillTargetX.toInt(), 0),
+        animationSpec = tween(durationMillis = 250),
+        label = "pillOffset"
+    )
+
     Column(modifier = modifier
         .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin(containerColor = Stone950.copy(alpha = 0.7f)))
         .shadow(12.dp, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
         .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Stone950)
-                .border(width = 2.dp, color = White10)
-                .navigationBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            NAV_ITEMS.forEach { item ->
-                val isActive = activeModule == item.id
-                val hasSubTabs = item.id in MODULES_WITH_SUBTABS
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Stone950)
+                    .border(width = 2.dp, color = White10)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                NAV_ITEMS.forEach { item ->
+                    val isActive = activeModule == item.id
+                    val hasSubTabs = item.id in MODULES_WITH_SUBTABS
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(4.dp))
-                        .then(
-                            if (isActive) {
-                                Modifier
-                                    .background(Champagne500.copy(alpha = 0.05f))
-                                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
-                            } else {
-                                Modifier
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .onGloballyPositioned { coordinates ->
+                                if (isActive) {
+                                    pillTargetX = coordinates.positionInRoot().x
+                                    pillWidth = coordinates.size.width.toFloat()
+                                }
                             }
-                        )
-                        .clickable {
-                            if (hasSubTabs) {
-                                openDropdown = if (openDropdown == item.id) null else item.id
-                            } else {
-                                openDropdown = null
-                                onChangeTab(item.targetTab)
+                            .clip(RoundedCornerShape(4.dp))
+                            .clickable {
+                                if (hasSubTabs) {
+                                    openDropdown = if (openDropdown == item.id) null else item.id
+                                } else {
+                                    openDropdown = null
+                                    onChangeTab(item.targetTab)
+                                }
                             }
-                        }
-                        .padding(vertical = 4.dp, horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.graphicsLayer {
-                            scaleX = if (isActive) 1.05f else 1f
-                            scaleY = if (isActive) 1.05f else 1f
-                        }
+                            .padding(vertical = 4.dp, horizontal = 4.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            painter = painterResource(item.iconRes),
-                            contentDescription = item.label,
-                            tint = if (isActive) Champagne400 else Zinc300.copy(alpha = 0.40f),
-                            modifier = Modifier.size(20.dp)
+                        val contentOffset by animateDpAsState(
+                            targetValue = if (isActive) 0.dp else 7.dp,
+                            animationSpec = tween(durationMillis = 200),
+                            label = "contentOffset"
                         )
-                        if (isActive) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = item.label.uppercase(),
-                                color = Champagne400,
-                                fontSize = 10.sp,
-                                fontFamily = Cinzel,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = trackingWider,
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .offset(y = contentOffset)
+                                .graphicsLayer {
+                                    scaleX = if (isActive) 1.05f else 1f
+                                    scaleY = if (isActive) 1.05f else 1f
+                                }
+                        ) {
+                            Icon(
+                                painter = painterResource(item.iconRes),
+                                contentDescription = item.label,
+                                tint = if (isActive) Champagne400 else Zinc300.copy(alpha = 0.40f),
+                                modifier = Modifier.size(20.dp)
                             )
+                            if (isActive) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = item.label.uppercase(),
+                                    color = Champagne400,
+                                    fontSize = 10.sp,
+                                    fontFamily = Cinzel,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = trackingWider,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 }
             }
+
+            // Animated active pill
+            Box(
+                modifier = Modifier
+                    .offset { animatedPillOffset }
+                    .size(width = pillWidth.dp, height = 40.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Champagne500.copy(alpha = 0.05f))
+                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
+            )
         }
     }
 
