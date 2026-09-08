@@ -12,8 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import com.iurispraecepta.herolog.ui.components.FlowRowStable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -106,7 +105,6 @@ private val SKILL_EMOJIS = listOf(
     "🔬", "🧘", "🎵", "💰", "💼", "🧪", "🛡️", "🎯"
 )
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SkillsScreen(
     skills: List<Skill>,
@@ -417,7 +415,7 @@ fun SkillsScreen(
                                 color = Color(0x40FEF3C7)
                             )
                         } else {
-                            FlowRow(
+                            FlowRowStable(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
@@ -585,7 +583,7 @@ fun SkillsScreen(
                     letterSpacing = 1.sp
                 )
 
-                FlowRow(
+                FlowRowStable(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
@@ -723,7 +721,7 @@ fun SkillsScreen(
                     letterSpacing = 1.sp
                 )
 
-                FlowRow(
+                FlowRowStable(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxWidth()
