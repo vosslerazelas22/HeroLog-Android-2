@@ -281,7 +281,7 @@ class MainActivity : ComponentActivity() {
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
                         LocalSfxManager provides sfxManager
                     ) {
-                    Box(modifier = Modifier.fillMaxSize().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
+                    Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()).consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(

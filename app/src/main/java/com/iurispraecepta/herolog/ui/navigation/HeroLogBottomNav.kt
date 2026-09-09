@@ -38,8 +38,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -169,8 +169,11 @@ fun HeroLogBottomNav(
     var openDropdown by remember { mutableStateOf<String?>(null) }
     val activeModule = getActiveModule(activeTab)
 
-    var pillTargetX by remember { mutableFloatStateOf(0f) }
-    var pillWidth by remember { mutableFloatStateOf(0f) }
+    var rowWidthPx by remember { mutableFloatStateOf(0f) }
+
+    val activeIndex = NAV_ITEMS.indexOfFirst { it.id == activeModule }.coerceAtLeast(0)
+    val itemWidthPx = if (rowWidthPx > 0f) rowWidthPx / NAV_ITEMS.size else 0f
+    val pillTargetX = itemWidthPx * activeIndex
 
     val animatedPillOffset by animateIntOffsetAsState(
         targetValue = IntOffset(pillTargetX.toInt(), 0),
@@ -190,7 +193,8 @@ fun HeroLogBottomNav(
                     .background(Stone950)
                     .border(width = 2.dp, color = White10)
                     .navigationBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .onSizeChanged { rowWidthPx = it.width.toFloat() },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -201,12 +205,7 @@ fun HeroLogBottomNav(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .onGloballyPositioned { coordinates ->
-                                if (isActive) {
-                                    pillTargetX = coordinates.positionInRoot().x
-                                    pillWidth = coordinates.size.width.toFloat()
-                                }
-                            }
+                            .height(48.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .clickable {
                                 if (hasSubTabs) {
@@ -261,7 +260,7 @@ fun HeroLogBottomNav(
             Box(
                 modifier = Modifier
                     .offset { animatedPillOffset }
-                    .size(width = pillWidth.dp, height = 40.dp)
+                    .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 40.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(Champagne500.copy(alpha = 0.05f))
                     .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
