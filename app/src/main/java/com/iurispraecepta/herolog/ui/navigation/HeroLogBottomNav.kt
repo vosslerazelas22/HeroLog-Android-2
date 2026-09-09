@@ -35,6 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -186,15 +188,22 @@ fun HeroLogBottomNav(
         .shadow(12.dp, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
         .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth().onSizeChanged { rowWidthPx = it.width.toFloat() }) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Stone950)
-                    .border(width = 2.dp, color = White10)
+                    .drawBehind {
+                        val strokePx = 2.dp.toPx()
+                        drawLine(
+                            color = White10,
+                            start = Offset(0f, strokePx / 2f),
+                            end = Offset(size.width, strokePx / 2f),
+                            strokeWidth = strokePx
+                        )
+                    }
                     .navigationBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .onSizeChanged { rowWidthPx = it.width.toFloat() },
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
