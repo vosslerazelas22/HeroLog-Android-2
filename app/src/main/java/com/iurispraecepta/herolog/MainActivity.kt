@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -280,7 +281,7 @@ class MainActivity : ComponentActivity() {
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
                         LocalSfxManager provides sfxManager
                     ) {
-                    Box(modifier = Modifier.fillMaxSize().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(
