@@ -1078,6 +1078,7 @@ fun FocusOrbPreviewScreen(
                             Text(
                                 text = "?",
                                 fontSize = 10.sp,
+                                lineHeight = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Champagne400.copy(alpha = 0.8f)
                             )
