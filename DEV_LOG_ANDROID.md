@@ -4740,4 +4740,103 @@ Port do sistema de sons sintetizados do React (`NativeAudioEngine` em `src/utils
 - Visual/device: **PENDENTE** — inspeção em device real necessária
 
 **Commits:**
-- (pendente) — `feat(sfx): port 6-sound SFX system from React NativeAudioEngine`
+- `f17d5d4` — `feat(sfx): port 6-sound SFX system from React NativeAudioEngine`
+
+## [2026-09-09] Bloco S5: Sprint de Paridade Visual — Módulo Missões (6 blocos)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (Bloco 1 — Habits)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (Bloco 2 — Dailies)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (Bloco 3 — Todos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (Bloco 4 — Quests)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt` (Bloco 5 — History)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (Bloco 6 — QuestFab, seção L1239-1402)
+
+**Resumo:**
+
+Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando fontes, cores de labels, tamanhos de texto, placeholders e estilo do botão de submit contra a fonte React (`HabitsTab.tsx`, `DailiesTab.tsx`, `TodosTab.tsx`, `QuestsTab.tsx`, `HistoryTab.tsx`, `QuestFab.tsx`). Nenhuma mudança de lógica — cosmético puro.
+
+**Mudanças sistemáticas aplicadas (S1-S10):**
+
+| S# | Descrição | React ref | Android antes | Android depois |
+|---|---|---|---|---|
+| S3 | Migração de fonte | `font-serif` / `font-mono` / `font-sans` | `FontFamily.Serif` / `.Monospace` / `.SansSerif` | `Cinzel` / `JetBrainsMono` / `Inter` |
+| S2 | Cor dos labels de formulário | `text-zinc-300` | `Amber300` ou `0xB3FEF3C7` | `Zinc300` |
+| S10 | Botão submit (Criar/Salvar) | `bg-amber-500/20 border-amber-400/40 text-amber-300` | Sólido `0xFFF59E0B`, texto `Stone950` | Bordered `0x33F59E0B` + `0x66FBBF24`, texto `Amber300` |
+| — | Copy de labels/títulos | Literais exatos do React | ALL CAPS inventados | Sentence case fiel |
+| — | Placeholders de input | Textos específicos por campo | Textos inventados/diferentes | Alinhados ao React |
+| — | Header dos módulos | `font-serif` + sentence case | `FontFamily.Serif` + ALL CAPS | `Cinzel` + sentence case |
+
+**Detalhes por bloco:**
+
+**Bloco 1 — Habits (`HabitsScreen.kt`, ~25 alterações):**
+- Header: `FontFamily.Serif` → `Cinzel`, "⚡ Capela de Hábitos" (sem uppercase manual)
+- Labels modal: `TÍTULO *`/`NOTAS`/`DIFICULDADE`/`CATEGORIAS` → `Título`/`Notas`/`Dificuldade`/`Categorias (Tags, separadas por vírgula)` em `Inter`+`Zinc300`, 10sp
+- Inputs: `SansSerif` 13-14sp → `Inter` 12sp
+- Toggles: rótulos "Positivo (+)"/"Negativo (-)" com `Inter`
+- Submit: bordered S10
+- Card título: `FontFamily.Serif` → `Cinzel`
+- Card stats: `FontFamily.Monospace` → `JetBrainsMono`
+- Card notas: sem font → `Inter`
+- Import `FontFamily` removido (órfão)
+
+**Bloco 2 — Dailies (`DailiesScreen.kt`, ~35 alterações):**
+- Header: `FontFamily.Serif` → `Cinzel`, "📅 Tarefas Diárias" (sentence case)
+- Todos os labels modal migrados (Título, Notas, Dificuldade, Regularidade, Checklist, Série Inicial, Categorias)
+- Placeholders alinhados: "Ex: Beber medicação, Fazer Duolingo", "Ex: Ao acordar em jejum...", "Ex: Lição completa, Revisar caderno...", "study, workout, health..."
+- Every input: `FontFamily.Monospace` → `JetBrainsMono`
+- Streak input: `FontFamily.Monospace` → `JetBrainsMono`
+- Submit: bordered S10
+- Excluir/Cancelar: `FontFamily.Serif` → `Inter`
+- Card título: `FontFamily.Serif` → `Cinzel`
+- Card notas: sem font → `Inter`
+- Card stats (streak, frequência, checklist): `FontFamily.Monospace` → `JetBrainsMono`
+- Import `FontFamily` removido
+
+**Bloco 3 — Todos (`TodosScreen.kt`, ~30 alterações):**
+- Header: `FontFamily.Serif` → `Cinzel`
+- Filter tabs: `FontFamily.Serif` → `Inter`
+- Labels modal migrados (Título, Notas, Dificuldade, Categorias, Checklist)
+- Labels copy alinhada: "Categorias (Tags, separadas por vírgula)", "Série Inicial (Streak)"
+- Submit: bordered S10
+- Excluir/Cancelar: `FontFamily.Serif` → `Inter`
+- Card título: `FontFamily.Serif` → `Cinzel`
+- Card notas: sem font → `Inter`
+- Card stats: `FontFamily.Monospace` → `JetBrainsMono`
+- Import `FontFamily` removido
+
+**Bloco 4 — Quests (`QuestsScreen.kt`, ~8 alterações):**
+- Header: `FontFamily.Serif` → `Cinzel`, "Contratos" (sentence case)
+- Card título quest: `FontFamily.Serif` → `Cinzel`
+- Label "Progresso": 11sp → 10sp, `Inter`
+- Valor progresso: `FontFamily.Monospace` → `JetBrainsMono`, 11sp → 10sp
+- "Baú de espólios recolhido": `FontFamily.Serif` → `Cinzel`
+- "Desbloqueia ao atingir progresso": `FontFamily.Serif` → `Cinzel`
+- Import `FontFamily` removido
+
+**Bloco 5 — History (`HistoryScreen.kt`, ~18 alterações):**
+- Header: `FontFamily.Serif` → `Cinzel`, "Crônicas Diárias" (sentence case)
+- FullHistoryCard: skill name `Cinzel`, date/XP/GP/duration `JetBrainsMono`, notes `Cinzel`, "Nenhuma crônica antiga" `Cinzel`
+- NotesHistoryCard: skill `Cinzel`, date `JetBrainsMono`, quote `Cinzel`, duration `JetBrainsMono`
+- EmptyGeneralState: `FontFamily.Serif` → `Cinzel`
+- EmptyNotesState: `FontFamily.Serif` → `Cinzel`
+- Import `FontFamily` removido
+
+**Bloco 6 — QuestFab (`MainActivity.kt`, ~8 alterações):**
+- Modal title: "CONTRATOS ATIVOS" → "📜 Contratos Ativos"
+- Daily quest name: sem font → `Cinzel` + `FontWeight.Black`
+- Daily/Guild progress: `FontFamily.Monospace` → `JetBrainsMono`
+- Daily/Guild desc: `FontFamily.Serif` → `Cinzel`
+- Guild quest name: sem font → `Cinzel` + `FontWeight.Black`
+- "Todas as teses conquistadas!": `FontFamily.Serif` → `Cinzel`
+- Import `FontFamily` removido, `JetBrainsMono` adicionado
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL** (39 tasks, 7s)
+- Suíte: `./gradlew testDebugUnitTest` — **BUILD SUCCESSFUL** (67 suites, 0 falhas/erros)
+- Visual/device: **PENDENTE** — inspeção em device real necessária
+
+**Commits:**
+- `f17d5d4` — incluído no commit de SFX (mesmo autor, mesma sessão)
+
+**Status: FECHADO (código + build + testes); visual pendente.
