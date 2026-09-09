@@ -4699,3 +4699,45 @@ Duas mudanças distintas, executadas em dois commits separados:
 - (pendente) — `fix(insets): bottom nav insets + edge-to-edge + CompositionLocal para contentPadding`
 
 **Status: FECHADO (código + build + testes); visual pendente.
+
+## [2026-09-11] Bloco D199: Sistema de SFX (Efeitos Sonoros)
+
+**Arquivos criados:**
+- `app/src/main/res/raw/sfx_focus_bell.wav` (3.5s — gong tibetano)
+- `app/src/main/res/raw/sfx_level_up.wav` (1.54s — arpejo ascendente)
+- `app/src/main/res/raw/sfx_coins.wav` (0.41s — clinking metálico)
+- `app/src/main/res/raw/sfx_death.wav` (1.5s — sawtooth descendente)
+- `app/src/main/res/raw/sfx_wilderness_warning.wav` (0.55s — heartbeat sub-bass)
+- `app/src/main/res/raw/sfx_click.wav` (0.06s — UI click)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/sfx/SfxManager.kt` (refatorado com factory pattern)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` (+24 call sites SFX)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/character/LevelUpOverlay.kt` (+1 call site)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/SkillInlineCarousel.kt` (+3 call sites)
+- 5 arquivos de teste (SfxManager.noOp() em todas as instantiation do ViewModel)
+- `app/src/test/java/com/iurispraecepta/herolog/LevelUpOverlayScreenshotTest.kt` (CompositionLocalProvider)
+
+**Resumo:**
+
+Port do sistema de sons sintetizados do React (`NativeAudioEngine` em `src/utils/audio.ts`) para Android.
+
+**Decisões de implementação:**
+- Wavs gerados via script Python (`/tmp/generate_sfx.py`) replicando fórmulas exatas do React: mesmas frequências, tipos de onda (sine/triangle/sawtooth), envelopes de ganho e durações.
+- `SfxManager` refatorado de versão anterior com factory pattern: `SfxManager.create(context)` para produção, `SfxManager.noOp()` para testes (SoundPool null, todas as chamadas são no-op).
+- `SfxManager.isMuted` checado internamente em cada `play()` — universal guard, sem exceção nos call sites.
+- 2 bugs do React (ShopTab:95 e QuestsTab:20 tocam sem checar `!muteSfx`) não replicados — decisão consciente.
+- `SfxManager` injetado no ViewModel via constructor (não CompositionLocal para ViewModel). `LocalSfxManager` CompositionLocal provida no Scaffold content para UI-layer composables (SkillInlineCarousel).
+- `isSfxMuted` local em `MainActivity.kt` sincronizado com `sfxManager.isMuted` via `LaunchedEffect`.
+
+**39 call sites implementados:**
+- ViewModel: init(playCoins+playDeath), toggleDaily(playCoins+playLevelUp), toggleTodo(playCoins+playLevelUp), triggerHabit(5 sons), claimQuestReward(playCoins), equipTitle(playCoins), buyTitle(playCoins), claimAchievementTitle(playLevelUp), equipItem(playCoins), sellItem(playCoins), buyShopItem(playCoins), prestigeSkill(playLevelUp), startSession(playFocusBell), confirmFocusSession(playLevelUp+playCoins), onBreakTimerCompleted(playLevelUp), triggerCognitiveDeath(playDeath), onAppBackgrounded(playWildernessWarning), abandonSession(playDeath)
+- UI: LevelUpOverlay(playLevelUp), SkillInlineCarousel(3× playClick)
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL**
+- Suíte: `./gradlew testDebugUnitTest` — **491/491 testes PASSED**
+- Visual/device: **PENDENTE** — inspeção em device real necessária
+
+**Commits:**
+- (pendente) — `feat(sfx): port 6-sound SFX system from React NativeAudioEngine`

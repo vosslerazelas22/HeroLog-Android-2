@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.iurispraecepta.herolog.logic.character.LevelUpEvent
+import com.iurispraecepta.herolog.ui.sfx.LocalSfxManager
 import kotlin.random.Random
 
 private val Stone950 = Color(0xFF0C0A09)
@@ -104,6 +105,11 @@ fun LevelUpOverlay(
     onDismiss: () -> Unit
 ) {
     if (event == null) return
+
+    val sfxManager = LocalSfxManager.current
+    LaunchedEffect(event) {
+        sfxManager?.playLevelUp()
+    }
 
     BackHandler(onBack = onDismiss)
 

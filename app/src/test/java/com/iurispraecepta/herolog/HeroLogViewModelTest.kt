@@ -15,6 +15,7 @@ import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.model.RepeatInterval
 import com.iurispraecepta.herolog.model.Todo
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
+import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.logic.SkillError
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
@@ -101,7 +102,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
 
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -112,7 +113,7 @@ class HeroLogViewModelTest {
         assertTrue(state?.hasClaimedLogin == true)
 
         // Confirma que persistiu de verdade - novo ViewModel no mesmo banco nao recria, so recarrega
-        val secondViewModel = HeroLogViewModel(repository, focusRepository)
+        val secondViewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(state, secondViewModel.characterState.value)
 
@@ -124,7 +125,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val equippedItem = com.iurispraecepta.herolog.model.InventoryItem(
@@ -149,7 +150,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val item = com.iurispraecepta.herolog.model.InventoryItem(
@@ -174,7 +175,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = createBaseState().copy(charName = "Aethelgard", gold = 500)
@@ -184,7 +185,7 @@ class HeroLogViewModelTest {
         assertEquals(state, viewModel.characterState.value)
 
         // Novo ViewModel, mesmo banco - prova persistência real, não só estado em memória do primeiro objeto
-        val secondViewModel = HeroLogViewModel(repository, focusRepository)
+        val secondViewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(state, secondViewModel.characterState.value)
@@ -196,7 +197,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseState = createBaseState().copy(skills = emptyList())
@@ -220,7 +221,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseState = createBaseState().copy(skills = listOf(
@@ -251,7 +252,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val skills = listOf(
@@ -285,7 +286,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val skills = listOf(
@@ -312,7 +313,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val skills = listOf(
@@ -346,7 +347,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val maxedSkill = com.iurispraecepta.herolog.model.Skill(id = "s1", name = "Android Dev", level = 99, xp = 500, emoji = "🤖", prestige = 2)
@@ -371,7 +372,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(streak = 5, combo = 10)
@@ -403,7 +404,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(equippedTitle = "DEATH-PROOF")
@@ -432,7 +433,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = false, isDungeonMode = false, dungeonSessions = 0)
@@ -456,7 +457,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(
@@ -503,7 +504,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
@@ -532,7 +533,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(
@@ -566,7 +567,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         // Morreu por Habit Down (sem sessão de foco iniciada)
@@ -600,7 +601,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1_000_000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         viewModel.startBreakTimer(5)
@@ -632,7 +633,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         viewModel.startBreakTimer(10)
@@ -657,7 +658,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1_000_000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         viewModel.startBreakTimer(1) // 60s
@@ -683,7 +684,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1_000_000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseChar = createBaseState().copy(
@@ -733,7 +734,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1_000_000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseChar = createBaseState().copy(
@@ -783,7 +784,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1_000_000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseChar = createBaseState().copy(
@@ -831,7 +832,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseChar = createBaseState().copy(
@@ -855,7 +856,7 @@ class HeroLogViewModelTest {
         assertEquals(15, updated?.pomodoroSettings?.longBreakDuration)
 
         // Verify persistence
-        val secondViewModel = HeroLogViewModel(repository, focusRepository)
+        val secondViewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(50, secondViewModel.characterState.value?.pomodoroSettings?.focusDuration)
 
@@ -867,7 +868,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseChar = createBaseState().copy(
@@ -923,7 +924,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseChar = createBaseState().copy(
@@ -947,7 +948,7 @@ class HeroLogViewModelTest {
         assertEquals(25, updated?.pomodoroSettings?.longBreakDuration)
 
         // Verify persistence
-        val secondViewModel = HeroLogViewModel(repository, focusRepository)
+        val secondViewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(45, secondViewModel.characterState.value?.pomodoroSettings?.focusDuration)
         assertEquals(8, secondViewModel.characterState.value?.pomodoroSettings?.shortBreakDuration)
@@ -961,7 +962,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseChar = createBaseState().copy(
@@ -1014,7 +1015,7 @@ class HeroLogViewModelTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val baseChar = createBaseState().copy(
@@ -1040,7 +1041,7 @@ class HeroLogViewModelTest {
         assertEquals(true, viewModel.characterState.value?.pomodoroSettings?.autoStartFocus)
 
         // Verify persistence
-        val secondViewModel = HeroLogViewModel(repository, focusRepository)
+        val secondViewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(true, secondViewModel.characterState.value?.pomodoroSettings?.autoStartBreak)
         assertEquals(true, secondViewModel.characterState.value?.pomodoroSettings?.autoStartFocus)
@@ -1064,7 +1065,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -1091,7 +1093,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -1133,7 +1136,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -1164,7 +1168,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -1209,7 +1214,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -1252,7 +1258,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { jsDateRef }
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1284,7 +1291,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { jsDateRef }
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1329,7 +1337,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { jsDateRef }
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
         )
 
         // Antes do delay de 100ms
@@ -1373,7 +1382,7 @@ class HeroLogViewModelTest {
         )
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.triggerHabit("h1", isUp = true)
@@ -1420,7 +1429,7 @@ class HeroLogViewModelTest {
         )
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.triggerHabit("h1", isUp = false)
@@ -1462,7 +1471,7 @@ class HeroLogViewModelTest {
         )
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.triggerHabit("unknown_id", isUp = true)
@@ -1506,7 +1515,7 @@ class HeroLogViewModelTest {
         )
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Toggle to completed
@@ -1569,7 +1578,7 @@ class HeroLogViewModelTest {
         )
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.toggleTodo("t1")
@@ -1596,7 +1605,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(habits = emptyList())
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.addHabit(
@@ -1649,7 +1658,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(habits = listOf(habit))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val editedHabit = habit.copy(
@@ -1683,7 +1692,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(habits = listOf(habit1, habit2))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.deleteHabit("h1")
@@ -1704,7 +1713,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(dailies = emptyList())
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.addDaily(
@@ -1765,7 +1774,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(dailies = listOf(daily))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val editedDaily = daily.copy(
@@ -1800,7 +1809,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(dailies = listOf(daily1, daily2))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.deleteDaily("d1")
@@ -1835,7 +1844,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(dailies = listOf(daily))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Flip c1 from false to true
@@ -1866,7 +1875,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(todos = emptyList())
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.addTodo(
@@ -1918,7 +1927,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(todos = listOf(todo))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         val editedTodo = todo.copy(
@@ -1951,7 +1960,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(todos = listOf(todo1, todo2))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.deleteTodo("t1")
@@ -1983,7 +1992,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(todos = listOf(todo))
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Flip c1 from false to true
@@ -2017,7 +2026,7 @@ class HeroLogViewModelTest {
         repository.saveCharacterState(state)
 
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime })
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
@@ -2051,7 +2060,7 @@ class HeroLogViewModelTest {
         val state = createBaseState().copy(combatLevel = 1)
         repository.saveCharacterState(state)
 
-        val viewModel = HeroLogViewModel(repository, focusRepository)
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.saveCharacterState(state.copy(combatLevel = 2))
@@ -2107,7 +2116,8 @@ class HeroLogViewModelTest {
         val viewModelWithShield = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { jsDateRef }
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -2128,7 +2138,8 @@ class HeroLogViewModelTest {
         val viewModelDamage = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { jsDateRef }
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -2152,7 +2163,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -2193,7 +2205,8 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.advanceUntilIdle()
 

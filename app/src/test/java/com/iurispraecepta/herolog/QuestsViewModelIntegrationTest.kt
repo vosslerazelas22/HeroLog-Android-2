@@ -9,6 +9,7 @@ import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
+import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -62,7 +63,7 @@ class QuestsViewModelIntegrationTest {
         val testDate = dateFormat.parse("2026-08-04")!!
 
         val state = createBaseState()
-        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository)
+        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository, sfxManager = SfxManager.noOp())
         advanceUntilIdle()
 
         val dailyList = viewModel.dailyQuests(state, testDate)
@@ -89,7 +90,7 @@ class QuestsViewModelIntegrationTest {
             totalSessions = 12,
             bestStreak = 3
         )
-        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository)
+        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository, sfxManager = SfxManager.noOp())
         advanceUntilIdle()
 
         val guildList = viewModel.guildQuestsProcessed(state, testDate)
@@ -113,7 +114,7 @@ class QuestsViewModelIntegrationTest {
         )
         characterRepository.saveCharacterState(initialHero)
 
-        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository)
+        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository, sfxManager = SfxManager.noOp())
         advanceUntilIdle()
 
         val beforeClaim = viewModel.characterState.value!!

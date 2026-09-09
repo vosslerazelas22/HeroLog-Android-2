@@ -21,7 +21,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.PaddingValues
@@ -91,6 +90,9 @@ import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.focus.AMBIENT_SOUNDS
 import com.iurispraecepta.herolog.ui.focus.AmbientSoundModal
+import com.iurispraecepta.herolog.ui.sfx.SfxManager
+import com.iurispraecepta.herolog.ui.sfx.LocalSfxManager
+import com.iurispraecepta.herolog.ui.sfx.rememberSfxManager
 import com.iurispraecepta.herolog.ui.focus.BreakPrepScreen
 import com.iurispraecepta.herolog.ui.focus.FocusModeScreen
 import com.iurispraecepta.herolog.ui.focus.FocusOrb
@@ -147,6 +149,7 @@ import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.model.OrbConcept
@@ -190,7 +193,11 @@ class MainActivity : ComponentActivity() {
 
                 val application = LocalContext.current.applicationContext as HeroLogApplication
                 val context = LocalContext.current
-                val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application))
+
+                // SFX de curta duração (level-up, coins, death, etc.)
+                val sfxManager = rememberSfxManager()
+
+                val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application, sfxManager))
                 val characterState by heroLogViewModel.characterState.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
@@ -216,6 +223,10 @@ class MainActivity : ComponentActivity() {
                 // O DisposableEffect(Unit) em rememberAmbientSoundController só libera ao
                 // desmontar o composable raiz, não ao trocar de aba.
                 val ambientController = rememberAmbientSoundController()
+
+                LaunchedEffect(isSfxMuted) {
+                    sfxManager.isMuted = isSfxMuted
+                }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
@@ -265,7 +276,10 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    CompositionLocalProvider(LocalBottomBarInset provides innerPadding.calculateBottomPadding()) {
+                    CompositionLocalProvider(
+                        LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
+                        LocalSfxManager provides sfxManager
+                    ) {
                     Box(modifier = Modifier.fillMaxSize().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
@@ -1233,7 +1247,7 @@ fun FocusOrbPreviewScreen(
                 HeroLogModal(
                     isOpen = isQuestFabOpen,
                     onClose = { isQuestFabOpen = false },
-                    title = "CONTRATOS ATIVOS",
+                    title = "📜 Contratos Ativos",
                     variant = ModalVariant.Amber
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -1265,15 +1279,16 @@ fun FocusOrbPreviewScreen(
                                         Text(
                                             text = q.name,
                                             fontSize = 12.sp,
+                                            fontFamily = Cinzel,
                                             color = if (q.isClaimed) Color(0x40E5C158)
                                             else if (q.isCompleted) Champagne400
                                             else Color(0xCCD6D3D1),
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.Black
                                         )
                                         Text(
                                             text = "${q.progress}/${q.target}",
                                             fontSize = 11.sp,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = JetBrainsMono,
                                             color = if (q.isCompleted) Champagne400 else Color(0x99A8A29E),
                                             fontWeight = if (q.isCompleted) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -1282,7 +1297,7 @@ fun FocusOrbPreviewScreen(
                                         text = q.desc,
                                         fontSize = 9.sp,
                                         color = Color(0x66D6D3D1),
-                                        fontFamily = FontFamily.Serif,
+                                        fontFamily = Cinzel,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 }
@@ -1309,13 +1324,14 @@ fun FocusOrbPreviewScreen(
                                         Text(
                                             text = closestGuild.name,
                                             fontSize = 12.sp,
+                                            fontFamily = Cinzel,
                                             color = Champagne400,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Black
                                         )
                                         Text(
                                             text = "${closestGuild.progress}/${closestGuild.target}",
                                             fontSize = 11.sp,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = JetBrainsMono,
                                             color = if (closestGuild.isCompleted) Champagne400 else Color(0x99A8A29E),
                                             fontWeight = if (closestGuild.isCompleted) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -1324,7 +1340,7 @@ fun FocusOrbPreviewScreen(
                                         text = closestGuild.desc,
                                         fontSize = 9.sp,
                                         color = Color(0x66D6D3D1),
-                                        fontFamily = FontFamily.Serif
+                                        fontFamily = Cinzel
                                     )
                                     // Progress bar
                                     Box(
@@ -1354,7 +1370,7 @@ fun FocusOrbPreviewScreen(
                                     text = "Todas as teses conquistadas!",
                                     fontSize = 12.sp,
                                     color = Color(0xFF10B981),
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Cinzel,
                                     fontWeight = FontWeight.Bold
                                 )
                             }

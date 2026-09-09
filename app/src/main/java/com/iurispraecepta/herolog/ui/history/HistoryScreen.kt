@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +59,9 @@ import com.iurispraecepta.herolog.model.HistoryEntry
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -105,8 +107,8 @@ fun HistoryScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "CRÔNICAS DIÁRIAS",
-                fontFamily = FontFamily.Serif,
+                text = "Crônicas Diárias",
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
                 letterSpacing = 0.12.em,
@@ -266,7 +268,7 @@ private fun FullHistoryCard(
                     ) {
                         Text(
                             text = entry.skillName,
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
                             color = Amber200,
@@ -299,7 +301,7 @@ private fun FullHistoryCard(
                     Text(
                         text = entry.date,
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         color = Stone400
                     )
                 }
@@ -311,7 +313,7 @@ private fun FullHistoryCard(
                     Text(
                         text = "⚡ +${entry.xp} XP",
                         fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Bold,
                         color = Emerald400
                     )
@@ -319,7 +321,7 @@ private fun FullHistoryCard(
                     Text(
                         text = "💎 +${entry.gold} GP",
                         fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Bold,
                         color = Amber400
                     )
@@ -345,8 +347,8 @@ private fun FullHistoryCard(
                         .padding(start = 10.dp, top = 6.dp, bottom = 6.dp, end = 8.dp)
                 ) {
                     Text(
-                        text = "“${entry.notes}”",
-                        fontFamily = FontFamily.Serif,
+                        text = "\u201C${entry.notes}\u201D",
+                        fontFamily = Cinzel,
                         fontStyle = FontStyle.Italic,
                         fontSize = 12.sp,
                         color = Amber100.copy(alpha = 0.85f),
@@ -380,7 +382,7 @@ private fun FullHistoryCard(
                     Text(
                         text = "⏱ Duração: ${entry.duration}m",
                         fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         color = Stone400
                     )
 
@@ -412,7 +414,7 @@ private fun FullHistoryCard(
                         Text(
                             text = "Nenhuma crônica antiga disponível",
                             fontSize = 10.sp,
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontStyle = FontStyle.Italic,
                             color = Amber100.copy(alpha = 0.3f)
                         )
@@ -460,7 +462,7 @@ private fun FullHistoryCard(
                                     fontSize = 12.sp,
                                     color = Amber100.copy(alpha = 0.9f),
                                     lineHeight = 18.sp,
-                                    fontFamily = FontFamily.Serif
+                                    fontFamily = Cinzel
                                 )
                             }
                         }
@@ -496,7 +498,7 @@ private fun NotesHistoryCard(
             ) {
                 Text(
                     text = entry.skillName.uppercase(),
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
                     letterSpacing = 0.08.em,
@@ -511,7 +513,7 @@ private fun NotesHistoryCard(
                 Text(
                     text = entry.date,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     color = Stone500
                 )
             }
@@ -543,8 +545,8 @@ private fun NotesHistoryCard(
                     .padding(start = 8.dp, top = 2.dp, bottom = 2.dp)
             ) {
                 Text(
-                    text = "“${entry.notes}”",
-                    fontFamily = FontFamily.Serif,
+                    text = "\u201C${entry.notes}\u201D",
+                    fontFamily = Cinzel,
                     fontStyle = FontStyle.Italic,
                     fontSize = 12.sp,
                     color = Amber100,
@@ -562,7 +564,7 @@ private fun NotesHistoryCard(
                 Text(
                     text = "Duração do Estudo: ${entry.duration} min",
                     fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = JetBrainsMono,
                     color = Stone500
                 )
             }
@@ -606,7 +608,7 @@ private fun EmptyHistoryGeneralState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Seu diário de jornada ainda está em branco.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontStyle = FontStyle.Italic,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
@@ -661,7 +663,7 @@ private fun EmptyNotesState(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Nenhuma Nota de Estudo registrada ainda.",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontStyle = FontStyle.Italic,
                 fontSize = 13.sp,
                 color = Amber300,

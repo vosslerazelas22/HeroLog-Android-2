@@ -57,7 +57,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -77,11 +76,15 @@ import com.iurispraecepta.herolog.ui.components.difficultyLabel
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 import java.util.Date
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -210,7 +213,7 @@ fun TodosScreen(
         ) {
             Text(
                 text = "🗒️ Missões Avulsas",
-                fontFamily = FontFamily.Serif,
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = Champagne400,
@@ -236,7 +239,7 @@ fun TodosScreen(
                     )
                     Text(
                         text = "Novo",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Inter,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = Champagne400
@@ -288,7 +291,7 @@ fun TodosScreen(
                 ) {
                     Text(
                         text = label,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Inter,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = when {
@@ -325,7 +328,7 @@ fun TodosScreen(
                     text = "Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!",
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         color = Amber100.copy(alpha = 0.4f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
@@ -378,11 +381,11 @@ fun TodosScreen(
                 // Título
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "TÍTULO *",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Título",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Amber300,
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -399,8 +402,8 @@ fun TodosScreen(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         textStyle = TextStyle(
                             color = Color.White,
-                            fontSize = 14.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         singleLine = true,
                         cursorBrush = SolidColor(Amber400),
@@ -411,7 +414,7 @@ fun TodosScreen(
                                     Text(
                                         text = "Ex: Resolver 3 problemas de Algoritmo, Escrever redação...",
                                         color = Stone500,
-                                        fontSize = 14.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -423,11 +426,11 @@ fun TodosScreen(
                 // Notas (h-14 ~ 56dp)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "NOTAS",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Notas",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xB3FEF3C7),
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -441,8 +444,8 @@ fun TodosScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         textStyle = TextStyle(
                             color = Amber100,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         cursorBrush = SolidColor(Amber400),
                         decorationBox = { innerTextField ->
@@ -472,11 +475,11 @@ fun TodosScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "DIFICULDADE",
-                            fontFamily = FontFamily.Serif,
+                            text = "Dificuldade",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -544,11 +547,11 @@ fun TodosScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "CATEGORIAS (TAGS)",
-                            fontFamily = FontFamily.Serif,
+                            text = "Categorias (Tags, separadas por vírgula)",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
                         BasicTextField(
@@ -562,8 +565,8 @@ fun TodosScreen(
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             textStyle = TextStyle(
                                 color = Amber100,
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.SansSerif
+                                fontSize = 12.sp,
+                                fontFamily = Inter
                             ),
                             singleLine = true,
                             cursorBrush = SolidColor(Amber400),
@@ -583,11 +586,11 @@ fun TodosScreen(
                 if (editingTodo == null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "CHECKLIST (OPCIONAL)",
-                            fontFamily = FontFamily.Serif,
+                            text = "Checklist",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -607,8 +610,8 @@ fun TodosScreen(
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 textStyle = TextStyle(
                                     color = Amber100,
-                                    fontSize = 13.sp,
-                                    fontFamily = FontFamily.SansSerif
+                                    fontSize = 12.sp,
+                                    fontFamily = Inter
                                 ),
                                 singleLine = true,
                                 cursorBrush = SolidColor(Amber400),
@@ -620,7 +623,7 @@ fun TodosScreen(
                                             Text(
                                                 text = "Ex: Resolver estrutura básica, Fazer deploy...",
                                                 color = Stone500,
-                                                fontSize = 13.sp
+                                                fontSize = 12.sp
                                             )
                                         }
                                         innerTextField()
@@ -714,7 +717,7 @@ fun TodosScreen(
                                 Text(
                                     text = "Excluir",
                                     color = Color(0xFFF87171),
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -788,7 +791,7 @@ fun TodosScreen(
                                 Text(
                                     text = "Cancelar",
                                     color = Stone400,
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -841,7 +844,8 @@ fun TodosScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(if (isSubmitEnabled) Color(0xFFF59E0B) else Color(0x40F59E0B))
+                                .background(Color(0x33F59E0B))
+                                .border(1.dp, Color(0x66FBBF24), RoundedCornerShape(6.dp))
                                 .clickable(enabled = isSubmitEnabled) {
                                     val parsedTags = formTagInput
                                         .split(",")
@@ -873,8 +877,8 @@ fun TodosScreen(
                         ) {
                             Text(
                                 text = if (editingTodo != null) "Salvar" else "Criar",
-                                color = if (isSubmitEnabled) Stone950 else Color(0x800C0A09),
-                                fontFamily = FontFamily.Serif,
+                                color = if (isSubmitEnabled) Amber300 else Color(0x80FCD34D),
+                                fontFamily = Inter,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
@@ -973,7 +977,7 @@ private fun TodoCardItem(
                 ) {
                     Text(
                         text = todo.title,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = if (todo.completed) Stone500 else Amber100,
@@ -990,6 +994,7 @@ private fun TodoCardItem(
                 if (todo.notes.isNotBlank()) {
                     Text(
                         text = todo.notes,
+                        fontFamily = Inter,
                         color = Amber100.copy(alpha = 0.65f),
                         fontSize = 12.sp,
                         maxLines = 2,
@@ -1006,7 +1011,7 @@ private fun TodoCardItem(
                         text = "🛡️ Tarefa Única",
                         color = Amber100.copy(alpha = 0.4f),
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = JetBrainsMono
                     )
 
                     if (hasChecklist) {
@@ -1021,7 +1026,7 @@ private fun TodoCardItem(
                             color = Purple400,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = JetBrainsMono
                         )
                     }
                 }

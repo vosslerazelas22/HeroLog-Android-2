@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +55,9 @@ import com.iurispraecepta.herolog.ui.ProcessedQuest
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -100,8 +102,8 @@ fun QuestsScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "CONTRATOS",
-                fontFamily = FontFamily.Serif,
+                text = "Contratos",
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 13.sp,
                 letterSpacing = 0.12.em,
@@ -266,7 +268,7 @@ private fun QuestCard(
                 ) {
                     Text(
                         text = quest.name,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = if (isClaimed) Amber100.copy(alpha = 0.6f) else if (isReadyToClaim) Amber300 else Amber100,
@@ -326,13 +328,14 @@ private fun QuestCard(
             ) {
                 Text(
                     text = "Progresso",
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
+                    fontFamily = Inter,
                     color = Stone400
                 )
                 Text(
                     text = "$clampedProgress / ${quest.target}",
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontSize = 10.sp,
+                    fontFamily = JetBrainsMono,
                     fontWeight = FontWeight.Bold,
                     color = if (quest.isCompleted) Amber400 else Stone400
                 )
@@ -431,7 +434,7 @@ private fun QuestCard(
                             Text(
                                 text = "Baú de espólios recolhido",
                                 fontSize = 10.sp,
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 fontStyle = FontStyle.Italic,
                                 color = Amber100.copy(alpha = 0.3f)
                             )
@@ -440,7 +443,7 @@ private fun QuestCard(
                             Text(
                                 text = "Desbloqueia ao atingir progresso",
                                 fontSize = 10.sp,
-                                fontFamily = FontFamily.Serif,
+                                fontFamily = Cinzel,
                                 color = Amber100.copy(alpha = 0.3f)
                             )
                         }

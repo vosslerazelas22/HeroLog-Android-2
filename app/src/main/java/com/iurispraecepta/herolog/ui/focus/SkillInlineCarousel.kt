@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.logic.SkillCarouselLogic
 import com.iurispraecepta.herolog.model.Skill
+import com.iurispraecepta.herolog.ui.sfx.LocalSfxManager
 
 /**
  * Port fiel de `src/components/SkillInlineCarousel.tsx` (React).
@@ -53,7 +54,7 @@ import com.iurispraecepta.herolog.model.Skill
  * Lógica de índice/swipe delegada a [SkillCarouselLogic] (testada isoladamente, 14 testes).
  *
  * **Divergências deliberadas da fonte**, mesmo padrão já registrado em outros componentes de Foco:
- * - SFX (`sound.playClick()`) omitido — SFX inteiro fora de escopo por decisão já registrada.
+ * - SFX (`sound.playClick()`) adicionado via `LocalSfxManager`.
  * - Atalho de teclado (←/→) N/A — plataforma touch, sem teclado físico por padrão.
  * - Cores hardcoded localmente (`#e5c158`/`#1c1917` etc), mesmo padrão do `AppHeader.kt` —
  *   `Color.kt` ainda não tem token `Champagne*` neste commit.
@@ -68,10 +69,14 @@ fun SkillInlineCarousel(
 ) {
     val champagne = Color(0xFFE5C158)
     val cardBg = Color(0xFF1C1917)
+    val sfxManager = LocalSfxManager.current
 
     if (skills.isEmpty()) {
         OutlinedButton(
-            onClick = { onOpenSkillsManager?.invoke() },
+            onClick = {
+                sfxManager?.playClick()
+                onOpenSkillsManager?.invoke()
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
         ) {
@@ -135,7 +140,10 @@ fun SkillInlineCarousel(
         horizontalArrangement = Arrangement.spacedBy(1.5.dp),
     ) {
         IconButton(
-            onClick = { goPrev() },
+            onClick = {
+                sfxManager?.playClick()
+                goPrev()
+            },
             enabled = canNavigate,
             modifier = Modifier.size(28.dp),
         ) {
@@ -204,7 +212,10 @@ fun SkillInlineCarousel(
         }
 
         IconButton(
-            onClick = { goNext() },
+            onClick = {
+                sfxManager?.playClick()
+                goNext()
+            },
             enabled = canNavigate,
             modifier = Modifier.size(28.dp),
         ) {

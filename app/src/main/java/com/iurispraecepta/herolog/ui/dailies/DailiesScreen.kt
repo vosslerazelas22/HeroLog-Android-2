@@ -56,7 +56,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -77,11 +76,15 @@ import com.iurispraecepta.herolog.ui.components.difficultyLabel
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 
 private val Champagne400 = Color(0xFFE5C158)
 private val Stone700 = Color(0xFF44403C)
@@ -224,8 +227,8 @@ fun DailiesScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "📅 TAREFAS DIÁRIAS",
-                fontFamily = FontFamily.Serif,
+                text = "📅 Tarefas Diárias",
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = Champagne400,
@@ -251,7 +254,7 @@ fun DailiesScreen(
                     )
                     Text(
                         text = "Novo",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Inter,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = Champagne400
@@ -284,7 +287,7 @@ fun DailiesScreen(
                     text = "Nenhum voto de prática diária estabelecido neste plano. Adicione tarefas para forjar hábitos duradouros todos os dias!",
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         color = Amber100.copy(alpha = 0.4f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
@@ -336,11 +339,11 @@ fun DailiesScreen(
                 // Título
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "TÍTULO *",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Título",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Amber300,
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -357,8 +360,8 @@ fun DailiesScreen(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         textStyle = TextStyle(
                             color = Color.White,
-                            fontSize = 14.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         singleLine = true,
                         cursorBrush = SolidColor(Amber400),
@@ -367,9 +370,9 @@ fun DailiesScreen(
                             Box {
                                 if (formTitle.isEmpty()) {
                                     Text(
-                                        text = "Ex: Treino matinal, Estudar 30m...",
+                                        text = "Ex: Beber medicação, Fazer Duolingo",
                                         color = Stone500,
-                                        fontSize = 14.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -381,11 +384,11 @@ fun DailiesScreen(
                 // Notas (h-14 ~ 56dp)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "NOTAS",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Notas",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xB3FEF3C7),
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -399,17 +402,17 @@ fun DailiesScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         textStyle = TextStyle(
                             color = Amber100,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         cursorBrush = SolidColor(Amber400),
                         decorationBox = { innerTextField ->
                             Box {
                                 if (formNotes.isEmpty()) {
                                     Text(
-                                        text = "Detalhes adicionais, contexto ou regras...",
+                                        text = "Ex: Ao acordar em jejum, abrir lição no celular...",
                                         color = Stone500,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -430,11 +433,11 @@ fun DailiesScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "DIFICULDADE",
-                            fontFamily = FontFamily.Serif,
+                            text = "Dificuldade",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -502,11 +505,11 @@ fun DailiesScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "REGULARIDADE",
-                            fontFamily = FontFamily.Serif,
+                            text = "Regularidade",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -597,7 +600,7 @@ fun DailiesScreen(
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
-                                    fontFamily = FontFamily.Monospace
+                                    fontFamily = JetBrainsMono
                                 ),
                                 singleLine = true,
                                 cursorBrush = SolidColor(Amber400),
@@ -614,11 +617,11 @@ fun DailiesScreen(
                 if (editingDaily == null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "CHECKLIST DE CRITÉRIOS (OPCIONAL)",
-                            fontFamily = FontFamily.Serif,
+                            text = "Checklist",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -638,8 +641,8 @@ fun DailiesScreen(
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                                 textStyle = TextStyle(
                                     color = Amber100,
-                                    fontSize = 13.sp,
-                                    fontFamily = FontFamily.SansSerif
+                                    fontSize = 12.sp,
+                                    fontFamily = Inter
                                 ),
                                 singleLine = true,
                                 cursorBrush = SolidColor(Amber400),
@@ -649,9 +652,9 @@ fun DailiesScreen(
                                     Box {
                                         if (checklistInput.isEmpty()) {
                                             Text(
-                                                text = "Novo sub-critério...",
+                                                text = "Ex: Lição completa, Revisar caderno...",
                                                 color = Stone500,
-                                                fontSize = 13.sp
+                                                fontSize = 12.sp
                                             )
                                         }
                                         innerTextField()
@@ -735,11 +738,11 @@ fun DailiesScreen(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "SÉRIE INICIAL (STREAK)",
-                            fontFamily = FontFamily.Serif,
+                            text = "Série Inicial (Streak)",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
                         BasicTextField(
@@ -756,7 +759,7 @@ fun DailiesScreen(
                             textStyle = TextStyle(
                                 color = Amber100,
                                 fontSize = 13.sp,
-                                fontFamily = FontFamily.Monospace
+                                fontFamily = JetBrainsMono
                             ),
                             singleLine = true,
                             cursorBrush = SolidColor(Amber400),
@@ -781,11 +784,11 @@ fun DailiesScreen(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "TAGS (VÍRGULAS)",
-                            fontFamily = FontFamily.Serif,
+                            text = "Categorias (Tags, separadas por vírgula)",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
                         BasicTextField(
@@ -798,15 +801,19 @@ fun DailiesScreen(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             textStyle = TextStyle(
                                 color = Amber100,
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily.SansSerif
+                                fontSize = 12.sp,
+                                fontFamily = Inter
                             ),
                             singleLine = true,
                             cursorBrush = SolidColor(Amber400),
                             decorationBox = { innerTextField ->
                                 Box {
                                     if (formTagInput.isEmpty()) {
-                                        Text(text = "ex: foco, diario", color = Stone500, fontSize = 13.sp)
+                                        Text(
+                                            text = "study, workout, health...",
+                                            color = Stone500,
+                                            fontSize = 13.sp
+                                        )
                                     }
                                     innerTextField()
                                 }
@@ -837,7 +844,7 @@ fun DailiesScreen(
                                 Text(
                                     text = "Excluir",
                                     color = Color(0xFFF87171),
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -911,7 +918,7 @@ fun DailiesScreen(
                                 Text(
                                     text = "Cancelar",
                                     color = Stone400,
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -964,7 +971,8 @@ fun DailiesScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(if (isSubmitEnabled) Color(0xFFF59E0B) else Color(0x40F59E0B))
+                                .background(Color(0x33F59E0B))
+                                .border(1.dp, Color(0x66FBBF24), RoundedCornerShape(6.dp))
                                 .clickable(enabled = isSubmitEnabled) {
                                     val parsedTags = formTagInput
                                         .split(",")
@@ -1005,8 +1013,8 @@ fun DailiesScreen(
                         ) {
                             Text(
                                 text = if (editingDaily != null) "Salvar" else "Criar",
-                                color = if (isSubmitEnabled) Stone950 else Color(0x800C0A09),
-                                fontFamily = FontFamily.Serif,
+                                color = if (isSubmitEnabled) Amber300 else Color(0x80FCD34D),
+                                fontFamily = Inter,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
@@ -1097,7 +1105,7 @@ private fun DailyCardItem(
                 ) {
                     Text(
                         text = daily.title,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = if (daily.completed) Color(0xFF7DD3FC) else Amber100,
@@ -1114,6 +1122,7 @@ private fun DailyCardItem(
                 if (daily.notes.isNotBlank()) {
                     Text(
                         text = daily.notes,
+                        fontFamily = Inter,
                         color = Amber100.copy(alpha = 0.65f),
                         fontSize = 12.sp,
                         maxLines = 2,
@@ -1130,7 +1139,7 @@ private fun DailyCardItem(
                         text = "🏅 ${daily.streak}",
                         color = Amber300,
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.SemiBold
                     )
 
@@ -1138,14 +1147,14 @@ private fun DailyCardItem(
                         text = "•",
                         color = Amber500.copy(alpha = 0.2f),
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = JetBrainsMono
                     )
 
                     Text(
                         text = getFrequencyText(daily.repeats, daily.every),
                         color = Amber100.copy(alpha = 0.4f),
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = JetBrainsMono
                     )
 
                     if (hasChecklist) {
@@ -1154,13 +1163,13 @@ private fun DailyCardItem(
                             text = "•",
                             color = Amber500.copy(alpha = 0.2f),
                             fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = JetBrainsMono
                         )
                         Text(
                             text = "📋 $completedCount de ${daily.checklist.size} critérios",
                             color = Purple400,
                             fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = JetBrainsMono,
                             fontWeight = FontWeight.Bold
                         )
                     }

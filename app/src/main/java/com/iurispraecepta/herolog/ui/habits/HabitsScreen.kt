@@ -50,7 +50,6 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -68,11 +67,15 @@ import com.iurispraecepta.herolog.ui.components.difficultyLabel
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -171,8 +174,8 @@ fun HabitsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "⚡ CAPELA DE HÁBITOS",
-                fontFamily = FontFamily.Serif,
+                text = "⚡ Capela de Hábitos",
+                fontFamily = Cinzel,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 color = Champagne400,
@@ -198,7 +201,7 @@ fun HabitsScreen(
                     )
                     Text(
                         text = "Novo",
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Inter,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = Champagne400
@@ -231,7 +234,7 @@ fun HabitsScreen(
                     text = "A heráldica de seus hábitos está em branco. Comece definindo comportamentos diários positivos ou rituais de quebra de vícios!",
                     style = TextStyle(
                         fontStyle = FontStyle.Italic,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         color = Amber100.copy(alpha = 0.4f),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
@@ -279,11 +282,11 @@ fun HabitsScreen(
                 // Título
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "TÍTULO *",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Título",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Amber300,
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -296,8 +299,8 @@ fun HabitsScreen(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         textStyle = TextStyle(
                             color = Color.White,
-                            fontSize = 14.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         singleLine = true,
                         cursorBrush = SolidColor(Amber400),
@@ -306,9 +309,9 @@ fun HabitsScreen(
                             Box {
                                 if (formTitle.isEmpty()) {
                                     Text(
-                                        text = "Ex: Beber 2L de água, Ler 10 páginas...",
+                                        text = "Ex: Beber água purificada, Estudar grimório, Procrastinar...",
                                         color = Stone500,
-                                        fontSize = 14.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -320,11 +323,11 @@ fun HabitsScreen(
                 // Notas
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "NOTAS",
-                        fontFamily = FontFamily.Serif,
-                        fontSize = 11.sp,
+                        text = "Notas",
+                        fontFamily = Inter,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xB3FEF3C7),
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -338,17 +341,17 @@ fun HabitsScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         textStyle = TextStyle(
                             color = Amber100,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         cursorBrush = SolidColor(Amber400),
                         decorationBox = { innerTextField ->
                             Box {
                                 if (formNotes.isEmpty()) {
                                     Text(
-                                        text = "Detalhes adicionais, contexto ou regras...",
+                                        text = "Ex: Cada gole limpa a mente, estudar por 20 minutos consecutivamente...",
                                         color = Stone500,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -369,11 +372,11 @@ fun HabitsScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "CAMINHOS PERMITIDOS",
-                            fontFamily = FontFamily.Serif,
+                            text = "Caminhos Permitidos",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -407,9 +410,10 @@ fun HabitsScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = "Positivo",
+                                        text = "Positivo (+)",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = Inter,
                                         color = if (formUp) Emerald400 else Stone500
                                     )
                                 }
@@ -441,9 +445,10 @@ fun HabitsScreen(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = "Negativo",
+                                        text = "Negativo (-)",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
+                                        fontFamily = Inter,
                                         color = if (formDown) Rose400 else Stone500
                                     )
                                 }
@@ -457,11 +462,11 @@ fun HabitsScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "DIFICULDADE",
-                            fontFamily = FontFamily.Serif,
+                            text = "Dificuldade",
+                            fontFamily = Inter,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xB3FEF3C7),
+                            color = Zinc300,
                             letterSpacing = 0.5.sp
                         )
 
@@ -527,11 +532,11 @@ fun HabitsScreen(
                 // Tags
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "TAGS (SEPARADAS POR VÍRGULA)",
-                        fontFamily = FontFamily.Serif,
+                        text = "Categorias (Tags, separadas por vírgula)",
+                        fontFamily = Inter,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xB3FEF3C7),
+                        color = Zinc300,
                         letterSpacing = 0.5.sp
                     )
                     BasicTextField(
@@ -544,8 +549,8 @@ fun HabitsScreen(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         textStyle = TextStyle(
                             color = Amber100,
-                            fontSize = 13.sp,
-                            fontFamily = FontFamily.SansSerif
+                            fontSize = 12.sp,
+                            fontFamily = Inter
                         ),
                         singleLine = true,
                         cursorBrush = SolidColor(Amber400),
@@ -553,9 +558,9 @@ fun HabitsScreen(
                             Box {
                                 if (formTagInput.isEmpty()) {
                                     Text(
-                                        text = "ex: saude, rotina, foco",
+                                        text = "study, workout, health...",
                                         color = Stone500,
-                                        fontSize = 13.sp
+                                        fontSize = 12.sp
                                     )
                                 }
                                 innerTextField()
@@ -586,7 +591,7 @@ fun HabitsScreen(
                                 Text(
                                     text = "Excluir",
                                     color = Color(0xFFF87171),
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -660,7 +665,7 @@ fun HabitsScreen(
                                 Text(
                                     text = "Cancelar",
                                     color = Stone400,
-                                    fontFamily = FontFamily.Serif,
+                                    fontFamily = Inter,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -710,10 +715,17 @@ fun HabitsScreen(
 
                         // Submit (Criar / Salvar)
                         val isSubmitEnabled = formTitle.isNotBlank()
+                        // Port S10: React usa bordered transparent (bg-amber-500/20 +
+                        // border-amber-400/40 + text-amber-300), não botão sólido.
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(if (isSubmitEnabled) Color(0xFFF59E0B) else Color(0x40F59E0B))
+                                .background(if (isSubmitEnabled) Color(0x33F59E0B) else Color(0x1AF59E0B))
+                                .border(
+                                    1.dp,
+                                    if (isSubmitEnabled) Color(0x66FBBF24) else Color(0x33FBBF24),
+                                    RoundedCornerShape(6.dp)
+                                )
                                 .clickable(enabled = isSubmitEnabled) {
                                     val parsedTags = formTagInput
                                         .split(",")
@@ -748,8 +760,8 @@ fun HabitsScreen(
                         ) {
                             Text(
                                 text = if (editingHabit != null) "Salvar" else "Criar",
-                                color = if (isSubmitEnabled) Stone950 else Color(0x800C0A09),
-                                fontFamily = FontFamily.Serif,
+                                color = if (isSubmitEnabled) Amber300 else Amber300.copy(alpha = 0.4f),
+                                fontFamily = Inter,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.5.sp
@@ -823,7 +835,7 @@ private fun HabitCardItem(
             ) {
                 Text(
                     text = habit.title,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = Amber100,
@@ -839,6 +851,7 @@ private fun HabitCardItem(
             if (habit.notes.isNotBlank()) {
                 Text(
                     text = habit.notes,
+                    fontFamily = Inter,
                     color = Amber100.copy(alpha = 0.65f),
                     fontSize = 12.sp,
                     maxLines = 2,
@@ -856,7 +869,7 @@ private fun HabitCardItem(
                         text = "✓ Feito hoje",
                         color = Amber400,
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = JetBrainsMono,
                         fontWeight = FontWeight.Medium
                     )
                 } else {
@@ -864,7 +877,7 @@ private fun HabitCardItem(
                         text = "○ Pendente hoje",
                         color = Stone500,
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = JetBrainsMono
                     )
                 }
 
@@ -872,14 +885,14 @@ private fun HabitCardItem(
                     text = "•",
                     color = Amber500.copy(alpha = 0.2f),
                     fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = JetBrainsMono
                 )
 
                 Text(
                     text = "(+${habit.upCount} | -${habit.downCount})",
                     color = Amber100.copy(alpha = 0.4f),
                     fontSize = 11.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontFamily = JetBrainsMono
                 )
             }
         }

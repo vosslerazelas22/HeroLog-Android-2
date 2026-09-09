@@ -10,6 +10,7 @@ import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import com.iurispraecepta.herolog.logic.focus.FocusSessionState
 import com.iurispraecepta.herolog.logic.focus.PersistedFocusSession
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
+import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -69,7 +70,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -99,7 +101,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -138,7 +141,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -179,7 +183,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -227,7 +232,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -260,7 +266,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -293,7 +300,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -318,7 +326,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -346,7 +355,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -374,7 +384,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -424,7 +435,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -450,7 +462,8 @@ class FocusSessionViewModelTest {
         val viewModel = HeroLogViewModel(
             repository,
             focusRepository,
-            clock = { testDispatcher.scheduler.currentTime }
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 

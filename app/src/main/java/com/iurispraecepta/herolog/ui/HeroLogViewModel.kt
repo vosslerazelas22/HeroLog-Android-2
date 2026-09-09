@@ -50,6 +50,7 @@ import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.LogEntry
 import com.iurispraecepta.herolog.model.OrbConcept
 import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
+import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -81,6 +82,7 @@ data class ProcessedQuest(
 class HeroLogViewModel(
     private val repository: CharacterRepository,
     private val focusSessionRepository: FocusSessionRepository,
+    private val sfxManager: SfxManager,
     private val clock: () -> Long = { System.currentTimeMillis() }
 ) : ViewModel() {
 
@@ -176,6 +178,7 @@ class HeroLogViewModel(
                     hasClaimedLogin = true
                 )
                 addSystemLog("💎 Proclamação Diária: Recebeste +${loginGold} GP por adentrar hoje ao Santuário Sagrado!", true)
+                sfxManager.playCoins()
             }
 
             if (finalState != existing) {
@@ -188,6 +191,7 @@ class HeroLogViewModel(
                     delay(100)
                     val cur = _characterState.value ?: return@launch
                     saveCharacterState(cur.copy(isPlayerDead = true))
+                    sfxManager.playDeath()
                 }
             }
 
@@ -292,6 +296,7 @@ class HeroLogViewModel(
         val current = _characterState.value ?: return
         val result = InventoryLogic.equipItem(current.inventory, current.equippedEquipment, item, slotIdx)
         saveCharacterState(current.copy(inventory = result.inventory, equippedEquipment = result.equippedEquipment))
+        sfxManager.playCoins()
     }
 
     // Bug corrigido em relacao ao scaffolding anterior do MainActivity: o gold precisa ser
@@ -302,6 +307,7 @@ class HeroLogViewModel(
         val current = _characterState.value ?: return
         val (updatedInventory, sellPrice) = InventoryLogic.sellItem(current.inventory, item)
         saveCharacterState(current.copy(inventory = updatedInventory, gold = current.gold + sellPrice))
+        sfxManager.playCoins()
     }
 
     fun buyShopItem(catalogEntry: com.iurispraecepta.herolog.logic.kingdom.ShopCatalogEntry) {
@@ -312,6 +318,7 @@ class HeroLogViewModel(
             catalogEntry = catalogEntry
         ) ?: return
         saveCharacterState(current.copy(gold = result.gold, inventory = result.inventory))
+        sfxManager.playCoins()
     }
 
     fun discardItem(item: InventoryItem) {
@@ -332,9 +339,17 @@ class HeroLogViewModel(
             val xp = if (current.charClass == CharClass.Mage) floor(rewards.xp * 1.2).toInt() else rewards.xp
             val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
             addSystemLog("✨ Prática Virtuosa: Completou o hábito positivo \"${habit.title}\"! Ganhou +${gold} GP e +${xp} XP.", true)
+            sfxManager.playCoins()
+            if (result.updatedState.combatLevel > current.combatLevel) {
+                sfxManager.playLevelUp()
+            }
         } else {
             val damage = if (current.charClass == CharClass.Ranger) max(1, floor(rewards.damage * 0.7).toInt()) else rewards.damage
             addSystemLog("⚠️ Desvio Espiritual: Sofreu dano pelo hábito negativo \"${habit.title}\"! Perdeu -${damage} HP de sua integridade.", false)
+            sfxManager.playWildernessWarning()
+            if (result.updatedState.isPlayerDead && !current.isPlayerDead) {
+                sfxManager.playDeath()
+            }
         }
     }
 
@@ -351,6 +366,10 @@ class HeroLogViewModel(
         if (!daily.completed) {
             val streak = daily.streak
             addSystemLog("📅 Voto Diário Cumprido: Concluiu \"${daily.title}\"! (+${gold} GP, +${xp} XP, Streak: ${streak + 1} dias)", true)
+            sfxManager.playCoins()
+            if (result.updatedState.combatLevel > current.combatLevel) {
+                sfxManager.playLevelUp()
+            }
         } else {
             addSystemLog("↩️ Reversão de Voto: Diária \"${daily.title}\" desmarcada. Perdidos -${gold} GP e -${xp} XP.")
         }
@@ -368,6 +387,10 @@ class HeroLogViewModel(
         val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
         if (!todo.completed) {
             addSystemLog("✔️ Afazer Cumprido: Concluiu aventura \"${todo.title}\"! (+${gold} GP, +${xp} XP!)", true)
+            sfxManager.playCoins()
+            if (result.updatedState.combatLevel > current.combatLevel) {
+                sfxManager.playLevelUp()
+            }
         } else {
             addSystemLog("↩️ Reversão de Contrato: Afazer \"${todo.title}\" reaberto. Perdidos -${gold} GP e -${xp} XP.")
         }
@@ -505,12 +528,16 @@ class HeroLogViewModel(
         val updated = QuestApplyLogic.claimQuestReward(current, questId, goldReward, xpReward)
         saveCharacterState(updated)
         addSystemLog("📜 Contrato da Gilda Resgatado! Moedas +${goldReward} GP e Relíquias +${xpReward} XP depositadas nas sacolas.", true)
+        sfxManager.playCoins()
     }
 
     fun equipTitle(titleId: String?) {
         val current = _characterState.value ?: return
         when (val result = TitleLogic.equipTitle(current.ownedTitles, titleId)) {
-            is EquipTitleResult.Success -> saveCharacterState(current.copy(equippedTitle = result.equippedTitle))
+            is EquipTitleResult.Success -> {
+                saveCharacterState(current.copy(equippedTitle = result.equippedTitle))
+                sfxManager.playCoins()
+            }
             EquipTitleResult.NotOwned -> { /* no-op: mesma regra da fonte, titulo nao possuido nao equipa */ }
         }
     }
@@ -518,7 +545,10 @@ class HeroLogViewModel(
     fun buyTitle(titleId: String, price: Int) {
         val current = _characterState.value ?: return
         when (val result = TitleLogic.buyTitle(current.gold, current.ownedTitles, titleId, price)) {
-            is TitlePurchaseResult.Success -> saveCharacterState(current.copy(gold = result.newGold, ownedTitles = result.newOwnedTitles))
+            is TitlePurchaseResult.Success -> {
+                saveCharacterState(current.copy(gold = result.newGold, ownedTitles = result.newOwnedTitles))
+                sfxManager.playCoins()
+            }
             TitlePurchaseResult.InsufficientGold -> { /* no-op: mesma regra da fonte */ }
             TitlePurchaseResult.AlreadyOwned -> { /* no-op: bug já corrigido no Bloco 7 */ }
         }
@@ -527,6 +557,7 @@ class HeroLogViewModel(
     fun claimAchievementTitle(titleId: String) {
         val current = _characterState.value ?: return
         saveCharacterState(current.copy(ownedTitles = TitleLogic.claimAchievementTitle(current.ownedTitles, titleId)))
+        sfxManager.playLevelUp()
     }
 
     fun importSaveFromPastedText(rawJson: String): SaveImportOutcome {
@@ -626,6 +657,7 @@ class HeroLogViewModel(
         if (SkillLogic.isPrestigeEligible(skill)) {
             val updated = SkillLogic.applyPrestige(skill)
             saveCharacterState(current.copy(skills = current.skills.toMutableList().apply { this[idx] = updated }))
+            sfxManager.playLevelUp()
         }
     }
 
@@ -663,6 +695,7 @@ class HeroLogViewModel(
         }
 
         startFocusTickJob()
+        sfxManager.playFocusBell()
     }
 
     fun togglePauseQuest() {
@@ -730,6 +763,7 @@ class HeroLogViewModel(
                     "tragicamente e todo o progresso heróico de focos seguidos foi perdido nas cinzas.",
                 highlighted = true
             )
+            sfxManager.playDeath()
         }
     }
 
@@ -745,8 +779,12 @@ class HeroLogViewModel(
                 if (!_focusSessionState.value.isPaused) {
                     togglePauseQuest()
                 }
+                sfxManager.playWildernessWarning()
             }
-            WildernessInfractionOutcome.GRACE_PERIOD_STARTED -> startGracePeriod()
+            WildernessInfractionOutcome.GRACE_PERIOD_STARTED -> {
+                startGracePeriod()
+                sfxManager.playWildernessWarning()
+            }
         }
     }
 
@@ -782,12 +820,13 @@ class HeroLogViewModel(
                 isPlayerDead = true
             )
         )
-        focusTickJob?.cancel() // cancelar também o job de contagem da sessão em si
+        focusTickJob?.cancel()
         _focusSessionState.value = _focusSessionState.value.copy(
             isGraceActive = false,
             isRunning = false
         )
         viewModelScope.launch { focusSessionRepository.clearSession() }
+        sfxManager.playDeath()
     }
 
     fun onAppForegrounded() {
@@ -839,6 +878,12 @@ class HeroLogViewModel(
         val oldSkillLevel = charState.skills.getOrNull(calc.skillIdx)?.level
         if (newSkillLevel != null && oldSkillLevel != null && newSkillLevel > oldSkillLevel) {
             addSystemLog("${calc.skillName} alcançou o Nível ${newSkillLevel}.", true)
+            sfxManager.playLevelUp()
+        }
+
+        // Combat level up
+        if (newState.combatLevel > charState.combatLevel) {
+            sfxManager.playLevelUp()
         }
 
         // Loot
@@ -878,6 +923,7 @@ class HeroLogViewModel(
         }
 
         saveCharacterState(newState)
+        sfxManager.playCoins()
 
         if (config?.isDungeonMode == true) {
             val nextSessions = config.dungeonSessions + 1
@@ -944,7 +990,7 @@ class HeroLogViewModel(
     private fun onBreakTimerCompleted() {
         breakTickJob?.cancel()
         _breakTimerState.value = _breakTimerState.value.copy(isBreakActive = false)
-        // SFX (sound.playLevelUp()) fora de escopo deste bloco — ponto de extensão futuro
+        sfxManager.playLevelUp()
     }
 
     fun skipBreak() {
