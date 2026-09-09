@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.OrbConcept
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 
 // Cores transcritas do FocusModeScreen.tsx real
 private val Stone950 = Color(0xFF0C0A09)
@@ -191,7 +192,7 @@ fun FocusModeScreen(
                             contentColor = PausedText
                         )
                     ) {
-                        Text("Retomar", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                        Text("Retomar", fontFamily = Cinzel, fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
                     }
                 } else {
                     OutlinedButton(
@@ -201,7 +202,7 @@ fun FocusModeScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Amber500),
                         border = BorderStroke(1.dp, RunningBorder)
                     ) {
-                        Text("Pausar", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                        Text("Pausar", fontFamily = Cinzel, fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
                     }
                 }
 
@@ -212,7 +213,7 @@ fun FocusModeScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = StoneExitText),
                     border = BorderStroke(1.dp, StoneExitBorder)
                 ) {
-                    Text("SAIR", fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
+                    Text("Sair", fontFamily = Cinzel, fontWeight = FontWeight.Black, letterSpacing = 1.sp, fontSize = 12.sp)
                 }
             }
         }

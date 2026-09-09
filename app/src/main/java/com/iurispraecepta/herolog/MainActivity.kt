@@ -11,9 +11,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -67,6 +64,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.composables.icons.lucide.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -924,8 +923,9 @@ fun FocusOrbPreviewScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             if (focusState.isPaused) "Retomar Missão" else "Pausar Missão",
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 0.8.sp,
+                            letterSpacing = 1.5.sp,
                             fontSize = 14.sp
                         )
                     }
@@ -1069,7 +1069,7 @@ fun FocusOrbPreviewScreen(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .size(20.dp)
+                                .size(18.dp)
                                 .clip(CircleShape)
                                 .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
                                 .clickable { showFocusTooltip = !showFocusTooltip },
@@ -1079,64 +1079,62 @@ fun FocusOrbPreviewScreen(
                                 text = "?",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Champagne400.copy(alpha = 0.8f),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.wrapContentSize(Alignment.Center)
+                                color = Champagne400.copy(alpha = 0.8f)
                             )
                         }
                     }
+                }
 
-                    // Tooltip popup — floats above banner, does not affect its height
-                    Box(modifier = Modifier.align(Alignment.TopEnd)) {
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = showFocusTooltip,
-                            enter = fadeIn(),
-                            exit = fadeOut()
+                // Tooltip popup — floats above banner via Popup overlay, does not affect layout
+                if (showFocusTooltip) {
+                    Popup(
+                        alignment = Alignment.TopEnd,
+                        properties = PopupProperties(focusable = false),
+                        onDismissRequest = { showFocusTooltip = false }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = 48.dp, end = 16.dp)
+                                .widthIn(max = 280.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xF20C0A09))
+                                .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                .padding(14.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = 44.dp, end = 14.dp)
-                                    .widthIn(max = 280.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xF20C0A09))
-                                    .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                    .padding(14.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Câmara de Foco (POMODORO)",
+                                        fontFamily = Cinzel,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        color = Champagne400,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .clickable { showFocusTooltip = false }
+                                            .padding(2.dp)
                                     ) {
                                         Text(
-                                            text = "Câmara de Foco (POMODORO)",
-                                            fontFamily = Cinzel,
+                                            text = "×",
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 11.sp,
-                                            color = Champagne400,
-                                            letterSpacing = 0.5.sp
+                                            color = Color(0x66A8A29E)
                                         )
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .clickable { showFocusTooltip = false }
-                                                .padding(2.dp)
-                                        ) {
-                                            Text(
-                                                text = "x",
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                 color = Color(0x66A8A29E)
-                                            )
-                                        }
                                     }
-                                    Text(
-                                        text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
-                                        fontSize = 11.sp,
-                                        color = Color(0xCCD6D3D1),
-                                        lineHeight = 16.sp
-                                    )
                                 }
+                                Text(
+                                    text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
+                                    fontSize = 11.sp,
+                                    color = Color(0xCCD6D3D1),
+                                    lineHeight = 16.sp
+                                )
                             }
                         }
                     }
@@ -1177,13 +1175,13 @@ fun FocusOrbPreviewScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(4.dp))
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
                                 )
                             )
-                            .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(6.dp))
+                            .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(4.dp))
                             .clickable {
                                 val config = FocusSessionConfig(
                                     selectedSkillIdx = validSkillIdx,
@@ -1193,13 +1191,14 @@ fun FocusOrbPreviewScreen(
                                 )
                                 viewModel.startSession(config, durationMinutes = focusDuration)
                             }
-                            .padding(vertical = 14.dp),
+                            .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "▶ INICIAR MISSÃO DE FOCO",
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Black,
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             letterSpacing = 1.2.sp,
                             color = Color(0xFF0C0A09)
                         )

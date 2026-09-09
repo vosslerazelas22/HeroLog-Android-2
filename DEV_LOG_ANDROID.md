@@ -4841,4 +4841,25 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 **Commits:**
 - `f17d5d4` — incluído no commit de SFX (mesmo autor, mesma sessão)
 
+**Status: FECHADO (código + build + testes); visual pendente.**
+
+## [2026-09-11] Bloco TooltipButtons — Tooltip "?" overlay + paridade de botões de sessão
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+imports Popup/PopupProperties, -imports AnimatedVisibility/fadeIn/fadeOut; botão "?" 18dp; tooltip → Popup overlay; Iniciar Missão 14sp/12dp/4dp/Cinzel; Pausar/Retomar Cinzel+letterSpacing 1.5sp)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusModeScreen.kt` (+import Cinzel; "SAIR"→"Sair"; Cinzel nos 3 botões Retomar/Pausar/Sair)
+
+**Resumo:**
+- **Tarefa 1 — Tooltip "?" do banner**: botão "?" `.size(20dp)` → `.size(18dp)` (paridade React `w-4.5 h-4.5`); removido `textAlign/wrapContentSize` redundante; tooltip movido de Box em fluxo (`AnimatedVisibility`) para `Popup(alignment=TopEnd)` — agora flutua sobre o banner sem afetar layout (paridade React `position:absolute`); offset ajustado `top=44→48dp, end=14→16dp` (React `top-12, right-4`); botão fechar `"x"` → `"×"`.
+- **Tarefa 2 — Botões de sessão**: Iniciar Missão (idle) `fontSize 13→14sp`, `padding vertical 14→12dp`, `shape 6→4dp`, `+fontFamily=Cinzel` (React `font-serif`); Pausar/Retomar (inline) `+fontFamily=Cinzel`, `letterSpacing 0.8→1.5sp` (React `tracking-widest`); FocusModeScreen `+fontFamily=Cinzel` nos 3 botões, `"SAIR"→"Sair"` (React sentence case).
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL** (39 tasks)
+- Testes: `./gradlew testDebugUnitTest` — **491/491 PASSED**, 0 failures, 0 errors
+- Visual: **PENDENTE** — aguardando inspeção em device/emulador
+
+**Desvios de escopo:**
+- Botão "Abandonar/Confirmar?" (inline) não alterado — React não usa `font-serif`/`tracking-widest` nesse botão; Android já alinhado (fontSize 12sp, peso Bold/Normal, sem fontFamily).
+- `RaidModeSection.kt` "?" do info box não alterado — padding/fonte já alinhados.
+
 **Status: FECHADO (código + build + testes); visual pendente.
