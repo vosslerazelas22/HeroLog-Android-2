@@ -4684,8 +4684,8 @@ Duas mudanças distintas, executadas em dois commits separados:
 **2. Insets/visual da bottom nav (spec-bottom-nav-header-insets.md, T1-T4):**
 - **Problema raiz**: `Box` raiz do Scaffold usava `.padding(innerPadding)` — conteúdo parava onde a bottom nav começava, `hazeEffect` borrava nada. Além disso, `enableEdgeToEdge()` sem argumentos usava `SystemBarStyle.auto()` — ícones do sistema saiam escuros em SO claro sobre fundo escuro. Android 10/11 aplicava scrim cinza na nav bar.
 - **Correção T1**: `enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))` — força ícones claros sempre.
-- **Correção T2**: `window.isNavigationBarContrastEnforced = false` guardado por `Build.VERSION.SDK_INT in Q..R` — remove scrim do Android 10/11.
-- **Correção T3**: `.padding(innerPadding)` → `.consumeWindowInsets(innerPadding)` no Box hazeSource — conteúdo agora se estende até a borda física, hazeEffect borra conteúdo real.
+- **Correção T2**: `window.isNavigationBarContrastEnforced = false` — remove scrim de contraste da nav bar. **Guard corrigido (11/09)**: inicialmente restrito a `Q..R` (API 29-30), mas a API existe em todas as versões desde Q; corrigido para `>= Q`.
+- **Correção T3**: `.padding(innerPadding)` → `.consumeWindowInsets(innerPadding)` no Box hazeSource — conteúdo agora se estende até a borda física, hazeEffect borra conteúdo real. **Revertido parcialmente (11/09)**: commit `beafc58` adicionou `.navigationBarsPadding()` ao Box tentando resolver visualmente a faixa caqui/oliva, mas isso contava o inset duas vezes (innerPadding.bottom já inclui a nav bar via HeroLogBottomNav). Revertido — o problema real era o scrim do Bug 1 (guard de versão restrito demais).
 - **Correção T4**: `LocalBottomBarInset` (compositionLocal em `ui/navigation/BottomBarInset.kt`) provido uma única vez via `CompositionLocalProvider` no Scaffold content. 12 telas scrolláveis consomem o valor — 9 via `contentPadding` em LazyColumn/LazyVerticalGrid, 3 via `Modifier.padding(bottom = ...)` após `.verticalScroll()`.
 - **Bug corrigido durante revisão**: `HeatmapScreen.kt` e `InventoryScreen.kt` tinham `.padding(bottom = ...)` ANTES de `.verticalScroll()` (encolhia viewport, não criava espaço rolável). Ordem invertida após revisão do Bruno.
 
@@ -4696,7 +4696,9 @@ Duas mudanças distintas, executadas em dois commits separados:
 
 **Commits:**
 - `ef84b51` — `fix(bottom-nav): alinhar ícones verticalmente e animar pill/tabs`
-- (pendente) — `fix(insets): bottom nav insets + edge-to-edge + CompositionLocal para contentPadding`
+- `99bc8e8` — `fix(insets): bottom nav insets + edge-to-edge + CompositionLocal para contentPadding`
+- `beafc58` — `fix(insets): adiciona navigationBarsPadding ao Box` (**REVERTIDO** — causava double-inset)
+- (pendente) — `fix(insets): corrige guard de versão isNavigationBarContrastEnforced (>=Q) + reverte navigationBarsPadding do Box`
 
 **Status: FECHADO (código + build + testes); visual pendente.
 

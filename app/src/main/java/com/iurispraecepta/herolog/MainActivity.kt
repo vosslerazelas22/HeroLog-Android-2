@@ -178,7 +178,7 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
-        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.Q..Build.VERSION_CODES.R) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
 
@@ -281,7 +281,7 @@ class MainActivity : ComponentActivity() {
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
                         LocalSfxManager provides sfxManager
                     ) {
-                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
+                    Box(modifier = Modifier.fillMaxSize().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(
