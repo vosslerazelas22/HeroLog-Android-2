@@ -1,12 +1,14 @@
 package com.iurispraecepta.herolog
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -28,6 +30,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,6 +53,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -116,6 +120,7 @@ import com.iurispraecepta.herolog.ui.todos.TodosScreen
 import com.iurispraecepta.herolog.ui.quests.QuestsScreen
 import com.iurispraecepta.herolog.ui.history.HistoryScreen
 import com.iurispraecepta.herolog.ui.navigation.HeroLogBottomNav
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
 import com.iurispraecepta.herolog.ui.navigation.getActiveModule
 import com.iurispraecepta.herolog.ui.components.PlaceholderScreen
@@ -165,7 +170,13 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
+        if (Build.VERSION.SDK_INT in Build.VERSION_CODES.Q..Build.VERSION_CODES.R) {
+            window.isNavigationBarContrastEnforced = false
+        }
 
         setContent {
             HeroLogTheme {
@@ -254,7 +265,8 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding).hazeSource(hazeState)) {
+                    CompositionLocalProvider(LocalBottomBarInset provides innerPadding.calculateBottomPadding()) {
+                    Box(modifier = Modifier.fillMaxSize().consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(
@@ -660,6 +672,7 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { heroLogViewModel.dismissDailyReport() }
                         )
                     }
+                    } // CompositionLocalProvider
                 }
             }
         }
@@ -1098,7 +1111,7 @@ fun FocusOrbPreviewScreen(
                                                 text = "x",
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = Color(0x66A8A29E)
+                                                 color = Color(0x66A8A29E)
                                             )
                                         }
                                     }

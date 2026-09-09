@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.kingdom
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,6 +113,7 @@ fun HeatmapScreen(
             .background(Stone950)
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
+            .padding(bottom = LocalBottomBarInset.current)
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 

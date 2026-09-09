@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.history
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
@@ -152,7 +154,7 @@ fun HistoryScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(bottom = 80.dp)
+                        contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
                     ) {
                         items(
                             items = notesEntries,
@@ -167,7 +169,7 @@ fun HistoryScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
+                    contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
                 ) {
                     items(
                         items = history,

@@ -1,5 +1,8 @@
 package com.iurispraecepta.herolog.ui.kingdom
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import androidx.compose.foundation.layout.PaddingValues
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -184,7 +187,8 @@ fun StatsScreen(state: CharacterState, modifier: Modifier = Modifier) {
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            contentPadding = PaddingValues(bottom = LocalBottomBarInset.current),
+            modifier = Modifier.fillMaxWidth()
         ) {
             items(stats) { stat ->
                 StatCard(stat)

@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.quests
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -161,7 +163,7 @@ fun QuestsScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
             ) {
                 items(
                     items = displayedQuests,

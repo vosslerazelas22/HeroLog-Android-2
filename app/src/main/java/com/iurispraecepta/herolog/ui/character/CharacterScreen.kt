@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.character
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -117,7 +119,8 @@ fun CharacterScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(16.dp)
+            .padding(bottom = LocalBottomBarInset.current),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // TOP CARD

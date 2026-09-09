@@ -1,6 +1,9 @@
 // app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/ShopScreen.kt
 package com.iurispraecepta.herolog.ui.kingdom
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import androidx.compose.foundation.layout.PaddingValues
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -207,7 +210,8 @@ private fun ShopItemList(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
     ) {
         items(catalog) { entry ->
             val canAfford = gold >= entry.price

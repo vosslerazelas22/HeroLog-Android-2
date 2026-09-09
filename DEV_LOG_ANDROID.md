@@ -4651,3 +4651,51 @@ DEV_LOG (fabricação de resultado de teste, imports silenciosos, etc.).
 **Commit:** `0883527` — `fix: replace FlowRow with FlowRowStable to resolve NoSuchMethodError crash`
 
 **Status: FECHADO (código + build + testes + device validado).
+
+## [2026-09-08] Bloco: Bottom Nav — Alinhamento de Ícones + Insets/Visual
+
+**Arquivos criados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/navigation/BottomBarInset.kt` (novo, +6 — `LocalBottomBarInset` compositionLocal)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/navigation/HeroLogBottomNav.kt` (+90/-55 — alinhamento vertical + animações)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+19/-2 — edge-to-edge + consumeWindowInsets + CompositionLocalProvider)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/skills/SkillsScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/character/CharacterScreen.kt` (padding bottom → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/inventory/InventoryScreen.kt` (padding bottom → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt` (contentPadding → LocalBottomBarInset, 2 ramos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/ShopScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/HeatmapScreen.kt` (padding bottom → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/StatsScreen.kt` (contentPadding → LocalBottomBarInset)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/AchievementsScreen.kt` (contentPadding → LocalBottomBarInset)
+
+**Resumo:**
+
+Duas mudanças distintas, executadas em dois commits separados:
+
+**1. Alinhamento de ícones da bottom nav (commits `ef84b51`):**
+- **Problema**: ícones Lucide tinham altura fixa; no React, o ícone sobe ~7px quando a aba é ativada (CSS Grid `items-center`). No Android, o `Row` sem `verticalAlignment` alinhava tudo ao topo — ícone nunca se movia.
+- **Correção**: `verticalAlignment = Alignment.CenterVertically` no `Row` + `animateDpAsState` no offset do Column (7dp, 200ms) + pill ativo animado via `animateIntOffsetAsState` (250ms, medido via `onGloballyPositioned`).
+
+**2. Insets/visual da bottom nav (spec-bottom-nav-header-insets.md, T1-T4):**
+- **Problema raiz**: `Box` raiz do Scaffold usava `.padding(innerPadding)` — conteúdo parava onde a bottom nav começava, `hazeEffect` borrava nada. Além disso, `enableEdgeToEdge()` sem argumentos usava `SystemBarStyle.auto()` — ícones do sistema saiam escuros em SO claro sobre fundo escuro. Android 10/11 aplicava scrim cinza na nav bar.
+- **Correção T1**: `enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(TRANSPARENT))` — força ícones claros sempre.
+- **Correção T2**: `window.isNavigationBarContrastEnforced = false` guardado por `Build.VERSION.SDK_INT in Q..R` — remove scrim do Android 10/11.
+- **Correção T3**: `.padding(innerPadding)` → `.consumeWindowInsets(innerPadding)` no Box hazeSource — conteúdo agora se estende até a borda física, hazeEffect borra conteúdo real.
+- **Correção T4**: `LocalBottomBarInset` (compositionLocal em `ui/navigation/BottomBarInset.kt`) provido uma única vez via `CompositionLocalProvider` no Scaffold content. 12 telas scrolláveis consomem o valor — 9 via `contentPadding` em LazyColumn/LazyVerticalGrid, 3 via `Modifier.padding(bottom = ...)` após `.verticalScroll()`.
+- **Bug corrigido durante revisão**: `HeatmapScreen.kt` e `InventoryScreen.kt` tinham `.padding(bottom = ...)` ANTES de `.verticalScroll()` (encolhia viewport, não criava espaço rolável). Ordem invertida após revisão do Bruno.
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL** (2 builds: um por commit)
+- Suíte completa: `./gradlew testDebugUnitTest` — **BUILD SUCCESSFUL** (2 runs)
+- Visual/device: **PENDENTE** — T5-T10 da spec (FAB skills, gesto, 3-botões, SO claro, AppHeader, scroll em 3+ telas)
+
+**Commits:**
+- `ef84b51` — `fix(bottom-nav): alinhar ícones verticalmente e animar pill/tabs`
+- (pendente) — `fix(insets): bottom nav insets + edge-to-edge + CompositionLocal para contentPadding`
+
+**Status: FECHADO (código + build + testes); visual pendente.

@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.skills
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -156,7 +158,7 @@ fun SkillsScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(bottom = 80.dp)
+        contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
     ) {
         items(skills, key = { it.name }) { sk ->
             val idx = skills.indexOf(sk)

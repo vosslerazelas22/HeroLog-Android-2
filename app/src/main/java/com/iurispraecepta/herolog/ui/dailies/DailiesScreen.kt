@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.dailies
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -294,7 +296,7 @@ fun DailiesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
             ) {
                 items(dailies, key = { it.id }) { d ->
                     DailyCardItem(

@@ -1,5 +1,8 @@
 package com.iurispraecepta.herolog.ui.kingdom
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import androidx.compose.foundation.layout.PaddingValues
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -95,7 +98,8 @@ fun AchievementsScreen(state: CharacterState, modifier: Modifier = Modifier) {
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            contentPadding = PaddingValues(bottom = LocalBottomBarInset.current),
+            modifier = Modifier.fillMaxWidth()
         ) {
             items(AchievementCatalog.ACHIEVEMENTS_LIST) { achievement ->
                 AchievementCard(

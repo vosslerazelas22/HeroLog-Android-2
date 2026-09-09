@@ -1,5 +1,7 @@
 package com.iurispraecepta.herolog.ui.inventory
 
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -84,7 +86,8 @@ fun InventoryScreen(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = LocalBottomBarInset.current),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (physicalItems.isNotEmpty()) {
