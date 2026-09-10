@@ -4909,3 +4909,46 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
   — repercussões no header interno desses wrappers, requer análise cuidadosa isolada.
 
 **Status: FECHADO (código + build + testes); visual pendente.
+
+---
+
+## [2026-09-10] Bloco: BUG#5 — Botão de confirmação fora da tela no fluxo de finalização do Pomodoro
+
+**Arquivos criados/alterados:**
+- `app/src/main/AndroidManifest.xml` (+1 — `android:windowSoftInputMode="adjustResize"`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt` (reescreveu
+  `CompletionShell`: Box→Column, weight(1f), LocalBottomBarInset, imePadding)
+- `app/src/test/java/com/iurispraecepta/herolog/FocusCompletionFlowScreenshotTest.kt` (+161 linhas,
+  5 testes novos em 2 classes: 3 viewport 375×667, 2 viewport 390×844)
+
+**Resumo:**
+- Bug #5: botão "CONTINUAR"/"RECEBER RECOMPENSAS" ficava fora da viewport em telas pequenas
+  (375×667, 390×844) no fluxo de finalização do Pomodoro (`FocusCompletionFlow`).
+- Causa raiz: `CompletionShell` usava `Box` com `Alignment.BottomCenter` e padding fixo de
+  72dp. Em telas pequenas, o conteúdo centralizado podia empurrar o botão para fora da area
+  visivel. Alem disso, o botao nao tinha respiro contra a navigation bar (consumeWindowInsets
+  na Activity marcou bottom como consumido sem aplicar padding fisico).
+- Fix: Box→Column com `weight(1f)` no conteudo (garante que o botao sempre fica visivel)
+  + `LocalBottomBarInset.current` no bottom padding (segue o padrao ja existente em 12 telas:
+  CharacterScreen, InventoryScreen, HeatmapScreen, QuestsScreen, DailiesScreen, HabitsScreen,
+  TodosScreen, SkillsScreen, HistoryScreen, StatsScreen, ShopScreen, AchievementsScreen).
+- IME: `imePadding()` no container raiz do CompletionShell para que o layout encolha quando o
+  teclado abre (campo OutlinedTextField do SessionNotesScreen). API `fitInside(WindowInsetsRulers.Ime.current)`
+  documentada na skill de edge-to-edge nao existe nesta versao do Compose (BOM 2024.09.00,
+  foundation-layout 1.8.0) — `imePadding()` e a alternativa estavel disponivel.
+- Opção A (aplicar `padding(bottom=innerPadding.calculateBottomPadding())` globalmente na
+  MainActivity.kt:285) foi descartada apos grep que revelou 12 telas ja usando
+  `LocalBottomBarInset.current` — teria causado padding duplo em todas ela.
+- `android:windowSoftInputMode="adjustResize"` adicionado ao AndroidManifest para a Activity.
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — BUILD SUCCESSFUL
+- Testes: `./gradlew testDebugUnitTest` — 496/496 PASSED, 0 failures, 0 errors
+  - FocusCompletionFlowScreenshotTest: 6/6 (pré-existentes, sem alteração)
+  - FocusCompletionFlowSmallScreenTest: 3/3 (novos: 375×667 summary/loot/notes)
+  - FocusCompletionFlowMediumScreenTest: 2/2 (novos: 390×844 summary/loot)
+- Visual: PENDENTE — aguardando inspeção em device/emulador com teclado aberto e fechado
+  nos dois viewports de referência (375×667 e 390×844)
+
+**Desvios de escopo aprovados:**
+- Nenhum.
