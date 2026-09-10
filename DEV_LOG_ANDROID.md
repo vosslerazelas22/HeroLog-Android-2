@@ -4952,3 +4952,31 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-09-10] Bloco: Scroll Foco + Pill Bottom Nav
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt
+- app/src/main/java/com/iurispraecepta/herolog/ui/navigation/HeroLogBottomNav.kt
+
+**Resumo:**
+- Bug 1: `.verticalScroll(rememberScrollState())` adicionado em 3 branches de
+  `FocusOrbPreviewScreen` (branches 4/5/6 — break ativo, sessão inline, idle).
+  `Arrangement.Center` preservado em todas (funciona quando conteúdo < viewport;
+  scroll assume quando transborda). FocusModeScreen excluído (usa `weight(1f)` no
+  Orb — conteúdo sempre cabe por design). Imports `rememberScrollState` e
+  `verticalScroll` adicionados.
+- Bug 2: Constante `navItemVerticalPadding = 6.dp` extraída (antes hardcode 6.dp
+  em dois lugares). Pill offset Y corrigido de `animatedPillOffset.y` (sempre 0)
+  para `navVerticalPadPx` (6.dp em pixels) — alinha pill com a área de conteúdo
+  do Row. `with(LocalDensity.current)` usado fora do lambda `offset{}` (que não
+  é composable).
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — BUILD SUCCESSFUL
+- Testes: `./gradlew testDebugUnitTest` — 0 falhas (XML bruto: nenhum arquivo
+  com `failures="[1-9]"`)
+- Visual: PENDENTE — aguardando inspeção em device/emulador (375×667 e 390×844)
+
+**Desvios de escopo aprovados:**
+- Nenhum.

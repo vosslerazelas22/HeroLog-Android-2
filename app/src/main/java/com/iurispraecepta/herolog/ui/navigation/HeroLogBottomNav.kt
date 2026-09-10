@@ -189,6 +189,7 @@ fun HeroLogBottomNav(
         .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
     ) {
         val horizontalPad = 12.dp
+        val navItemVerticalPadding = 6.dp
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -204,7 +205,7 @@ fun HeroLogBottomNav(
                         )
                     }
                     .navigationBarsPadding()
-                    .padding(horizontal = horizontalPad, vertical = 6.dp)
+                    .padding(horizontal = horizontalPad, vertical = navItemVerticalPadding)
                     .onSizeChanged { rowWidthPx = it.width.toFloat() },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -269,9 +270,10 @@ fun HeroLogBottomNav(
 
             // Animated active pill
             val horizontalPadPx = with(LocalDensity.current) { horizontalPad.roundToPx() }
+            val navVerticalPadPx = with(LocalDensity.current) { navItemVerticalPadding.roundToPx() }
             Box(
                 modifier = Modifier
-                    .offset { IntOffset(animatedPillOffset.x + horizontalPadPx, animatedPillOffset.y) }
+                    .offset { IntOffset(animatedPillOffset.x + horizontalPadPx, navVerticalPadPx) }
                     .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 40.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(Champagne500.copy(alpha = 0.05f))
