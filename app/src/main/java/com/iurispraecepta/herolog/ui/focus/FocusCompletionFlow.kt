@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +46,7 @@ import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
 fun getRank(isWildernessChecked: Boolean, pauseCount: Int): String = when {
@@ -72,46 +74,46 @@ fun CompletionShell(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(Stone950)
-            .padding(24.dp)
+            .imePadding()
+            .padding(
+                start = 24.dp,
+                top = 24.dp,
+                end = 24.dp,
+                bottom = 24.dp + LocalBottomBarInset.current
+            )
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 72.dp),
+                .weight(1f)
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             content()
         }
 
-        Box(
+        Button(
+            onClick = onNext,
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFC29544),
+                contentColor = Stone950
+            ),
+            border = BorderStroke(1.dp, Color(0xFFE9C37A))
         ) {
-            Button(
-                onClick = onNext,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFC29544),
-                    contentColor = Stone950
-                ),
-                border = BorderStroke(1.dp, Color(0xFFE9C37A))
-            ) {
-                Text(
-                    text = if (isLastStep) "RECEBER RECOMPENSAS" else "CONTINUAR",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    letterSpacing = 2.sp,
-                    color = Stone950
-                )
-            }
+            Text(
+                text = if (isLastStep) "RECEBER RECOMPENSAS" else "CONTINUAR",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                letterSpacing = 2.sp,
+                color = Stone950
+            )
         }
     }
 }

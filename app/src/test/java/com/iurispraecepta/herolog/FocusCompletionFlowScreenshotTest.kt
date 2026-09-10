@@ -179,3 +179,164 @@ class FocusCompletionFlowScreenshotTest {
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_flow_notes_with_skill_tags.png")
     }
 }
+
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w375dp-h667dp", sdk = [36])
+class FocusCompletionFlowSmallScreenTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Before
+    fun setUp() {
+        composeTestRule.mainClock.autoAdvance = false
+    }
+
+    private val baseRewards = FocusRewardsCalculation(
+        skillIdx = 0,
+        skillName = "Programação",
+        xpEarned = 150,
+        goldEarned = 45,
+        durationMins = 25,
+        dungeonClearGoldBonus = 0,
+        hasUsedDoubleLoot = false,
+        hasUsedFocusElixir = false,
+        hasUsedRuneFortune = false,
+        hasUsedCrystalClarity = false,
+        usedEquipmentIndicesAndCharges = emptyList(),
+        lootedItems = emptyList(),
+        droppedTitle = null,
+        isWildernessChecked = false,
+        isDungeonMode = false,
+        comboBonusPercent = 0
+    )
+
+    @Test
+    fun completionShell_buttonVisible_375x667_summary() {
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    SessionSummaryScreen(
+                        rewardsCalculation = baseRewards,
+                        pauseCount = 2,
+                        streak = 7
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_375x667_summary.png")
+    }
+
+    @Test
+    fun completionShell_buttonVisible_375x667_lootDrop() {
+        val items = listOf(
+            LootItem("Poção de Mana", "🧪", "Recupera 50 MP.", BuffType.CelestinePotion, 20, false, 1, 1, Rarity.Comum),
+            LootItem("Grimório Arcano", "📖", "Aumenta o XP.", BuffType.SilverGrimoire, 100, true, 5, 5, Rarity.Especial),
+            LootItem("Escudo Velado", "🛡️", "Proteção mágica.", BuffType.CelestinePotion, 80, true, 3, 3, Rarity.Comum),
+            LootItem("Amuleto Sombrio", "📿", "Reduz dano recebido.", BuffType.CelestinePotion, 60, true, 2, 2, Rarity.Comum)
+        )
+        val title = DroppedTitle("focus_master", "Mestre da Concentração", "👑")
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    LootDropScreen(
+                        lootedItems = items,
+                        droppedTitle = title
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_375x667_loot_drop.png")
+    }
+
+    @Test
+    fun completionShell_buttonVisible_375x667_notes() {
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = true) {
+                    SessionNotesScreen(
+                        completionNotes = "Estudei coroutines e flows em Kotlin.",
+                        onNotesChange = {},
+                        completionTag = "Coroutines",
+                        onTagChange = {},
+                        skillTags = listOf("Kotlin", "Coroutines", "Room DB", "Compose")
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_375x667_notes.png")
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(qualifiers = "w390dp-h844dp", sdk = [36])
+class FocusCompletionFlowMediumScreenTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    @Before
+    fun setUp() {
+        composeTestRule.mainClock.autoAdvance = false
+    }
+
+    private val baseRewards = FocusRewardsCalculation(
+        skillIdx = 0,
+        skillName = "Programação",
+        xpEarned = 150,
+        goldEarned = 45,
+        durationMins = 25,
+        dungeonClearGoldBonus = 0,
+        hasUsedDoubleLoot = false,
+        hasUsedFocusElixir = false,
+        hasUsedRuneFortune = false,
+        hasUsedCrystalClarity = false,
+        usedEquipmentIndicesAndCharges = emptyList(),
+        lootedItems = emptyList(),
+        droppedTitle = null,
+        isWildernessChecked = false,
+        isDungeonMode = false,
+        comboBonusPercent = 0
+    )
+
+    @Test
+    fun completionShell_buttonVisible_390x844_summary() {
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    SessionSummaryScreen(
+                        rewardsCalculation = baseRewards,
+                        pauseCount = 1,
+                        streak = 14
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_390x844_summary.png")
+    }
+
+    @Test
+    fun completionShell_buttonVisible_390x844_lootDrop() {
+        val items = listOf(
+            LootItem("Poção de Mana", "🧪", "Recupera 50 MP.", BuffType.CelestinePotion, 20, false, 1, 1, Rarity.Comum),
+            LootItem("Grimório Arcano", "📖", "Aumenta o XP.", BuffType.SilverGrimoire, 100, true, 5, 5, Rarity.Especial),
+            LootItem("Escudo Velado", "🛡️", "Proteção mágica.", BuffType.CelestinePotion, 80, true, 3, 3, Rarity.Comum)
+        )
+        val title = DroppedTitle("focus_master", "Mestre da Concentração", "👑")
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    LootDropScreen(
+                        lootedItems = items,
+                        droppedTitle = title
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_390x844_loot_drop.png")
+    }
+}
