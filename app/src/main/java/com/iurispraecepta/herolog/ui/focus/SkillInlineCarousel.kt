@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -181,11 +183,21 @@ fun SkillInlineCarousel(
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                     )
-                    Text(
-                        text = "Nv. ${skill.level}" + ((skill.prestige ?: 0).let { p -> if (p > 0) " " + "★".repeat(p) else "" }),
-                        color = champagne.copy(alpha = 0.8f),
-                        fontSize = 11.sp,
-                    )
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF16161D))
+                            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                    ) {
+                        Text(
+                            text = "Nv. ${skill.level}" + ((skill.prestige ?: 0).let { p -> if (p > 0) " " + "★".repeat(p) else "" }),
+                            color = champagne.copy(alpha = 0.8f),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 }
             }
 

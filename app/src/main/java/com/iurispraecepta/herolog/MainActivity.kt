@@ -1146,8 +1146,7 @@ fun FocusOrbPreviewScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     SkillInlineCarousel(
                         skills = characterState.skills,
@@ -1157,7 +1156,7 @@ fun FocusOrbPreviewScreen(
                         onOpenSkillsManager = { isSkillSelectorOpen = true }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     FocusOrb(
                         timeLeft = focusDuration * 60,
