@@ -110,7 +110,6 @@ fun HeatmapScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
             .padding(bottom = LocalBottomBarInset.current)

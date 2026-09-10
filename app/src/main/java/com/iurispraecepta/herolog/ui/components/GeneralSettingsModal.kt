@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.Close
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.OrbConcept
 import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import androidx.compose.ui.text.style.TextAlign
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -69,7 +70,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Divider
 
 // Paleta 1:1 com React
-private val QuestPanel = Color(0xFF0B0915)
 private val Stone800 = Color(0xFF292524)
 private val Champagne400 = Color(0xFFE5C158)
 private val Champagne500 = Color(0xFFD4AF37)

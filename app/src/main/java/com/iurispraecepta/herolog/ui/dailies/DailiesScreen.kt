@@ -215,7 +215,6 @@ fun DailiesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Header

@@ -65,8 +65,6 @@ fun LogsScreen(logs: List<LogEntry>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF1A1614), RoundedCornerShape(8.dp)) // aprox. bg-quest-panel
-            .border(1.dp, Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
             .padding(20.dp)
     ) {
         // Header -- porte do wrapper compartilhado (título centralizado + ícone + borda inferior)

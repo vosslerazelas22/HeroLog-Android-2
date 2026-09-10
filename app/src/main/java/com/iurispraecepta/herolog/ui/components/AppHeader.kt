@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -90,7 +91,6 @@ import com.composables.icons.lucide.R
 // ---------------------------------------------------------------------------
 private val Champagne400 = Color(0xFFE5C158)
 private val Champagne500 = Color(0xFFD4AF37)
-private val QuestPanel = Color(0xFF0B0915)
 private val Ice400 = Color(0xFFA9D6E5) // hover do botão de ajustes — N/A em touch, mantido por referência
 private val Orange500 = Color(0xFFF97316) // orange-500 padrão Tailwind (ícone do streak)
 private val Red500 = Color(0xFFEF4444)    // red-500 padrão Tailwind (VolumeX)

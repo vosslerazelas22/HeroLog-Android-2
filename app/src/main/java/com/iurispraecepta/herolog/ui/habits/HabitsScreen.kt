@@ -74,7 +74,7 @@ import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
-import com.iurispraecepta.herolog.ui.theme.Stone950
+
 import com.iurispraecepta.herolog.ui.theme.Zinc300
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -162,7 +162,6 @@ fun HabitsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Header

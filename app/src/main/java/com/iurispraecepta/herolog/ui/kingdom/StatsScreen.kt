@@ -43,7 +43,7 @@ import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.Stone950
+
 
 private val Champagne400 = Color(0xFFE5C158)
 private val Champagne500 = Color(0xFFD4AF37)
@@ -154,7 +154,6 @@ fun StatsScreen(state: CharacterState, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
             .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.height(12.dp))

@@ -4863,3 +4863,49 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 - `RaidModeSection.kt` "?" do info box não alterado — padding/fonte já alinhados.
 
 **Status: FECHADO (código + build + testes); visual pendente.
+
+## [2026-09-09] Bloco: Background padrão — Scaffold QuestPanel + remoção de .background(Stone950)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/theme/Color.kt` (+1 — `QuestPanel`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (+2 — import `QuestPanel` + `containerColor = QuestPanel`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/AppHeader.kt` (+1/-1 — importar `QuestPanel` de `Color.kt`, remover definição local)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/GeneralSettingsModal.kt` (+1/-1 — importar `QuestPanel` de `Color.kt`, remover definição local)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (-1 — remover `.background(Stone950)` + remover import não utilizado)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/ShopScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleSelectorScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/HeatmapScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/StatsScreen.kt` (-1 — remover `.background(Stone950)` + remover import não utilizado)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/AchievementsScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/GuideScreen.kt` (-1 — remover `.background(Stone950)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/LogsScreen.kt` (-2 — remover `.background(Color(0xFF1A1614), RoundedCornerShape(8.dp))` e `.border(...)` da raiz)
+
+**Resumo:**
+- Auditoria de background identificou que 12 telas usavam `.background(Stone950)` (#0C0A09)
+  enquanto Focus/Skills (sem background) mostravam o Scaffold surface `Stone900` (#1C1917).
+  O React usa `bg-quest-panel` (#0B0915) uniformemente em todas as abas (confirmado via
+  `App.tsx:2332-3518` + `HabitsTab.tsx:103` + `DailiesTab.tsx:128` + `TodosTab.tsx:123`).
+- Cor `QuestPanel` (#0B0915) movida de definições locais (`AppHeader.kt:93`,
+  `GeneralSettingsModal.kt:72`) para `Color.kt` (uso compartilhado).
+- Scaffold em `MainActivity.kt:244` agora define `containerColor = QuestPanel`, alinhando
+  com o React `bg-quest-panel`.
+- 12 telas tiveram `.background(Stone950)` removido — herdam `QuestPanel` do Scaffold.
+- LogsScreen teve cor `#1A1614` + `RoundedCornerShape` + `border` removidos da raiz (formato
+  alinhado com wrapper padrão React).
+- Wrappers de Character/Inventory em MainActivity (Column com Stone900@50% + border) ficam
+  para bloco próprio futuro (requer migração de header "FICHA DO HERÓI"/"EQUIPAMENTOS").
+
+**Validação:**
+- Build: `./gradlew assembleDebug` — **BUILD SUCCESSFUL** (39 tasks)
+- Testes: `./gradlew testDebugUnitTest` — **491/491 PASSED**, 0 failures, 0 errors
+- Visual: **PENDENTE** — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Passo 4 (simplificar wrappers de Character/Inventory) deferido para bloco próprio futuro
+  — repercussões no header interno desses wrappers, requer análise cuidadosa isolada.
+
+**Status: FECHADO (código + build + testes); visual pendente.

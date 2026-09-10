@@ -3,6 +3,7 @@ package com.iurispraecepta.herolog.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val QuestDeep = Color(0xFF050409)
+val QuestPanel = Color(0xFF0B0915)
 val Stone950 = Color(0xFF0C0A09)
 val Stone900 = Color(0xFF1C1917)
 val Stone800 = Color(0xFF292524)
