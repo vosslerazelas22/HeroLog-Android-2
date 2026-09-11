@@ -5006,3 +5006,10 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-09-11] Bloco B — SessionSummaryScreen parity (D173, D174)
+
+**Arquivos**: `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt`
+**Resumo**: Alinhado título "SESSÃO CONCLUÍDA" (20sp, Cinzel ExtraBold, letter-spacing 3sp), rank (label "★ CLASSIFICAÇÃO X ★" 14sp Cinzel + drop-shadow Champagne400/35% + descrição 10sp JetBrainsMono uppercase) e divider 85% Amber500/15% ao React `FocusCompletionFlow.tsx` linhas 180–192.
+**Validação**: assembleDebug SUCCESS; 11 testes unitários PASSED (XML bruto confirmado); visual pendente.
+**Desvios**: nenhum (stretch D175–D181, D4–D8 fora de escopo).
