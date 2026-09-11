@@ -20,9 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -168,21 +165,24 @@ fun TitleSelectorScreen(
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Amber500.copy(alpha = 0.10f)))
                     Spacer(modifier = Modifier.height(2.dp))
 
-                    // grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 — telas Android tratadas como
-                    // "sm" (2 colunas), consistente com o resto do módulo Reino
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(600.dp)
-                    ) {
-                        items(unlockedTitles) { title ->
-                            TitleCard(
-                                title = title,
-                                isEquipped = equippedTitle == title.id,
-                                onEquip = { onEquipTitle(title.id) },
-                                onUnequip = { onEquipTitle(null) }
-                            )
+                    // grid-cols-2 — sem LazyVerticalGrid (crash quando aninhado em verticalScroll)
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        unlockedTitles.chunked(2).forEach { rowItems ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                rowItems.forEach { title ->
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        TitleCard(
+                                            title = title,
+                                            isEquipped = equippedTitle == title.id,
+                                            onEquip = { onEquipTitle(title.id) },
+                                            onUnequip = { onEquipTitle(null) }
+                                        )
+                                    }
+                                }
+                                repeat(2 - rowItems.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -260,7 +260,7 @@ private fun TitleCard(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(text = title.emoji, fontSize = 16.sp)
                     Text(
-                        text = title.name,
+                        text = title.name.uppercase(),
                         fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
