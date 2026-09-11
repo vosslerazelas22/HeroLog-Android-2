@@ -331,3 +331,21 @@ etc.), as regras de documentação mudam:
 - **Exceção**: `AGENTS.md` pode ser atualizado se a mudança for exclusiva da branch
   (ex: nova armadilha descoberta que só se aplica ao módulo sendo trabalhado) — mas
   apenas após confirmação explícita do usuário.
+
+### 11.1 Atualização de docs após merge (erro confirmado)
+
+Ao receber um pedido para atualizar `DEV_LOG_ANDROID.md` e/ou `PARIDADE.md` **após um
+merge de feature branch para a main**, o agente deve:
+
+1. **Confirmar que está operando no worktree da main** (`/home/bruno/projetos/HeroLog-Android-2`),
+   não num worktree de feature branch. Usar `git worktree list` e `pwd` para verificar.
+2. **Nunca editar docs compartilhados a partir de um worktree de feature branch** —
+   mesmo que o merge já tenha sido feito, o worktree da feature pode estar desatualizado
+   ou conter arquivos revertidos (commits de revert não entram no merge squash/fast-forward).
+3. Se o agente estiver no worktree errado, ** parar e informar o usuário** em vez de
+   prosseguir com a edição.
+
+**Causa raiz do incidente (11/09)**: agente operava no worktree da branch
+`feat/parity-session-summary` ao invés da main ao receber pedido de atualização de docs
+pós-merge. Editou `DEV_LOG_ANDROID.md` e `PARIDADE.md` no worktree errado, gerando um
+commit que teve que ser revertido.
