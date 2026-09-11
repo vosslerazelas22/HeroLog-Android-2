@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +49,11 @@ import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Amber100
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 
 fun getRank(isWildernessChecked: Boolean, pauseCount: Int): String = when {
     isWildernessChecked && pauseCount == 0 -> "S+"
@@ -176,24 +182,54 @@ fun SessionSummaryScreen(
     ) {
         Text(
             text = "SESSÃO CONCLUÍDA",
-            color = Color(0xFFE2B054),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 1.5.sp
+            color = Champagne400,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = Cinzel,
+            letterSpacing = 3.sp
         )
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 4.dp,
+                    spotColor = Champagne400.copy(alpha = 0.35f),
+                    ambientColor = Champagne400.copy(alpha = 0.35f)
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
-                text = rank,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFFFCD34D)
+                text = "★ CLASSIFICAÇÃO $rank ★",
+                color = Champagne400,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = Cinzel,
+                letterSpacing = 0.5.sp
             )
             Text(
-                text = rankDesc,
-                fontSize = 14.sp,
-                color = Color(0xFFA8A29E),
+                text = rankDesc.uppercase(),
+                color = Amber100.copy(alpha = 0.4f),
+                fontSize = 10.sp,
+                fontFamily = JetBrainsMono,
+                letterSpacing = 0.5.sp,
                 textAlign = TextAlign.Center
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(0.85f)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Amber500.copy(alpha = 0.15f))
             )
         }
 
