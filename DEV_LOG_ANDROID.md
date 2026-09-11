@@ -4980,3 +4980,29 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+---
+
+## [2026-09-11] Bloco: A — Titles críticos (Branch A, feat/parity-titles-critical)
+
+**Data:** 11/09/2026
+**Commit:** 1d12fd0
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleSelectorScreen.kt`
+
+**Resumo:**
+- D121: LazyVerticalGrid dentro de verticalScroll substituído por Column + chunked(2) —
+  mesmo padrão de TitleShopScreen.kt. Altura fixa 600.dp removida.
+- D120: text = title.name.uppercase() — paridade com React font-serif uppercase.
+- D166: Falso positivo da auditoria. HeroLogModal já fornece heightIn(max=0.8f) +
+  verticalScroll no conteúdo — equivalente prático ao React (inner max-h-[65vh] sem
+  overflow próprio; quem rola é o Modal). TitleEquipModal.kt sem alteração.
+
+**Validação:**
+- Build: BUILD SUCCESSFUL
+- Testes: TitleEquipModalScreenshotTest 2/2 PASSED (XML nominal)
+- Visual: PENDENTE — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Nenhum.
