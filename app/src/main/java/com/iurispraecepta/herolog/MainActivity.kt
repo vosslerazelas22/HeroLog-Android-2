@@ -265,20 +265,6 @@ class MainActivity : ComponentActivity() {
                             hazeState = hazeState
                         )
                     },
-                    floatingActionButton = {
-                        if (activeTab == "skills") {
-                            FloatingActionButton(
-                                onClick = { isCreateModalOpen = true },
-                                containerColor = Amber400,
-                                contentColor = Stone950
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Adicionar Habilidade"
-                                )
-                            }
-                        }
-                    }
                 ) { innerPadding ->
                     CompositionLocalProvider(
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
