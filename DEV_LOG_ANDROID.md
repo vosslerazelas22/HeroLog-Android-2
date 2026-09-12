@@ -5038,3 +5038,27 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 - Ícone Article em vez de BookOpen (BookOpen indisponível na versão Material Icons Extended)
 - Ícone AddCircle em vez de PlusCircle (PlusCircle indisponível)
 - Tooltip Prestígio implementado como placeholder (popup real exige estado adicional)
+
+## [2026-09-11] Bloco D — Pill height 48dp + padding-bottom focus tab
+
+**Arquivos alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/navigation/HeroLogBottomNav.kt
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt
+
+**Resumo:**
+- Pill height de 40.dp → 48.dp (replicando React `BottomNav.tsx:150` `absolute inset-0` — pill
+  preenche o Box pai inteiro). `navVerticalPadPx` preservado no offset Y (Row tem
+  `padding(vertical = 6.dp)`, nav items começam 6dp abaixo do topo do Box).
+- `Spacer(modifier = Modifier.height(LocalBottomBarInset.current))` adicionado após
+  `QuickActionsBar` em 2 branches de `FocusOrbPreviewScreen`: idle (linha ~1230) e
+  running-inline (linha ~998). Branch break ativo sem QuickActionsBar, sem alteração.
+  Padrão consistente com as 13+ telas que já usam `LocalBottomBarInset.current`.
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes: ./gradlew testDebugUnitTest → BUILD SUCCESSFUL (69 suítes, 0 failures)
+- XML bruto confirmado
+- Visual: PENDENTE — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Nenhum.
