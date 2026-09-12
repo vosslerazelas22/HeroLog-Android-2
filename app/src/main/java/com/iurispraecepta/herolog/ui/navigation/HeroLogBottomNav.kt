@@ -268,13 +268,13 @@ fun HeroLogBottomNav(
                 }
             }
 
-            // Animated active pill
+            // Animated active pill — height = 48.dp (matches nav item Box, replicates React's inset-0)
             val horizontalPadPx = with(LocalDensity.current) { horizontalPad.roundToPx() }
             val navVerticalPadPx = with(LocalDensity.current) { navItemVerticalPadding.roundToPx() }
             Box(
                 modifier = Modifier
                     .offset { IntOffset(animatedPillOffset.x + horizontalPadPx, navVerticalPadPx) }
-                    .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 40.dp)
+                    .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 48.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(Champagne500.copy(alpha = 0.05f))
                     .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))

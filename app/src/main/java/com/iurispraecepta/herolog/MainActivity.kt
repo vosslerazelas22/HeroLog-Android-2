@@ -996,6 +996,8 @@ fun FocusOrbPreviewScreen(
                     onOpenSettingsModal = {},
                     onEnterFullscreen = { isFocusMode = true }
                 )
+
+                Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
             }
         } else {
             val currentRaidMode = raidModeFrom(isDungeonModePreview, isWildernessPreview)
@@ -1226,6 +1228,8 @@ fun FocusOrbPreviewScreen(
                         onOpenSettingsModal = { isTimerSettingsOpen = true },
                         onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
                     )
+
+                    Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                 }
             }
 
