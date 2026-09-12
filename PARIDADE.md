@@ -81,7 +81,7 @@ Status possíveis: `Não iniciado` · `Em andamento` · `Bloqueado` · `Validado
 | Item | Status | Fidelidade Lógica | Fidelidade Visual | Notas |
 |---|---|---|---|---|
 | Lógica pura (`SkillLogic.kt`) | Validado | Validada — 17 testes, incluindo o caso sensível de renomear para o mesmo nome (exclusão `sIdx != idx`) e índice inválido (`SkillError.InvalidIndex`, corrigido no Bloco 2.1) | N/A | Bloco 2 + 2.1 |
-| Tela de skills (UI) | Validado | Validada (usa `SkillLogic.requiredXpForLevel`, `onDeleteSkill` sem lógica de confirmação) | Validado — confirmado visualmente no preview real, incluindo `applyPrestige` funcionando ponta a ponta (Bloco 6.1) | React: `SkillsScreen.tsx` — consumirá `SkillLogic.kt`. Bloco 5 + 5.1 + 6 + 6.1 |
+| Tela de skills (UI) | Em andamento | N/A (mudança apenas visual) | PENDENTE (validação em device/emulador) | Header "HABILIDADES" + botão ? + botão "NOVA"; fontes Cinzel/JetBrainsMono/Inter; sem FAB flutuante. Bloco C (11/09) |
 | Seletor de skill ativa (UI) | Validado | Validada (usa `SkillLogic.requiredXpForLevel`, sem duplicar fórmula) | Parcial — screenshot em modo record, glow do card ativo corrigido no Bloco 4.1, ainda sem inspeção visual humana (não plugado na MainActivity ainda, só a Skills Screen foi) | React: `SkillSelectorModal.tsx` (`/src/components/`) — modal de cards, não `<select>` nativo. Bloco 4 + 4.1 |
 | Skills customizadas (tags, rename, delete, prestige) | Validado (lógica) / Não iniciado (UI) | Validada via `SkillLogic.kt` | N/A | React: `useSkills.ts` |
 

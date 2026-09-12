@@ -5013,3 +5013,28 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 **Resumo**: Alinhado título "SESSÃO CONCLUÍDA" (20sp, Cinzel ExtraBold, letter-spacing 3sp), rank (label "★ CLASSIFICAÇÃO X ★" 14sp Cinzel + drop-shadow Champagne400/35% + descrição 10sp JetBrainsMono uppercase) e divider 85% Amber500/15% ao React `FocusCompletionFlow.tsx` linhas 180–192.
 **Validação**: assembleDebug SUCCESS; 11 testes unitários PASSED (XML bruto confirmado); visual pendente.
 **Desvios**: nenhum (stretch D175–D181, D4–D8 fora de escopo).
+
+## [2026-09-11] Bloco C — SkillsScreen visual (header, NOVA, fontes)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt
+- app/src/main/java/com/iurispraecepta/herolog/ui/skills/SkillsScreen.kt
+
+**Resumo:**
+- Header "HABILIDADES" com ícone Article, texto Cinzel bold champagne, botão ? (tooltip Prestígio placeholder) e botão NOVA com ícone AddCircle que abre modal de criar habilidade (mesmo fluxo do FAB removido)
+- FAB do Scaffold removido do MainActivity.kt (bloco floatingActionButton Skills)
+- 18 ocorrências de FontFamily.Serif/Monospace/SansSerif substituídas por Cinzel/JetBrainsMono/Inter em SkillsScreen.kt
+- Reformatação ktlint aplicada (indentation drift corrigido, imports reordenados)
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes: ./gradlew testDebugUnitTest --tests '*Skill*' → BUILD SUCCESSFUL
+  - SkillLogicTest: 12/12 PASSED
+  - SkillsScreenScreenshotTest: 3/3 PASSED
+- XML bruto confirmado em app/build/test-results/testDebugUnitTest/
+- Visual: PENDENTE — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- Ícone Article em vez de BookOpen (BookOpen indisponível na versão Material Icons Extended)
+- Ícone AddCircle em vez de PlusCircle (PlusCircle indisponível)
+- Tooltip Prestígio implementado como placeholder (popup real exige estado adicional)
