@@ -1,5 +1,10 @@
 package com.iurispraecepta.herolog.ui.focus
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,18 +22,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.ui.theme.Amber500
-import com.iurispraecepta.herolog.ui.theme.Stone950
 
 @Composable
 fun BreakPrepScreen(
@@ -49,9 +54,8 @@ fun BreakPrepScreen(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .background(Stone950)
-            .padding(24.dp),
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Surface(
@@ -157,6 +161,49 @@ fun BreakPrepScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun BreakEndButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Fonte: App.tsx:2751-2757 — botão "Encerrar Pausa" (gradiente emerald) com animate-pulse.
+    val infiniteTransition = rememberInfiniteTransition(label = "break_end_pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "break_end_pulse_alpha"
+    )
+    val emeraldDarkText = Color(0xFF064E3B)
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = pulseAlpha }
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color(0xFF34D399), Color(0xFF4ADE80), Color(0xFF6EE7B7))
+                )
+            )
+            .border(1.dp, Color(0xFF34D399), RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Encerrar Pausa",
+            color = emeraldDarkText,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.sp
+        )
     }
 }
 

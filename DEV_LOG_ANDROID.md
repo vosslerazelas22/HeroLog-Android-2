@@ -5062,3 +5062,55 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-09-14] Bloco E — Break Prep/Running shell persistente + fullscreen break (D24/D25)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/BreakPrepScreen.kt
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusModeScreen.kt
+- app/src/main/java/com/iurispraecepta/herolog/logic/focus/BreakTimerState.kt
+- app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt
+
+**Resumo:**
+- `FocusHeaderBanner` extraído como composable privado — banner "CÂMARA DE FOCO" + tooltip
+  Popup compartilhado entre idle, running-inline, break-prep e break-active
+- Break prep (`isBreakPrep`): agora renderiza como card inline dentro do shell (banner +
+  carousel + `QuickActionsBar` visíveis). Antes substituía tudo com `fillMaxSize`.
+- Break active (`isBreakActive`): shell persistente com banner + carousel + orb esmeralda +
+  `BreakEndButton` "Encerrar Pausa" (emerald gradient + pulse) + `RaidModeInfoBox` +
+  `QuickActionsBar`. Antes só orb + "⏩ Pular Descanso".
+- Fullscreen break: `FocusModeScreen` com `isBreakActive=true`, orb esmeralda em tela cheia.
+  Espelha React (`App.tsx:2055` — `sessionConfig.isFocusMode` retorna `FocusModeScreen`
+  independente do estado de break).
+- Running inline: agora tem header banner (antes faltava — D24).
+- `BreakPrepScreen.kt`: removido `fillMaxSize`/`background` takeover (agora card inline).
+  Adicionado `BreakEndButton` (emerald gradient + pulse, paridade com `App.tsx:2751-2757`).
+- `FocusModeScreen.kt`: parâmetro `isBreakActive` adicionado, repassado ao `FocusOrb`.
+- `BreakTimerState.kt`: +2 campos (`wasLastSessionWildernessMode`, `lastSessionDungeonSessions`)
+  para preservar config da sessão que acabou de rodar durante o break.
+- `HeroLogViewModel.kt`: `confirmFocusSession` captura wilderness/dungeonSessions do config
+  antes de chamar break; `enterBreakPrep` e `startBreakTimer` aceitam e armazenam os novos
+  campos. Bug de regressão corrigido: `onStartBreak` no break-prep agora forward os 3 campos
+  do `breakTimerState` para `startBreakTimer` (antes usava defaults `false`/`0`).
+- `isRunning = false` em todos os estados de break (match React `enterBreak` em
+  `useFocusSession.ts:739`).
+- Break-orb, RaidModeInfoBox e QuickActionsBar durante break usam `breakTimerState.wasLastSession*`
+  em vez de `isDungeonModePreview`/`isWildernessPreview`.
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes: ./gradlew testDebugUnitTest → 83/83 PASSED
+  - HeroLogViewModelTest: 57/57 PASSED
+  - FocusSessionViewModelTest: 12/12 PASSED
+  - FocusSessionConfirmTest: 5/5 PASSED
+  - FocusSessionRecoveryTest: 4/4 PASSED
+  - FocusSessionRepositoryTest: 5/5 PASSED
+- XML bruto confirmado em app/build/test-results/testDebugUnitTest/
+- Visual: PENDENTE — aguardando inspeção em device/emulador
+
+**Desvios de escopo aprovados:**
+- `BreakEndButton` pulso (alpha 0.85→1) é aproximação do CSS `animate-pulse` do React —
+  verificar equivalência visual no side-by-side.
+- `graceSecondsLeft = 3` hardcoded no fullscreen break (inerte com `isGraceActive=false`,
+  mas registrado para futura refatoração se necessário).

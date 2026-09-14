@@ -931,16 +931,18 @@ class HeroLogViewModel(
         }
 
         val isDungeon = config?.isDungeonMode == true
+        val isWilderness = config?.isWildernessChecked == true
+        val dungeonSessions = config?.dungeonSessions ?: 0
         val charForBreak = newState
         if (charForBreak.pomodoroSettings.autoStartBreak) {
-            val breakMins = if (isDungeon && (config.dungeonSessions + 1) >= 4) {
+            val breakMins = if (isDungeon && (dungeonSessions + 1) >= 4) {
                 charForBreak.pomodoroSettings.longBreakDuration.takeIf { it > 0 } ?: 15
             } else {
                 charForBreak.pomodoroSettings.shortBreakDuration.takeIf { it > 0 } ?: 5
             }
-            startBreakTimer(breakMins)
+            startBreakTimer(breakMins, isDungeon, isWilderness, dungeonSessions)
         } else {
-            enterBreakPrep(wasDungeonMode = isDungeon)
+            enterBreakPrep(wasDungeonMode = isDungeon, wasWildernessMode = isWilderness, lastDungeonSessions = dungeonSessions)
         }
 
         _focusSessionState.value = FocusSessionState()
@@ -953,16 +955,18 @@ class HeroLogViewModel(
         _breakTimerState.value = _breakTimerState.value.copy(selectedBreakMins = minutes)
     }
 
-    fun enterBreakPrep(wasDungeonMode: Boolean = false) {
+    fun enterBreakPrep(wasDungeonMode: Boolean = false, wasWildernessMode: Boolean = false, lastDungeonSessions: Int = 0) {
         val defaultBreakMins = _characterState.value?.pomodoroSettings?.shortBreakDuration?.takeIf { it > 0 } ?: 5
         _breakTimerState.value = _breakTimerState.value.copy(
             isBreakPrep = true,
             wasLastSessionDungeonMode = wasDungeonMode,
+            wasLastSessionWildernessMode = wasWildernessMode,
+            lastSessionDungeonSessions = lastDungeonSessions,
             selectedBreakMins = defaultBreakMins
         )
     }
 
-    fun startBreakTimer(minutes: Int) {
+    fun startBreakTimer(minutes: Int, wasDungeonMode: Boolean = false, wasWildernessMode: Boolean = false, lastDungeonSessions: Int = 0) {
         cancelSession() // mesma chamada de segurança que o React faz, mesmo já esperando sessão zerada
         val totalSeconds = minutes * 60
         breakEndTimeMillis = clock() + totalSeconds * 1000L
@@ -971,7 +975,10 @@ class HeroLogViewModel(
             isBreakActive = true,
             selectedBreakMins = minutes,
             secondsLeft = totalSeconds,
-            totalSeconds = totalSeconds
+            totalSeconds = totalSeconds,
+            wasLastSessionDungeonMode = wasDungeonMode,
+            wasLastSessionWildernessMode = wasWildernessMode,
+            lastSessionDungeonSessions = lastDungeonSessions
         )
         breakTickJob?.cancel()
         breakTickJob = viewModelScope.launch {

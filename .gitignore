@@ -18,3 +18,9 @@ local.properties
 debug.keystore
 dev/
 specs/
+
+# Impeccable (design skill) - tudo local, nada no git
+.impeccable/
+.opencode/skills/impeccable/
+.cursor/agents/impeccable-*.md
+.cursor/skills/impeccable/

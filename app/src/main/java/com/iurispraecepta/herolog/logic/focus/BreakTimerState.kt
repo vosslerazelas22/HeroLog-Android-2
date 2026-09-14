@@ -6,5 +6,7 @@ data class BreakTimerState(
     val selectedBreakMins: Int = 5,
     val secondsLeft: Int = 0,
     val totalSeconds: Int = 0,
-    val wasLastSessionDungeonMode: Boolean = false
+    val wasLastSessionDungeonMode: Boolean = false,
+    val wasLastSessionWildernessMode: Boolean = false,
+    val lastSessionDungeonSessions: Int = 0
 )

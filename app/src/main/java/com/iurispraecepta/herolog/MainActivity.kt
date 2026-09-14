@@ -95,6 +95,7 @@ import com.iurispraecepta.herolog.ui.focus.AmbientSoundModal
 import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import com.iurispraecepta.herolog.ui.sfx.LocalSfxManager
 import com.iurispraecepta.herolog.ui.sfx.rememberSfxManager
+import com.iurispraecepta.herolog.ui.focus.BreakEndButton
 import com.iurispraecepta.herolog.ui.focus.BreakPrepScreen
 import com.iurispraecepta.herolog.ui.focus.FocusModeScreen
 import com.iurispraecepta.herolog.ui.focus.FocusOrb
@@ -782,67 +783,183 @@ fun FocusOrbPreviewScreen(
                     Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
                 }
             }
-        } else if ((focusState.isRunning && isFocusMode) || characterState.isPlayerDead) {
-            val config = focusState.config
-            val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
-            val skillName = selectedSkillForSession?.name ?: "Habilidade"
-            val skillEmoji = selectedSkillForSession?.emoji ?: "💻"
-
-            FocusModeScreen(
-                skillName = skillName,
-                skillEmoji = skillEmoji,
-                isDungeonMode = config?.isDungeonMode ?: false,
-                dungeonSessions = config?.dungeonSessions ?: 0,
-                isWildernessChecked = config?.isWildernessChecked ?: false,
-                timeLeft = focusState.timeLeft,
-                totalSeconds = focusState.totalSeconds,
-                isRunning = focusState.isRunning,
-                isPaused = focusState.isPaused,
-                onTogglePause = { viewModel.togglePauseQuest() },
-                onExit = {
-                    isFocusMode = false
-                },
-                isGraceActive = focusState.isGraceActive,
-                graceSecondsLeft = focusState.graceSecondsLeft,
-                isPlayerDead = characterState.isPlayerDead,
-                onReturnToFocusCap = { viewModel.returnToFocusFromGrace() },
-                onRespawn = { viewModel.respawnHero() },
-                orbConcept = characterState?.orbConcept ?: OrbConcept.D,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (breakTimerState.isBreakPrep) {
-            BreakPrepScreen(
-                shortBreakMinutes = characterState.pomodoroSettings.shortBreakDuration,
-                longBreakMinutes = characterState.pomodoroSettings.longBreakDuration,
-                selectedBreakMinutes = breakTimerState.selectedBreakMins,
-                isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
-                onSelectDuration = { viewModel.selectBreakDuration(it) },
-                onStartBreak = { viewModel.startBreakTimer(breakTimerState.selectedBreakMins) },
-                onSkipBreak = { viewModel.skipBreak() }
-            )
-        } else if (breakTimerState.isBreakActive) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                FocusOrb(
+        } else if ((focusState.isRunning && isFocusMode) || characterState.isPlayerDead ||
+            (breakTimerState.isBreakActive && isFocusMode)
+        ) {
+            if (breakTimerState.isBreakActive) {
+                // Descanso em tela cheia — espelha o React: `sessionConfig.isFocusMode`
+                // retorna <FocusModeScreen> independente do estado de break (App.tsx:2055).
+                val selectedSkillForSession = characterState.skills.getOrNull(validSkillIdx)
+                FocusModeScreen(
+                    skillName = selectedSkillForSession?.name ?: "Habilidade",
+                    skillEmoji = selectedSkillForSession?.emoji ?: "💻",
+                    isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                    dungeonSessions = breakTimerState.lastSessionDungeonSessions,
+                    isWildernessChecked = breakTimerState.wasLastSessionWildernessMode,
                     timeLeft = breakTimerState.secondsLeft,
                     totalSeconds = breakTimerState.selectedBreakMins * 60,
-                    isRunning = true,
+                    isRunning = false,
                     isPaused = false,
+                    onTogglePause = {},
+                    onExit = { isFocusMode = false },
+                    isGraceActive = false,
+                    graceSecondsLeft = 3,
+                    isPlayerDead = false,
+                    onReturnToFocusCap = {},
+                    onRespawn = {},
+                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
                     isBreakActive = true,
-                    orbConcept = orbConcept,
-                    size = FocusOrbSize.STANDARD
+                    modifier = Modifier.fillMaxSize()
                 )
-                Spacer(modifier = Modifier.height(20.dp))
-                OutlinedButton(
-                    onClick = { viewModel.skipBreak() }
+            } else {
+                val config = focusState.config
+                val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
+                val skillName = selectedSkillForSession?.name ?: "Habilidade"
+                val skillEmoji = selectedSkillForSession?.emoji ?: "💻"
+
+                FocusModeScreen(
+                    skillName = skillName,
+                    skillEmoji = skillEmoji,
+                    isDungeonMode = config?.isDungeonMode ?: false,
+                    dungeonSessions = config?.dungeonSessions ?: 0,
+                    isWildernessChecked = config?.isWildernessChecked ?: false,
+                    timeLeft = focusState.timeLeft,
+                    totalSeconds = focusState.totalSeconds,
+                    isRunning = focusState.isRunning,
+                    isPaused = focusState.isPaused,
+                    onTogglePause = { viewModel.togglePauseQuest() },
+                    onExit = {
+                        isFocusMode = false
+                    },
+                    isGraceActive = focusState.isGraceActive,
+                    graceSecondsLeft = focusState.graceSecondsLeft,
+                    isPlayerDead = characterState.isPlayerDead,
+                    onReturnToFocusCap = { viewModel.returnToFocusFromGrace() },
+                    onRespawn = { viewModel.respawnHero() },
+                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        } else if (breakTimerState.isBreakPrep) {
+            // Break prep inline — React (App.tsx:2413-2475) mantém banner + carousel +
+            // quick actions visíveis; só o viewport do timer vira o card de escolha de pausa.
+            Column(modifier = Modifier.fillMaxSize()) {
+                FocusHeaderBanner(
+                    showTooltip = showFocusTooltip,
+                    onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
+                    onCloseTooltip = { showFocusTooltip = false },
+                    onOpenQuestFab = { isQuestFabOpen = true }
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("⏩ Pular Descanso")
+                    SkillInlineCarousel(
+                        skills = characterState.skills,
+                        selectedIndex = validSkillIdx,
+                        onSelectIndex = { selectedSkillIdx = it },
+                        disabled = false,
+                        onOpenSkillsManager = { isSkillSelectorOpen = true }
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    BreakPrepScreen(
+                        shortBreakMinutes = characterState.pomodoroSettings.shortBreakDuration,
+                        longBreakMinutes = characterState.pomodoroSettings.longBreakDuration,
+                        selectedBreakMinutes = breakTimerState.selectedBreakMins,
+                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                        onSelectDuration = { viewModel.selectBreakDuration(it) },
+                        onStartBreak = {
+                            viewModel.startBreakTimer(
+                                minutes = breakTimerState.selectedBreakMins,
+                                wasDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                                wasWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                                lastDungeonSessions = breakTimerState.lastSessionDungeonSessions
+                            )
+                        },
+                        onSkipBreak = { viewModel.skipBreak() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    QuickActionsBar(
+                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                        isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                        isRunning = false,
+                        onOpenModeModal = { isIncursionModalOpen = true },
+                        activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                        onOpenAmbientModal = { isAmbientModalOpen = true },
+                        isSettingsEnabled = true,
+                        onOpenSettingsModal = { isTimerSettingsOpen = true },
+                        onEnterFullscreen = { }
+                    )
+                }
+            }
+        } else if (breakTimerState.isBreakActive) {
+            // Rest running inline — banner + carousel + orb esmeralda + "Encerrar Pausa" +
+            // status bar + quick actions permanecem visíveis (paridade com App.tsx:2476-2494,
+            // e TRANSIT CONTROL em App.tsx:2751-2757).
+            Column(modifier = Modifier.fillMaxSize()) {
+                FocusHeaderBanner(
+                    showTooltip = showFocusTooltip,
+                    onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
+                    onCloseTooltip = { showFocusTooltip = false },
+                    onOpenQuestFab = { isQuestFabOpen = true }
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    SkillInlineCarousel(
+                        skills = characterState.skills,
+                        selectedIndex = validSkillIdx,
+                        onSelectIndex = { selectedSkillIdx = it },
+                        disabled = false,
+                        onOpenSkillsManager = { isSkillSelectorOpen = true }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FocusOrb(
+                        timeLeft = breakTimerState.secondsLeft,
+                        totalSeconds = breakTimerState.selectedBreakMins * 60,
+                        isRunning = false,
+                        isPaused = false,
+                        isBreakActive = true,
+                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                        isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                        orbConcept = orbConcept,
+                        size = FocusOrbSize.STANDARD
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    BreakEndButton(onClick = { viewModel.skipBreak() })
+                    Spacer(modifier = Modifier.height(12.dp))
+                    RaidModeInfoBox(
+                        mode = raidModeFrom(breakTimerState.wasLastSessionDungeonMode, breakTimerState.wasLastSessionWildernessMode),
+                        dungeonSessions = breakTimerState.lastSessionDungeonSessions,
+                        dungeonOnCooldown = false,
+                        lootChancePercent = lootChancePercentFrom(
+                            studiedMinutes = focusDuration,
+                            isDungeon = breakTimerState.wasLastSessionDungeonMode,
+                            equippedTitleId = characterState.equippedTitle
+                        ),
+                        onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                        onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                        onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    QuickActionsBar(
+                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                        isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                        isRunning = false,
+                        onOpenModeModal = { isIncursionModalOpen = true },
+                        activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                        onOpenAmbientModal = { isAmbientModalOpen = true },
+                        isSettingsEnabled = false,
+                        onOpenSettingsModal = {},
+                        onEnterFullscreen = { isFocusMode = true }
+                    )
                 }
             }
         } else if (focusState.isRunning) {
@@ -852,14 +969,20 @@ fun FocusOrbPreviewScreen(
             val config = focusState.config
             val currentRaidModeRunning = raidModeFrom(config?.isDungeonMode ?: false, config?.isWildernessChecked ?: false)
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                FocusHeaderBanner(
+                    showTooltip = showFocusTooltip,
+                    onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
+                    onCloseTooltip = { showFocusTooltip = false },
+                    onOpenQuestFab = { isQuestFabOpen = true }
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 SkillInlineCarousel(
                     skills = characterState.skills,
                     selectedIndex = config?.selectedSkillIdx ?: 0,
@@ -998,6 +1121,7 @@ fun FocusOrbPreviewScreen(
                 )
 
                 Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
+                }
             }
         } else {
             val currentRaidMode = raidModeFrom(isDungeonModePreview, isWildernessPreview)
@@ -1005,135 +1129,12 @@ fun FocusOrbPreviewScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header banner — equivale ao div de App.tsx:2338-2381
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    // Banner (without tooltip — tooltip floats above via sibling Box)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
-                                )
-                            )
-                            .border(1.dp, Color(0x1AF59E0B))
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Left: QuestFab button (absolute)
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .size(20.dp)
-                                .clip(CircleShape)
-                                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                                .clickable { isQuestFabOpen = true },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.lucide_ic_scroll),
-                                contentDescription = "Ver Contratos Ativos",
-                                tint = Champagne400,
-                                modifier = Modifier.size(11.dp)
-                            )
-                        }
-
-                        // Center: Timer icon + title
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.lucide_ic_timer),
-                                contentDescription = null,
-                                tint = Champagne500,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "CÂMARA DE FOCO",
-                                fontFamily = Cinzel,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 12.sp,
-                                color = Champagne400,
-                                letterSpacing = 1.sp
-                            )
-                        }
-
-                        // Right: Tooltip button (absolute)
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .size(18.dp)
-                                .clip(CircleShape)
-                                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                                .clickable { showFocusTooltip = !showFocusTooltip },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "?",
-                                fontSize = 10.sp,
-                                lineHeight = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Champagne400.copy(alpha = 0.8f)
-                            )
-                        }
-                    }
-                }
-
-                // Tooltip popup — floats above banner via Popup overlay, does not affect layout
-                if (showFocusTooltip) {
-                    Popup(
-                        alignment = Alignment.TopEnd,
-                        properties = PopupProperties(focusable = false),
-                        onDismissRequest = { showFocusTooltip = false }
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 48.dp, end = 16.dp)
-                                .widthIn(max = 280.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xF20C0A09))
-                                .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                                .padding(14.dp)
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "Câmara de Foco (POMODORO)",
-                                        fontFamily = Cinzel,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
-                                        color = Champagne400,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .clickable { showFocusTooltip = false }
-                                            .padding(2.dp)
-                                    ) {
-                                        Text(
-                                            text = "×",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0x66A8A29E)
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
-                                    fontSize = 11.sp,
-                                    color = Color(0xCCD6D3D1),
-                                    lineHeight = 16.sp
-                                )
-                            }
-                        }
-                    }
-                }
+                FocusHeaderBanner(
+                    showTooltip = showFocusTooltip,
+                    onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
+                    onCloseTooltip = { showFocusTooltip = false },
+                    onOpenQuestFab = { isQuestFabOpen = true }
+                )
 
                 // Content (existing focus tab UI)
                 Column(
@@ -1483,4 +1484,144 @@ fun FocusOrbPreviewScreen(
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(text = "Hello $name!", modifier = modifier)
+}
+
+// Banner "CÂMARA DE FOCO" + tooltip flutuante — extraído para reaproveitamento entre os
+// estados da aba Foco (idle, sessão rodando inline, break prep, break active).
+// Fonte: App.tsx:2338-2381 (banner estrutural, sempre visível quando activeTab === 'focus').
+@Composable
+private fun FocusHeaderBanner(
+    showTooltip: Boolean,
+    onToggleTooltip: () -> Unit,
+    onCloseTooltip: () -> Unit,
+    onOpenQuestFab: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // Banner (without tooltip — tooltip floats above via sibling Box)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
+                    )
+                )
+                .border(1.dp, Color(0x1AF59E0B))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Left: QuestFab button (absolute)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                    .clickable { onOpenQuestFab() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_ic_scroll),
+                    contentDescription = "Ver Contratos Ativos",
+                    tint = Champagne400,
+                    modifier = Modifier.size(11.dp)
+                )
+            }
+
+            // Center: Timer icon + title
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.lucide_ic_timer),
+                    contentDescription = null,
+                    tint = Champagne500,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "CÂMARA DE FOCO",
+                    fontFamily = Cinzel,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 12.sp,
+                    color = Champagne400,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            // Right: Tooltip button (absolute)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                    .clickable { onToggleTooltip() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "?",
+                    fontSize = 10.sp,
+                    lineHeight = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Champagne400.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+
+    // Tooltip popup — floats above banner via Popup overlay, does not affect layout
+    if (showTooltip) {
+        Popup(
+            alignment = Alignment.TopEnd,
+            properties = PopupProperties(focusable = false),
+            onDismissRequest = { onCloseTooltip() }
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 48.dp, end = 16.dp)
+                    .widthIn(max = 280.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xF20C0A09))
+                    .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                    .padding(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Câmara de Foco (POMODORO)",
+                            fontFamily = Cinzel,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = Champagne400,
+                            letterSpacing = 0.5.sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onCloseTooltip() }
+                                .padding(2.dp)
+                        ) {
+                            Text(
+                                text = "×",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0x66A8A29E)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
+                        fontSize = 11.sp,
+                        color = Color(0xCCD6D3D1),
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+        }
+    }
 }

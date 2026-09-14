@@ -132,7 +132,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 | D2 | **Header — mobile sidebar dead code** | Tem sidebar por gesto (`isMobileSidebarOpen`, handlers declarados mas nunca bindados ao DOM) | Não tem sidebar (usa só BottomNav) | **Baixa** | Código morto no React; funcionalmente equivalente |
 | D3 | **BottomNav — ícones approximations** | `lucide-react` (Castle, Checklist, etc.) | Material Icons / Lucide Android (aproximações semânticas) | **Baixa** | `Castle→Home`, `Checklist→Checklist` (confirmado existir) |
 
-### 4.2 Módulo Foco (FocusModeScreen — 43 divergências)
+### 4.2 Módulo Foco (FocusModeScreen — 41 divergências)
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
@@ -579,8 +579,8 @@ A varredura profunda (linha a linha, **todas as 17 telas e 15 modais analisados*
 
 | # | Divergência | Impacto |
 |---|---|---|
-| D24 | Header "CÂMARA DE FOCO" some durante sessão | Perde contexto visual |
-| D25 | Break prep full-screen vs inline | Perde contexto ao redor |
+| D24 | Header "CÂMARA DE FOCO" some durante sessão | ✅ **Resolvido (Bloco E, 14/09)** |
+| D25 | Break prep full-screen vs inline | ✅ **Resolvido (Bloco E, 14/09)** |
 | D7+D8 | FocusCompletionFlow loot decoration | Momento de recompensa menos elaborado |
 | D12+D13 | CharacterScreen header button + isRunning | Funcionalidade ausente |
 | D146 | IncursionModeModal layout vertical vs horizontal | Layout estrutural diferente |
@@ -741,11 +741,12 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 
 | Status | Qtd | Divergências |
 |---|---|---|
-| ❌ Não resolvido | 22 | D1, D4-D8, D12-D14, D17, D18, D20-D25 + D120, D121, D131-D134, D153, D166, D173-D174, D198 |
+| ❌ Não resolvido | 20 | D1, D4-D8, D12-D14, D17, D18, D20-D23 + D120, D121, D131-D134, D153, D166, D173-D174, D198 |
 | ✅ Resolvido por Sprint S5 | 1 | D15 (HabitsScreen header casing) |
 | ✅ Resolvido por S5 (labels) | 2 | D57 (Habits labels), D70 (Dailies labels) |
 | ✅ Resolvido por S5 (submit) | 3 | D59 (Habits submit), D80 (Todos submit), S10 parcial |
 | ✅ Resolvido por S5 (fontes) | 5 | D86 (Quests progress), D90 (Quests claimed), D95 parcial (History), D194 (QuestFab title), D197 (QuestFab empty) |
+| ✅ Resolvido por Bloco E (D24/D25) | 2 | D24 (header CÂMARA DE FOCO), D25 (break prep inline) |
 | N/A (decisão consciente / equivalente funcional) | 9 | D2, D3, D9-D11, D16, D19 |
 
 **Total resolvido pelo Sprint S5: 11 divergências** (D15, D57, D59, D63, D70, D80, D86, D90, D95 parcial, D194, D197).

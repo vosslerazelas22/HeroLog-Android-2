@@ -73,6 +73,7 @@ fun FocusModeScreen(
     onReturnToFocusCap: () -> Unit = {},
     onRespawn: () -> Unit = {},
     orbConcept: OrbConcept = OrbConcept.D,
+    isBreakActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Pulso radial de fundo — reflexo mágico. Ver PARIDADE.md: chuva de partículas cintilantes
@@ -166,6 +167,7 @@ fun FocusModeScreen(
                     isPaused = isPaused,
                     isDungeonMode = isDungeonMode,
                     isWildernessMode = isWildernessChecked,
+                    isBreakActive = isBreakActive,
                     orbConcept = orbConcept,
                     size = FocusOrbSize.FULLSCREEN
                 )
