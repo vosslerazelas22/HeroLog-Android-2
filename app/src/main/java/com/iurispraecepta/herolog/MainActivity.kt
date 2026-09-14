@@ -88,7 +88,9 @@ import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
 import com.iurispraecepta.herolog.ui.daily.DailyReportModal
+import com.iurispraecepta.herolog.ui.components.HazePocDialog
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
+import com.iurispraecepta.herolog.ui.components.LocalHazeState
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.focus.AMBIENT_SOUNDS
 import com.iurispraecepta.herolog.ui.focus.AmbientSoundModal
@@ -269,7 +271,10 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     CompositionLocalProvider(
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
-                        LocalSfxManager provides sfxManager
+                        LocalSfxManager provides sfxManager,
+                        // TEMP spec-002 PoC Opção A: expõe o HazeState da raiz aos dialogs
+                        // de teste. Remover junto com o HazePocDialog após a decisão.
+                        LocalHazeState provides hazeState
                     ) {
                     Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()).consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
                         // Background celestial particles reflection effect
@@ -724,6 +729,10 @@ fun FocusOrbPreviewScreen(
     var isAmbientModalOpen by remember { mutableStateOf(false) }
     var showFocusTooltip by remember { mutableStateOf(false) }
     var isQuestFabOpen by remember { mutableStateOf(false) }
+    // TEMP spec-002 PoC Opção A: estado do dialog de teste Haze. Remover após a decisão.
+    var isHazePocOpen by remember { mutableStateOf(false) }
+    var hazePocAllowBackdropClose by remember { mutableStateOf(true) }
+    var hazePocDisableEscClose by remember { mutableStateOf(false) }
 
     var isConfirmingAbandon by remember { mutableStateOf(false) }
     var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
@@ -1230,6 +1239,12 @@ fun FocusOrbPreviewScreen(
                         onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
                     )
 
+                    // TEMP spec-002 PoC Opção A: trigger do dialog de teste Haze.
+                    // Remover junto com o HazePocDialog após a decisão arquitetural.
+                    OutlinedButton(onClick = { isHazePocOpen = true }) {
+                        Text(text = "🧪 Haze PoC (TEMP spec-002)")
+                    }
+
                     Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                 }
             }
@@ -1400,6 +1415,17 @@ fun FocusOrbPreviewScreen(
                     }
                 }
             }
+
+            // TEMP spec-002 PoC Opção A: dialog de teste Haze (fora de produção).
+            // Remover junto com o trigger após a decisão arquitetural.
+            HazePocDialog(
+                isOpen = isHazePocOpen,
+                onClose = { isHazePocOpen = false },
+                allowBackdropClose = hazePocAllowBackdropClose,
+                disableEscClose = hazePocDisableEscClose,
+                onAllowBackdropCloseChange = { hazePocAllowBackdropClose = it },
+                onDisableEscCloseChange = { hazePocDisableEscClose = it }
+            )
 
             IncursionModeModal(
                 isOpen = isIncursionModalOpen,
