@@ -241,10 +241,13 @@ fun HeroLogModal(
                         .background(Stone900)
                         .border(1.dp, borderColor, RoundedCornerShape(16.dp))
                 ) {
-                    // Ambient glow
+                    // Ambient glow (spec-002: matchParentSize, não fillMaxSize — um Box
+                    // vazio com fillMaxSize mede no máximo das constraints e esticava
+                    // o painel wrap-content até a altura cheia; o teto 0.8f antigo
+                    // mascarava isso. matchParentSize só acompanha o pai medido.)
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .matchParentSize()
                             .background(Brush.verticalGradient(listOf(glowColor, Color.Transparent)))
                     )
 
