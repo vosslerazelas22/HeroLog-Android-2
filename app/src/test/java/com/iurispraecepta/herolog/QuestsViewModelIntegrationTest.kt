@@ -81,29 +81,6 @@ class QuestsViewModelIntegrationTest {
     }
 
     @Test
-    fun guildQuestsProcessed_generatesGuildQuestsCorrectly() = runTest(testDispatcher) {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val testDate = dateFormat.parse("2026-08-04")!!
-
-        val state = createBaseState().copy(
-            combatLevel = 5,
-            totalSessions = 12,
-            bestStreak = 3
-        )
-        val viewModel = HeroLogViewModel(characterRepository, focusSessionRepository, sfxManager = SfxManager.noOp())
-        advanceUntilIdle()
-
-        val guildList = viewModel.guildQuestsProcessed(state, testDate)
-        assertEquals(3, guildList.size)
-
-        // Com esses atributos, todas as 3 guild quests devem estar completas e não resgatadas
-        guildList.forEach { quest ->
-            assertTrue(quest.isCompleted)
-            assertFalse(quest.isClaimed)
-        }
-    }
-
-    @Test
     fun claimQuestReward_updatesStateAndPersists() = runTest(testDispatcher) {
         val initialHero = createBaseState().copy(
             gold = 100,
@@ -122,23 +99,23 @@ class QuestsViewModelIntegrationTest {
         val beforeTotalXp = beforeClaim.totalXP
 
         viewModel.claimQuestReward(
-            questId = "guild_1",
-            goldReward = 400,
-            xpReward = 200
+            questId = "daily_rite_25",
+            goldReward = 100,
+            xpReward = 50
         )
         advanceUntilIdle()
 
         val updated = viewModel.characterState.value
         assertNotNull(updated)
-        assertEquals(beforeGold + 400, updated!!.gold)
-        assertEquals(beforeTotalXp + 200, updated.totalXP)
-        assertTrue(updated.achievements.contains("claimed_guild_1"))
+        assertEquals(beforeGold + 100, updated!!.gold)
+        assertEquals(beforeTotalXp + 50, updated.totalXP)
+        assertTrue(updated.achievements.any { it.startsWith("claimed_daily_rite_25") })
 
         // Verifica se persistiu no repositório
         val persisted = characterRepository.getCharacterState()
         assertNotNull(persisted)
-        assertEquals(beforeGold + 400, persisted!!.gold)
-        assertEquals(beforeTotalXp + 200, persisted.totalXP)
+        assertEquals(beforeGold + 100, persisted!!.gold)
+        assertEquals(beforeTotalXp + 50, persisted.totalXP)
     }
 
     private fun createBaseState(): CharacterState {

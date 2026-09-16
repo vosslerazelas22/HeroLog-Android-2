@@ -22,17 +22,10 @@ class QuestCatalogTest {
     }
 
     @Test
-    fun guildQuestCatalogCount_is3() {
-        assertEquals(3, QuestCatalog.GUILD_QUESTS.size)
-    }
-
-    @Test
     fun allQuestIds_areUnique() {
         val dailyIds = QuestCatalog.DAILY_QUEST_CATALOG.map { it.id }
-        val guildIds = QuestCatalog.GUILD_QUESTS.map { it.id }
-        val allIds = dailyIds + guildIds
 
-        assertEquals(allIds.size, allIds.distinct().size)
+        assertEquals(dailyIds.size, dailyIds.distinct().size)
     }
 
     @Test
@@ -66,11 +59,10 @@ class QuestCatalogTest {
     }
 
     @Test
-    fun spotCheck_getProgress_guild1() {
-        val quest = QuestCatalog.GUILD_QUESTS.first { it.id == "guild_1" }
-        val state = createBaseState().copy(combatLevel = 7)
-        val progress = quest.getProgress(state)
-        assertEquals(5, progress)
+    fun guildQuests_doNotExistInCatalog() {
+        // Spec-001 FR-001: Marcos da Jornada / guild quests foram removidos do catálogo.
+        val fieldNames = QuestCatalog::class.java.declaredFields.map { it.name }
+        assertTrue("GUILD_QUESTS não deve existir no catálogo", "GUILD_QUESTS" !in fieldNames)
     }
 
     private fun createBaseState(): CharacterState {

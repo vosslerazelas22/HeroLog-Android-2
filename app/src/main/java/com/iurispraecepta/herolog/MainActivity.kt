@@ -141,6 +141,7 @@ import com.iurispraecepta.herolog.ui.components.AppHeader
 import com.iurispraecepta.herolog.ui.components.GeneralSettingsModal
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
+import com.iurispraecepta.herolog.ui.components.AchievementAnnouncementOverlay
 import com.iurispraecepta.herolog.logic.SaveImportOutcome
 import com.iurispraecepta.herolog.data.JsonConfig
 import com.iurispraecepta.herolog.data.export.GameStateExporter
@@ -190,7 +191,6 @@ class MainActivity : ComponentActivity() {
             HeroLogTheme {
                 // Estado de navegação em string, fiel ao `activeTab` da fonte React (`useState<string>('focus')`).
                 var activeTab by remember { mutableStateOf("focus") }
-                var questsSubTab by remember { mutableStateOf("daily") }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
                 var isRestoreSaveOpen by remember { mutableStateOf(false) }
                 var isGeneralSettingsOpen by remember { mutableStateOf(false) }
@@ -535,9 +535,6 @@ class MainActivity : ComponentActivity() {
                                 if (state != null) {
                                     QuestsScreen(
                                         dailyQuests = heroLogViewModel.dailyQuests(state),
-                                        guildQuests = heroLogViewModel.guildQuestsProcessed(state),
-                                        activeSubTab = questsSubTab,
-                                        onSubTabChange = { questsSubTab = it },
                                         onClaimQuestReward = heroLogViewModel::claimQuestReward
                                     )
                                 }
@@ -773,6 +770,7 @@ fun FocusOrbPreviewScreen(
                 val shouldShowStreakCelebration = characterState.lastStudyDate != todayString
                 val selectedSkillForSession = characterState.skills.getOrNull(rewards.skillIdx)
                 val skillTags = selectedSkillForSession?.tags ?: emptyList()
+                val newAchievements by viewModel.pendingFocusAchievements.collectAsState()
 
                 FocusCompletionFlow(
                     rewardsCalculation = rewards,
@@ -780,6 +778,7 @@ fun FocusOrbPreviewScreen(
                     streak = streak,
                     shouldShowStreakCelebration = shouldShowStreakCelebration,
                     skillTags = skillTags,
+                    newAchievements = newAchievements,
                     onConfirm = { editedNotes, selectedTag ->
                         viewModel.confirmFocusSession(editedNotes, selectedTag)
                     },
@@ -1244,10 +1243,6 @@ fun FocusOrbPreviewScreen(
             // QuestFab Modal — contratos ativos (port de QuestFab.tsx)
             if (characterState != null) {
                 val dailyQuests: List<ProcessedQuest> = viewModel.dailyQuests(characterState!!)
-                val guildQuests: List<ProcessedQuest> = viewModel.guildQuestsProcessed(characterState!!)
-                val closestGuild = guildQuests
-                    .filter { !it.isClaimed }
-                    .maxByOrNull { it.progress.toFloat() / it.target.coerceAtLeast(1) }
 
                 HeroLogModal(
                     isOpen = isQuestFabOpen,
@@ -1309,78 +1304,6 @@ fun FocusOrbPreviewScreen(
                             }
                         }
 
-                        // Marcos da Jornada
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "MARCOS DA JORNADA",
-                                fontFamily = Cinzel,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp,
-                                color = Champagne400,
-                                letterSpacing = 0.5.sp
-                            )
-                            if (closestGuild != null) {
-                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = closestGuild.name,
-                                            fontSize = 12.sp,
-                                            fontFamily = Cinzel,
-                                            color = Champagne400,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                        Text(
-                                            text = "${closestGuild.progress}/${closestGuild.target}",
-                                            fontSize = 11.sp,
-                                            fontFamily = JetBrainsMono,
-                                            color = if (closestGuild.isCompleted) Champagne400 else Color(0x99A8A29E),
-                                            fontWeight = if (closestGuild.isCompleted) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    }
-                                    Text(
-                                        text = closestGuild.desc,
-                                        fontSize = 9.sp,
-                                        color = Color(0x66D6D3D1),
-                                        fontFamily = Cinzel
-                                    )
-                                    // Progress bar
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(8.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(Color(0x1A1C1917))
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth(
-                                                    (closestGuild.progress.toFloat() / closestGuild.target.coerceAtLeast(1)).coerceIn(0f, 1f)
-                                                )
-                                                .fillMaxSize()
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(
-                                                    Brush.horizontalGradient(
-                                                        listOf(Champagne500, Color(0xFFF5DFA0))
-                                                    )
-                                                )
-                                        )
-                                    }
-                                }
-                            } else {
-                                Text(
-                                    text = "Todas as teses conquistadas!",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF10B981),
-                                    fontFamily = Cinzel,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
                         // Navigation button
                         Box(
                             modifier = Modifier
@@ -1438,6 +1361,13 @@ fun FocusOrbPreviewScreen(
                 onSaveCustomSettings = { f, s, l -> viewModel.saveCustomTimerSettings(f, s, l) },
                 onToggleAutoStartBreak = { viewModel.toggleAutoStartBreak() },
                 onToggleAutoStartFocus = { viewModel.toggleAutoStartFocus() }
+            )
+
+            // ── Overlay de anúncio de conquistas fora do foco (FR-009/US-04) ──
+            val achievementQueue by viewModel.achievementAnnouncementQueue.collectAsState()
+            AchievementAnnouncementOverlay(
+                queue = achievementQueue,
+                onDismiss = { viewModel.dismissNextAchievementAnnouncement() }
             )
         }
 
