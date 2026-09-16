@@ -141,13 +141,6 @@ class HeroLogViewModel(
         }
     }
 
-    /**
-     * Limpa a fila de anúncios de foco (chamado ao iniciar nova sessão).
-     */
-    fun clearPendingFocusAchievements() {
-        _pendingFocusAchievements.value = emptyList()
-    }
-
     private val _dailyReport = MutableStateFlow<DailyReportData?>(null)
     val dailyReport: StateFlow<DailyReportData?> = _dailyReport.asStateFlow()
 
