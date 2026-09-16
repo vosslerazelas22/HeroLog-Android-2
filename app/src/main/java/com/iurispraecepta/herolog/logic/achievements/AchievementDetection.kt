@@ -21,8 +21,10 @@ object AchievementDetection {
 
     /**
      * Detecta novos achievements desbloqueados na transição [previous] → [candidate].
-     * Retorna os Achievement novos em ordem de catálogo, já com os IDs adicionados ao
-     * [candidate] (via retorna uma lista de novos IDs para serem persistidos).
+     *
+     * Retorna os [Achievement] novos em ordem de catálogo — aqueles cujo threshold foi
+     * cruzado nesta mutação e que ainda não estavam persistidos. Os IDs resultantes devem
+     * ser persistidos via [withAchievements]; esta função não altera o estado.
      */
     fun detectNewAchievements(
         previous: CharacterState,

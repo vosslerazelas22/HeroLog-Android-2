@@ -45,14 +45,15 @@ fun AchievementAnnouncementOverlay(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val currentAchievement = queue.firstOrNull() ?: return
+    val currentAchievement = queue.firstOrNull()
 
     AnimatedVisibility(
-        visible = true,
+        visible = currentAchievement != null,
         enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
         exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
         modifier = modifier.fillMaxSize()
     ) {
+        if (currentAchievement != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -155,6 +156,7 @@ fun AchievementAnnouncementOverlay(
                     )
                 }
             }
+        }
         }
     }
 }
