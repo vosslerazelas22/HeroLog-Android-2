@@ -247,8 +247,12 @@ class MainActivity : ComponentActivity() {
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
+                // TEMP spec-002 PoC Opção A: hazeSource no Scaffold inteiro para que o
+                // AppHeader (topBar) também faça parte da fonte do blur (antes só o
+                // conteúdo estava na fonte, e o header só escurecia). Padrão canônico
+                // do Haze; nós de hazeEffect se auto-excluem. Reavaliar ao integrar.
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().hazeSource(hazeState),
                     containerColor = QuestPanel,
                     topBar = {
                         AppHeader(
@@ -276,7 +280,7 @@ class MainActivity : ComponentActivity() {
                         // de teste. Remover junto com o HazePocDialog após a decisão.
                         LocalHazeState provides hazeState
                     ) {
-                    Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()).consumeWindowInsets(innerPadding).hazeSource(hazeState)) {
+                    Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()).consumeWindowInsets(innerPadding)) {
                         // Background celestial particles reflection effect
                         // Equivalente ao radial-gradient purple-950/20 do React (App.tsx:2075)
                         Box(

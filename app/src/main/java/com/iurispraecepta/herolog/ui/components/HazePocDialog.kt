@@ -1,6 +1,7 @@
 package com.iurispraecepta.herolog.ui.components
 
 import androidx.activity.compose.BackHandler
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +19,10 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +59,13 @@ private val Stone200 = Color(0xFFE7E5E4)
 private val Stone400 = Color(0xFFA8A29E)
 private val Champagne400 = Color(0xFFE5C158)
 
+private const val HAZE_POC_TAG = "HazePoC"
+
+// TEMP spec-002: candidatos de raio para calibração visual contra o React
+// (backdrop-blur 2px, degrau mínimo da escala). O vencedor vira constante.
+private val POC_RADIUS_CANDIDATES = listOf(0.5f, 1f, 1.5f, 2f)
+private const val POC_NOISE_REFERENCE = 0.15f // default do HazeStyle, p/ comparação
+
 @Composable
 fun HazePocDialog(
     isOpen: Boolean,
@@ -66,9 +77,20 @@ fun HazePocDialog(
 ) {
     if (!isOpen) return
 
+    // TEMP spec-002: breadcrumbs p/ diagnosticar o Voltar no device (logcat: HazePoC).
+    // Teste-controle: repetir o Voltar no IncursionModeModal de produção na mesma sessão
+    // (sistêmico vs. PoC-específico).
+    Log.d(HAZE_POC_TAG, "composing isOpen=$isOpen disableEscClose=$disableEscClose allowBackdropClose=$allowBackdropClose")
     BackHandler(enabled = !disableEscClose) {
+        Log.d(HAZE_POC_TAG, "BackHandler fired (disableEscClose=$disableEscClose), closing")
         onClose()
     }
+
+    // TEMP spec-002: calibração de intensidade. Baseline noiseFactor=0f (HazeStyle usa
+    // 0.15 de grain por default, provado no bytecode do 1.6.10 — mais intenso que o CSS).
+    var radiusDp by remember { mutableStateOf(1f) }
+    var noise by remember { mutableStateOf(0f) }
+    Log.d(HAZE_POC_TAG, "style radius=${radiusDp}dp noise=$noise")
 
     val hazeState = LocalHazeState.current
 
@@ -96,7 +118,8 @@ fun HazePocDialog(
                     style = HazeStyle(
                         backgroundColor = Stone950.copy(alpha = 0.8f),
                         tint = null,
-                        blurRadius = 2.dp
+                        blurRadius = radiusDp.dp,
+                        noiseFactor = noise
                     )
                 )
             } else {
@@ -141,6 +164,57 @@ fun HazePocDialog(
                         fontSize = 13.sp,
                         color = Stone200
                     )
+                    Text(
+                        text = "Raio (alvo: quase imperceptível, degrau mínimo):",
+                        fontSize = 12.sp,
+                        color = Stone400
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        POC_RADIUS_CANDIDATES.forEach { candidate ->
+                            val selected = candidate == radiusDp
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(
+                                        if (selected) Champagne400.copy(alpha = 0.25f)
+                                        else Stone950
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (selected) Champagne400 else Stone400.copy(alpha = 0.4f),
+                                        RoundedCornerShape(6.dp)
+                                    )
+                                    .clickable { radiusDp = candidate }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$candidate",
+                                    fontSize = 12.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (selected) Champagne400 else Stone200
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = noise != 0f,
+                            onCheckedChange = { on -> noise = if (on) POC_NOISE_REFERENCE else 0f }
+                        )
+                        Text(
+                            text = "Grain 0.15 (default Haze, p/ referência)",
+                            fontSize = 12.sp,
+                            color = Stone400
+                        )
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
