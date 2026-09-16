@@ -2,7 +2,7 @@ package com.iurispraecepta.herolog.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,6 +14,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -33,8 +34,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
@@ -45,18 +48,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeEffect
@@ -80,6 +86,12 @@ private object ModalTokens {
     val BackdropBlurRadius = 0.25.dp // calibrado em device vs React blur(2px), 09/2026
     const val BackdropNoiseFactor = 0f // HazeStyle usa 0.15 default (grain); CSS é limpo
     const val ExitAnimDurationMs = 220L // tween 220ms da animação de saída
+    // Passo 3 (§4): header mobile + título mobile. Breakpoint sm (p-5, text-lg, p-6)
+    // deliberadamente ausente — só entra se confirmado necessário em device.
+    val HeaderHorizontalPadding = 16.dp // p-4 mobile
+    val TitleFontSize = 16.sp // text-base mobile
+    val PanelElevation = 20.dp // shadow-xl, sem halo (escuro sobre escuro)
+    val ContentDefaultColor = Color(0xFFE7E5E4) // text-stone-200 herdado pelo slot
 }
 
 // Hex tokens
@@ -147,19 +159,19 @@ fun HeroLogModal(
         ModalVariant.Amber -> Quadruple(
             Color(0x4DD4AF37), // champagne-500/30
             listOf(Champagne600, Champagne400, Champagne600),
-            Color(0x05D4AF37), // champagne-500/[0.02]
+            Color(0x03D4AF37), // champagne-500/[0.01]
             Champagne400
         )
         ModalVariant.Purple -> Quadruple(
             Color(0x4DA855F7), // purple-500/30
             listOf(Purple600, Purple400, Purple600),
-            Color(0x05A855F7), // purple-500/[0.02]
+            Color(0x03A855F7), // purple-500/[0.01]
             Purple400
         )
         ModalVariant.Red -> Quadruple(
             Color(0x4DEF4444), // red-500/30
             listOf(Red600, Red400, Red600),
-            Color(0x05EF4444), // red-500/[0.02]
+            Color(0x03EF4444), // red-500/[0.01]
             Red400
         )
     }
@@ -216,17 +228,27 @@ fun HeroLogModal(
                 }
             }
 
-            Box(modifier = backdropModifier)
-
-            // Animated Modal Container
+            // Backdrop com fade próprio, separado do painel (spec-002 §4).
             AnimatedVisibility(
                 visible = animatedVisible,
-                enter = fadeIn(tween(220, easing = FastOutSlowInEasing)) +
-                        scaleIn(initialScale = 0.95f, animationSpec = tween(220, easing = FastOutSlowInEasing)) +
-                        slideInVertically(initialOffsetY = { 15 }, animationSpec = tween(220, easing = FastOutSlowInEasing)),
-                exit = fadeOut(tween(220, easing = FastOutSlowInEasing)) +
-                        scaleOut(targetScale = 0.95f, animationSpec = tween(220, easing = FastOutSlowInEasing)) +
-                        slideOutVertically(targetOffsetY = { 15 }, animationSpec = tween(220, easing = FastOutSlowInEasing))
+                enter = fadeIn(tween(220, easing = EaseOut)),
+                exit = fadeOut(tween(220, easing = EaseOut))
+            ) {
+                Box(modifier = backdropModifier)
+            }
+
+            // Animated Modal Container (spec-002 §4: easeOut 220ms; y=15 do React
+            // em dp→px — 15px CSS ≈ 15dp, não 15px físicos).
+            // Deslocamento pré-calculado (o lambda do slide é Density-receiver).
+            val slideOffsetPx = with(LocalDensity.current) { 15.dp.toPx().toInt() }
+            AnimatedVisibility(
+                visible = animatedVisible,
+                enter = fadeIn(tween(220, easing = EaseOut)) +
+                        scaleIn(initialScale = 0.95f, animationSpec = tween(220, easing = EaseOut)) +
+                        slideInVertically(initialOffsetY = { slideOffsetPx }, animationSpec = tween(220, easing = EaseOut)),
+                exit = fadeOut(tween(220, easing = EaseOut)) +
+                        scaleOut(targetScale = 0.95f, animationSpec = tween(220, easing = EaseOut)) +
+                        slideOutVertically(targetOffsetY = { slideOffsetPx }, animationSpec = tween(220, easing = EaseOut))
             ) {
                 val screenHeight = LocalConfiguration.current.screenHeightDp.dp
                 Box(
@@ -237,6 +259,7 @@ fun HeroLogModal(
                         .padding(ModalTokens.OuterMargin)
                         .widthIn(max = ModalTokens.PanelMaxWidth)
                         .fillMaxWidth()
+                        .shadow(ModalTokens.PanelElevation, RoundedCornerShape(16.dp))
                         .clip(RoundedCornerShape(16.dp))
                         .background(Stone900)
                         .border(1.dp, borderColor, RoundedCornerShape(16.dp))
@@ -277,26 +300,40 @@ fun HeroLogModal(
                                             strokeWidth = 1.dp.toPx()
                                         )
                                     }
-                                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                                    .padding(horizontal = ModalTokens.HeaderHorizontalPadding, vertical = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
                                     text = title.uppercase(),
                                     modifier = Modifier.weight(1f),
                                     style = androidx.compose.ui.text.TextStyle(
-                                        fontFamily = FontFamily.Serif,
+                                        fontFamily = Cinzel,
                                         fontWeight = FontWeight.Black,
-                                        fontSize = 18.sp,
+                                        fontSize = ModalTokens.TitleFontSize,
                                         color = titleColor,
-                                        letterSpacing = 0.8.sp
+                                        letterSpacing = 0.8.sp,
+                                        // drop-shadow-[0_1px_4px_rgba(variante,0.2)] do React
+                                        shadow = Shadow(
+                                            color = titleColor.copy(alpha = 0.2f),
+                                            offset = Offset(0f, 1f),
+                                            blurRadius = 4f
+                                        )
                                     )
                                 )
 
+                                // Fechar (spec-002 §4): visual 20px preservado; pressionado
+                                // replica o hover React (bg stone-800 + tint da variante).
+                                // Toque mantido em 32dp (acessibilidade).
+                                val closeInteraction = remember { MutableInteractionSource() }
+                                val closePressed by closeInteraction.collectIsPressedAsState()
                                 Box(
                                     modifier = Modifier
                                         .size(32.dp)
                                         .clip(RoundedCornerShape(8.dp))
+                                        .background(if (closePressed) Stone800 else Color.Transparent)
                                         .clickable(
+                                            interactionSource = closeInteraction,
+                                            indication = null,
                                             role = Role.Button,
                                             onClick = onClose
                                         ),
@@ -305,7 +342,7 @@ fun HeroLogModal(
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Fechar",
-                                        tint = Stone400,
+                                        tint = if (closePressed) titleColor else Stone400,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -322,7 +359,12 @@ fun HeroLogModal(
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 20.dp, vertical = 20.dp)
                         ) {
-                            content()
+                            // text-stone-200 do slot React: herdado pelos filhos sem cor própria.
+                            CompositionLocalProvider(
+                                LocalContentColor provides ModalTokens.ContentDefaultColor
+                            ) {
+                                content()
+                            }
                         }
                     }
                 }
