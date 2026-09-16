@@ -119,9 +119,9 @@ fun HeroLogModal(
 
     if (!shouldRenderDialog) return
 
-    BackHandler(enabled = shouldRenderDialog && !disableEscClose) {
-        onClose()
-    }
+    // NOTA spec-002: sem BackHandler aqui fora — o dispatcher da janela focada é o do
+    // Dialog (ver dentro do Dialog abaixo). Bug confirmado em device 09/2026: Voltar
+    // nunca fechava nenhum modal do app.
 
     val (borderColor, topGradient, glowColor, titleColor) = when (variant) {
         ModalVariant.Amber -> Quadruple(
@@ -154,6 +154,15 @@ fun HeroLogModal(
             dismissOnClickOutside = allowBackdropClose
         )
     ) {
+        // spec-002: BackHandler DENTRO do Dialog — com o modal aberto, a janela focada
+        // é a do dialog e o back é despachado no dispatcher dela, não no da activity.
+        // Fora daqui o Voltar nunca chegava (bug confirmado em device 09/2026).
+        // Guard isOpen: durante os 220ms de saída o handler desarma, zerando até o
+        // disparo benigno nos 3 form modals (Habits/Dailies/Todos, onClose em 2
+        // estágios). BH-1 resolvido por construção.
+        BackHandler(enabled = isOpen && !disableEscClose) {
+            onClose()
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize(),

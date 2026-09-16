@@ -285,6 +285,25 @@ As seguintes armadilhas foram confirmadas durante o desenvolvimento e devem ser 
    são de `model.*` (os reais) e não de algum pacote paralelo/morto (ex: `logic.quests.*`
    continha uma cópia duplicada dos tipos que nunca foi usada pelo estado real).
 
+6. **"Fidelidade validada" para interações exige teste em device real, nunca só leitura de
+   código.** Comparação estática não pega bugs de dispatcher de janela: em 09/2026 o
+   `BackHandler` dos modais era considerado "fiel" por comparação com o React, mas o Voltar
+   nunca fechou nenhum modal do app — o handler estava registrado no dispatcher da activity
+   enquanto a janela focada (e o back despachado) era a do `Dialog`. Só um teste-controle em
+   aparelho físico revelou. Daqui pra frente, qualquer validação de interação (fechar por
+   Voltar, gestos, foco de janela) rotulada como "validada" precisa ter passado por device
+   real. Backlog conhecido da mesma causa raiz: `LevelUpOverlay.kt` tem o mesmo padrão e o
+   mesmo bug, corrigir em sprint própria (fora do escopo da spec-002, que cobre só o que usa
+   `HeroLogModal`).
+   
+   Nuance registrada na mesma ocasião: "onClose idempotente" não é propriedade universal
+   do padrão `BackHandler`-dentro-de-`Dialog` — é verdade observável neste código porque
+   19 dos 22 `onClose` são atribuição pura e os 3 restantes (formulários Habits/Dailies/Todos,
+   com `onClose` em 2 estágios via `isConfirmingCancel`) são neutralizados por resets em
+   `openCreateModal`/`openEditModal`/`resetForm`. Reusar o padrão em modal novo sem essa
+   mesma garantia transforma o disparo redundante em bug real. Por isso o guard
+   `enabled = isOpen && ...` é parte do padrão, não opcional.
+
 ## 10. Comportamento esperado antes de implementar uma mudança
 
 1. **Ler o `PARIDADE.md`** na seção correspondente ao módulo que será alterado. Verificar:

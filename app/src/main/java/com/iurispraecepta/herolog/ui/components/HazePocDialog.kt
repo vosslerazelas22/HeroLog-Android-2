@@ -63,7 +63,7 @@ private const val HAZE_POC_TAG = "HazePoC"
 
 // TEMP spec-002: candidatos de raio para calibração visual contra o React
 // (backdrop-blur 2px, degrau mínimo da escala). O vencedor vira constante.
-private val POC_RADIUS_CANDIDATES = listOf(0.5f, 1f, 1.5f, 2f)
+private val POC_RADIUS_CANDIDATES = listOf(0.25f, 0.5f, 1f, 1.5f, 2f)
 private const val POC_NOISE_REFERENCE = 0.15f // default do HazeStyle, p/ comparação
 
 @Composable
@@ -81,14 +81,10 @@ fun HazePocDialog(
     // Teste-controle: repetir o Voltar no IncursionModeModal de produção na mesma sessão
     // (sistêmico vs. PoC-específico).
     Log.d(HAZE_POC_TAG, "composing isOpen=$isOpen disableEscClose=$disableEscClose allowBackdropClose=$allowBackdropClose")
-    BackHandler(enabled = !disableEscClose) {
-        Log.d(HAZE_POC_TAG, "BackHandler fired (disableEscClose=$disableEscClose), closing")
-        onClose()
-    }
 
     // TEMP spec-002: calibração de intensidade. Baseline noiseFactor=0f (HazeStyle usa
     // 0.15 de grain por default, provado no bytecode do 1.6.10 — mais intenso que o CSS).
-    var radiusDp by remember { mutableStateOf(1f) }
+    var radiusDp by remember { mutableStateOf(0.5f) }
     var noise by remember { mutableStateOf(0f) }
     Log.d(HAZE_POC_TAG, "style radius=${radiusDp}dp noise=$noise")
 
@@ -104,6 +100,13 @@ fun HazePocDialog(
             dismissOnClickOutside = allowBackdropClose
         )
     ) {
+        // spec-002: BackHandler DENTRO do Dialog — mesmo fix do HeroLogModal (janela
+        // focada = dispatcher do dialog, não da activity). Guard isOpen espelhado:
+        // durante a saída o handler desarma (onClose aqui é atribuição pura).
+        BackHandler(enabled = isOpen && !disableEscClose) {
+            Log.d(HAZE_POC_TAG, "BackHandler fired (disableEscClose=$disableEscClose), closing")
+            onClose()
+        }
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
