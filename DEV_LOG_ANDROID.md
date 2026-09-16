@@ -5228,3 +5228,50 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-09-16] spec-002 passo 3 — tabela visual §4 + fechamento da spec
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HeroLogModal.kt
+  (único arquivo de código do passo)
+- 29 baselines em app/src/test/screenshots/ (só `*modal*.png` + `*confirm_*.png`)
+- Commits: `e602722` (código, sem push pelo agente).
+
+**Resumo:**
+- Título: `Cinzel` 16sp mobile + `Shadow(variante 20%, offset 0/1, blur 4)` (= drop-shadow
+  do React). Breakpoint `sm:` (p-5/text-lg/p-6) deliberadamente ausente — só entra se
+  confirmado necessário em device (nunca foi pedido nesta rodada → fechado como
+  desnecessário para os viewports de referência).
+- Painel: `shadow(20dp, rounded-16)` antes do `clip` (= shadow-xl sem cortar o halo).
+- Header: padding-h 20→16dp. Slot: `LocalContentColor → stone-200` (herança do React).
+- Glow: `0x05`→`0x03` (2%→1%) nas 3 variantes. Fechar: pressionado = bg stone-800 +
+  tint da variante (= hover React); toque 32dp mantido.
+- Animação: `FastOutSlowInEasing` → `EaseOut` (= easeOut CSS); y 15px físicos →
+  `15.dp→px` (no A05s ~2.6× maior que antes); fade do backdrop separado do painel.
+- 2 erros de API no caminho (ambos corrigidos): `LocalContentColor` é `material3`,
+  não `runtime` (import fantasma removido); `Dp.toPx()` calculado via `LocalDensity`
+  prévio (lambda do slide não resolve o extension).
+- Baselines: `recordRoborazziDebug` IGNORA filtro `--tests` (regravou 73 PNGs + criou 24
+  untracked). Revertidos todos os fora de escopo; deletados os 24 untracked (criados
+  pela minha rodada, mtime 15:25). Restaram exatamente os 29 com chrome HeroLogModal.
+  Full `testDebugUnitTest` forçado (`--rerun-tasks`, 2m31s): **496/496 PASSED, 0 falhas,
+  69 classes** — primeira validação FULL do ciclo (não mais parcial).
+- Anomalia registrada com honestidade: os baselines velhos (30/08) passaram na
+  verificação ANTES do re-record, mesmo com deltas de pixel reais do §4 (título,
+  paddings) — causa não determinada (threshold? captura?). Por isso o gate visual
+  desta spec foi sempre o device, nunca o Roborazzi. Baselines novos são
+  pós-inspeção humana, conforme §9.
+- Gap pré-existente observado (fora de escopo, sprint futura): 24 métodos de screenshot
+  (FocusOrb concepts, FocusCompletion viewports, GeneralSettings backup) NÃO têm baseline
+  commitado e passam no vazio em modo verify — sem verificação real. Não tocado aqui.
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes: FULL `testDebugUnitTest --rerun-tasks` → 496/496 PASSED, XML bruto confirmado.
+- Visual device real (Bruno): TODOS os pontos da bateria passo 3 aprovados (Cinzel,
+  sombra, header, press do ×, animação) + variantes amber/purple/red já validadas
+  em rodada anterior. Breakpoint sm: fechado como desnecessário.
+
+**Desvios de escopo aprovados:**
+- Nenhum. Backlogs seguem: `LevelUpOverlay` (Voltar), overflow `DailyReportModal`,
+  quirk API 31, gap dos 24 baselines ausentes.
