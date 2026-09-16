@@ -5202,3 +5202,29 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 
 **Desvios de escopo aprovados:**
 - Nenhum além dos já registrados (LevelUpOverlay segue backlog).
+
+## [2026-09-16] spec-002 passo 2b — glow matchParentSize + validação device (2 viewports)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HeroLogModal.kt
+- Commit: `f71029e` (sem push pelo agente).
+
+**Resumo:**
+- Primeiro teste device do passo 2 reprovou o sizing (Incursão e Timer seguiam
+  esticados). Causa raiz: o glow `Box(fillMaxSize())` vazio media no máximo das
+  constraints e esticava o painel wrap-content até a altura cheia — o teto 0.8f
+  antigo mascarava isso. Diagnóstico D1 estava certo sobre o teto, mas incompleto
+  (duas forças dimensionavam o painel). Fix em 1 linha: `matchParentSize()`
+  (acompanha o pai medido, sem influenciar a medição; ordem de desenho preservada).
+- Validação device (Bruno, 375×667 e 390×844): modal dimensionado pelo conteúdo
+  (Som ambiente em tamanho máximo com scroll, correto pelo volume de conteúdo);
+  backdrop blur funcionando no fundo E no header; interações ok; sem jank.
+  Critérios §8.1/§8.2/§8.4 atendidos. Resta a tabela visual §4 (passo 3).
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes (parcial): 9/9 PASSED, XML bruto confirmado, baselines intactos.
+- Visual device real: APROVADO nos 2 viewports (sizing + backdrop).
+
+**Desvios de escopo aprovados:**
+- Nenhum.
