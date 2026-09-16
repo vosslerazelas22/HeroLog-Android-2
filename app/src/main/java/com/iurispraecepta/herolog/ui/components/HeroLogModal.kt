@@ -1,6 +1,5 @@
 package com.iurispraecepta.herolog.ui.components
 
-import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -38,13 +37,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -58,9 +57,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.hazeEffect
 import kotlinx.coroutines.delay
 
 enum class ModalVariant { Amber, Purple, Red }
+
+/**
+ * Fonte do blur de backdrop (spec-002, Opção A adotada em device 09/2026).
+ * Fornecido na raiz (`MainActivity`), consumido aqui e lido pelos dialogs —
+ * evita propagar `HazeState` por ~15 call sites. Nulo em previews/testes, onde o
+ * backdrop cai para o fundo chapado (mesmo visual de antes do Haze).
+ */
+val LocalHazeState = compositionLocalOf<HazeState?> { null }
+
+/** Tokens do chrome do modal (spec-002 §4) — sem literais mágicos inline. */
+private object ModalTokens {
+    val PanelMaxWidth = 448.dp // max-w-md
+    val OuterMargin = 16.dp // p-4
+    const val ContentMaxHeightFraction = 0.8f // max-h-[80vh]: limite DO CONTEÚDO
+    val BackdropBlurRadius = 0.25.dp // calibrado em device vs React blur(2px), 09/2026
+    const val BackdropNoiseFactor = 0f // HazeStyle usa 0.15 default (grain); CSS é limpo
+    const val ExitAnimDurationMs = 220L // tween 220ms da animação de saída
+}
 
 // Hex tokens
 private val Stone950 = Color(0xFF0C0A09)
@@ -112,7 +132,7 @@ fun HeroLogModal(
             animatedVisible = true
         } else {
             animatedVisible = false
-            delay(220L) // Duração da animação de saída (tween 220ms)
+            delay(ModalTokens.ExitAnimDurationMs) // Duração da animação de saída (tween 220ms)
             shouldRenderDialog = false
         }
     }
@@ -168,13 +188,23 @@ fun HeroLogModal(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            // Backdrop
-            var backdropModifier = Modifier
-                .fillMaxSize()
-                .background(Stone950.copy(alpha = 0.8f))
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                backdropModifier = backdropModifier.blur(2.dp)
+            // Backdrop (spec-002 FR-003): hazeEffect amostra a cena real (blur de
+            // verdade, não da própria camada). Sem HazeState (previews/testes), cai
+            // para o fundo chapado. Raio calibrado em device vs React blur(2px).
+            val hazeState = LocalHazeState.current
+            var backdropModifier = Modifier.fillMaxSize()
+            if (hazeState != null) {
+                backdropModifier = backdropModifier.hazeEffect(
+                    state = hazeState,
+                    style = HazeStyle(
+                        backgroundColor = Stone950.copy(alpha = 0.8f),
+                        tint = null,
+                        blurRadius = ModalTokens.BackdropBlurRadius,
+                        noiseFactor = ModalTokens.BackdropNoiseFactor
+                    )
+                )
+            } else {
+                backdropModifier = backdropModifier.background(Stone950.copy(alpha = 0.8f))
             }
 
             if (allowBackdropClose) {
@@ -200,11 +230,13 @@ fun HeroLogModal(
             ) {
                 val screenHeight = LocalConfiguration.current.screenHeightDp.dp
                 Box(
+                    // spec-002 FR-001: painel dimensionado PELO CONTEÚDO (wrap content).
+                    // O teto 0.8f vive no slot de conteúdo abaixo (FR-002), como o
+                    // max-h-[80vh] do React — nunca mais no painel externo.
                     modifier = Modifier
-                        .padding(16.dp)
-                        .widthIn(max = 448.dp)
+                        .padding(ModalTokens.OuterMargin)
+                        .widthIn(max = ModalTokens.PanelMaxWidth)
                         .fillMaxWidth()
-                        .heightIn(max = screenHeight * 0.8f)
                         .clip(RoundedCornerShape(16.dp))
                         .background(Stone900)
                         .border(1.dp, borderColor, RoundedCornerShape(16.dp))
@@ -277,10 +309,13 @@ fun HeroLogModal(
                             }
                         }
 
-                        // Content
+                        // Content (spec-002 FR-002): o limite vertical mora AQUI, como o
+                        // max-h-[80vh] + overflow-y-auto do React. Conteúdo curto →
+                        // painel compacto; longo → rola com header/borda estáveis.
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .heightIn(max = screenHeight * ModalTokens.ContentMaxHeightFraction)
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 20.dp, vertical = 20.dp)
                         ) {

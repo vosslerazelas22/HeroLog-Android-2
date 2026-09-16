@@ -5114,3 +5114,91 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
   verificar equivalência visual no side-by-side.
 - `graceSecondsLeft = 3` hardcoded no fullscreen break (inerte com `isGraceActive=false`,
   mas registrado para futura refatoração se necessário).
+
+## [2026-09-16] spec-002 passo 1 — PoC Haze Opção A + decisão arquitetural (device real)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HazePocDialog.kt (novo, TEMP — removido no passo 2)
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt (CompositionLocal LocalHazeState + hazeSource no Scaffold + trigger TEMP)
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HeroLogModal.kt (BackHandler para dentro do Dialog + guard isOpen)
+- AGENTS.md (armadilha nº 6 + nuance de idempotência)
+- Commits: `758fb75` (PoC inicial), `7f766f2` (hazeSource no Scaffold, stepper, logs), `3afb47c` (BackHandler + guard + AGENTS.md). Sem push pelo agente.
+
+**Resumo:**
+- Teste decisório da spec-002 §6 executado via PoC temporária (Dialog de teste com
+  `hazeEffect` compartilhando o `HazeState` da raiz via `CompositionLocal`), sem tocar
+  modais de produção. **Decisão: Opção A adotada** — blur cobre a cena incl. header,
+  painel nítido, tint comparável ao React, zero jank no A05s (API 35).
+- Bug estrutural achado e corrigido na PoC: `hazeSource` estava só no Box do conteúdo
+  (AppHeader fora da fonte, só escurecia). Movido para o modifier do `Scaffold`
+  (padrão canônico do Haze; `hazeEffect` se auto-exclui). Consumo do BottomNav intacto.
+- Calibração de intensidade: React `backdrop-blur 2px` confirmado via DevTools como alvo
+  "quase imperceptível". PoC provou 2 contribuidores do excesso Android: `noiseFactor`
+  default 0.15 do `HazeStyle` (verificado no bytecode do `haze-1.6.10.aar` via `javap`:
+  default `-1f` → `HazeDefaults.noiseFactor = 0.15f`) + semântica de raio Haze ≠ px CSS.
+  Sem blur duplicado no caminho testado (PoC nunca teve `Modifier.blur`). **Raio final
+  aprovado em device: 0.25 dp, noise 0.** "2dp = 2px CSS" descartado como premissa.
+- Bug sistêmico revelado pelo teste-controle: Voltar nunca fechou nenhum modal do app
+  (PoC E Incursão de produção). Causa: `BackHandler` registrado no dispatcher da activity
+  enquanto a janela focada é a do `Dialog` (que consome o back em silêncio com
+  `dismissOnBackPress = false`). Fix: `BackHandler(enabled = isOpen && !disableEscClose)`
+  DENTRO do conteúdo do `Dialog` (`HeroLogModal.kt` + PoC). BH-1 resolvido por construção
+  (19/22 `onClose` são atribuição pura; os 3 form modals em 2 estágios são neutralizados
+  por resets em `openCreateModal`/`openEditModal`/`resetForm`; guard `isOpen` zera até o
+  disparo benigno na janela de 220ms). Device confirmou: Voltar fecha (PoC + Incursão +
+  Ajustes), Voltar bloqueado não fecha. `LevelUpOverlay.kt` tem o mesmo padrão/bug —
+  backlog para sprint própria (fora de escopo spec-002).
+- API 24 (emulador, GLES ligado): só escurece, sem blur = fallback documentado do Haze
+  (RenderScript indisponível → scrim `backgroundColor`). Degradação graciosa = visual
+  chapado atual; sem regressão vs status quo. Ressalva: pode ser limitação do emulador,
+  não do API em si. Quirk de API 31 (RenderNode evitado, changelog 1.0.0) anotado, sem
+  teste dedicado. `minSdk = 24` confirmado em `app/build.gradle.kts:19`.
+- Haze 1.6.0 changelog: blur em todas as versões Android via RenderScript — base da
+  expectativa (1) confirmada para o piso.
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL (58s)
+- Testes (parcial — suíte completa não rodada): 9/9 PASSED, XML bruto confirmado
+  - HeroLogModalScreenshotTest: 2/2 PASSED
+  - IncursionModeModalScreenshotTest: 5/5 PASSED
+  - ModalCountRegistryTest: 2/2 PASSED
+- Visual device real (Bruno): header desfoca, painel nítido, tint ok, raio 0.25 aprovado,
+  Voltar 2×2 + controle produção ok, sem jank, API 24 fallback chapado ok.
+
+**Desvios de escopo aprovados:**
+- `LevelUpOverlay.kt` NÃO tocado (mesmo bug, sprint própria) — backlog registrado no
+  AGENTS.md item 6.
+- Stepper de raio/noise e logs `HazePoC` existiram só na PoC TEMP (removida no passo 2).
+
+## [2026-09-16] spec-002 passo 2 — integração final no HeroLogModal (FR-001/FR-002/FR-003)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HeroLogModal.kt
+  (`LocalHazeState` permanente + `ModalTokens` + backdrop `hazeEffect` + sizing + guard
+  `isOpen` no `BackHandler`)
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt (remoção do wiring TEMP
+  da PoC; `hazeSource` no Scaffold e provider `LocalHazeState` viram permanentes)
+- app/src/main/java/com/iurispraecepta/herolog/ui/components/HazePocDialog.kt (DELETADO)
+
+**Resumo:**
+- FR-003/backdrop: `Modifier.blur` na camada escura removido (com o guard `>=S` e os
+  imports `Build`/`blur`); backdrop agora `hazeEffect(HazeStyle(stone-950/80, tint null,
+  blur 0.25dp, noise 0f))` com fallback chapado quando sem `HazeState` (previews/testes).
+- FR-001/FR-002/sizing: teto `0.8f` saiu do painel externo → `heightIn(max = 0.8 × tela)`
+  no slot de conteúdo (fiel ao `max-h-[80vh]` do React); painel em wrap content.
+- `ModalTokens`: `PanelMaxWidth` 448dp, `OuterMargin` 16dp, `ContentMaxHeightFraction` 0.8f,
+  `BackdropBlurRadius` 0.25dp, `BackdropNoiseFactor` 0f, `ExitAnimDurationMs` 220L.
+- Ajustes visuais da tabela §4 (Cinzel, sombra, paddings header/content, glow 1%, botão
+  fechar, easing) ficam para o passo 3, em alteração auditável própria.
+- PoC 100% removida: grep por `HazePoc|isHazePoc|hazePoc|TEMP spec-002` retorna zero.
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL (1m22s)
+- Testes (parcial): 9/9 PASSED, XML bruto confirmado (2/2 + 5/5 + 2/2, mesmos da rodada PoC).
+  Baselines Roborazzi INTACTOS — o render em teste (fallback chapado, sem `HazeState`)
+  é pixel-idêntico ao anterior, o que confirma que o `Modifier.blur` antigo era no-op
+  no Robolectric. Validação visual do sizing/backdrop reais: pendente de device (Bruno).
+- Visual: PENDENTE — Incursão compacta + modal longo com scroll + backdrop em device.
+
+**Desvios de escopo aprovados:**
+- Nenhum além dos já registrados (LevelUpOverlay segue backlog).

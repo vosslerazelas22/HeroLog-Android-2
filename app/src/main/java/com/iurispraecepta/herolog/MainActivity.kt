@@ -88,7 +88,6 @@ import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
 import com.iurispraecepta.herolog.ui.daily.DailyReportModal
-import com.iurispraecepta.herolog.ui.components.HazePocDialog
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.LocalHazeState
 import com.iurispraecepta.herolog.ui.components.ModalVariant
@@ -247,10 +246,9 @@ class MainActivity : ComponentActivity() {
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
-                // TEMP spec-002 PoC Opção A: hazeSource no Scaffold inteiro para que o
-                // AppHeader (topBar) também faça parte da fonte do blur (antes só o
-                // conteúdo estava na fonte, e o header só escurecia). Padrão canônico
-                // do Haze; nós de hazeEffect se auto-excluem. Reavaliar ao integrar.
+                // spec-002: hazeSource no Scaffold inteiro para que o
+                // AppHeader (topBar) também faça parte da fonte do blur.
+                // Padrão canônico do Haze; nós de hazeEffect se auto-excluem.
                 Scaffold(
                     modifier = Modifier.fillMaxSize().hazeSource(hazeState),
                     containerColor = QuestPanel,
@@ -276,8 +274,8 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
                         LocalSfxManager provides sfxManager,
-                        // TEMP spec-002 PoC Opção A: expõe o HazeState da raiz aos dialogs
-                        // de teste. Remover junto com o HazePocDialog após a decisão.
+                        // spec-002: HazeState da raiz alimenta o blur de backdrop dos
+                        // dialogs (HeroLogModal) e o BottomNav.
                         LocalHazeState provides hazeState
                     ) {
                     Box(modifier = Modifier.fillMaxSize().padding(top = innerPadding.calculateTopPadding()).consumeWindowInsets(innerPadding)) {
@@ -733,10 +731,6 @@ fun FocusOrbPreviewScreen(
     var isAmbientModalOpen by remember { mutableStateOf(false) }
     var showFocusTooltip by remember { mutableStateOf(false) }
     var isQuestFabOpen by remember { mutableStateOf(false) }
-    // TEMP spec-002 PoC Opção A: estado do dialog de teste Haze. Remover após a decisão.
-    var isHazePocOpen by remember { mutableStateOf(false) }
-    var hazePocAllowBackdropClose by remember { mutableStateOf(true) }
-    var hazePocDisableEscClose by remember { mutableStateOf(false) }
 
     var isConfirmingAbandon by remember { mutableStateOf(false) }
     var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
@@ -1243,12 +1237,6 @@ fun FocusOrbPreviewScreen(
                         onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
                     )
 
-                    // TEMP spec-002 PoC Opção A: trigger do dialog de teste Haze.
-                    // Remover junto com o HazePocDialog após a decisão arquitetural.
-                    OutlinedButton(onClick = { isHazePocOpen = true }) {
-                        Text(text = "🧪 Haze PoC (TEMP spec-002)")
-                    }
-
                     Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                 }
             }
@@ -1419,17 +1407,6 @@ fun FocusOrbPreviewScreen(
                     }
                 }
             }
-
-            // TEMP spec-002 PoC Opção A: dialog de teste Haze (fora de produção).
-            // Remover junto com o trigger após a decisão arquitetural.
-            HazePocDialog(
-                isOpen = isHazePocOpen,
-                onClose = { isHazePocOpen = false },
-                allowBackdropClose = hazePocAllowBackdropClose,
-                disableEscClose = hazePocDisableEscClose,
-                onAllowBackdropCloseChange = { hazePocAllowBackdropClose = it },
-                onDisableEscCloseChange = { hazePocDisableEscClose = it }
-            )
 
             IncursionModeModal(
                 isOpen = isIncursionModalOpen,
