@@ -85,6 +85,12 @@ import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Zinc300
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.derivedStateOf
+import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
+import com.iurispraecepta.herolog.ui.form.TodoDraft
+import com.iurispraecepta.herolog.ui.form.QuestFormShell
+import com.iurispraecepta.herolog.ui.form.isEqualTo
 import java.util.Date
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -142,6 +148,28 @@ fun TodosScreen(
     var isConfirmingDelete by remember { mutableStateOf(initialConfirmDelete) }
     var isConfirmingCancel by remember { mutableStateOf(initialConfirmCancel) }
 
+    var deleteConfirmState by remember { mutableStateOf(DeleteConfirmState.None) }
+    var showDiscard by remember { mutableStateOf(false) }
+
+    // FR-005: Snapshot imutavel capturado ao abrir o formulario
+    var initialDraft by remember { mutableStateOf<TodoDraft?>(null) }
+
+    // FR-005: Comparacao estrutural do rascunho atual com o snapshot
+    val isDirty by remember {
+        derivedStateOf {
+            val draft = initialDraft ?: return@derivedStateOf false
+            val current = TodoDraft(
+                title = formTitle,
+                notes = formNotes,
+                difficulty = formDifficulty,
+                tags = formTagInput,
+                checklistItems = checklistItems,
+                checklistInput = checklistInput
+            )
+            !draft.isEqualTo(current)
+        }
+    }
+
     val isModalOpen = isCreating || editingTodo != null
 
     fun resetForm() {
@@ -153,6 +181,9 @@ fun TodosScreen(
         checklistItems = emptyList()
         isConfirmingDelete = false
         isConfirmingCancel = false
+        deleteConfirmState = DeleteConfirmState.None
+        initialDraft = null
+        showDiscard = false
         isCreating = false
         editingTodo = null
     }
@@ -166,8 +197,19 @@ fun TodosScreen(
         checklistItems = emptyList()
         isConfirmingDelete = false
         isConfirmingCancel = false
+        deleteConfirmState = DeleteConfirmState.None
         editingTodo = null
         isCreating = true
+        showDiscard = false
+        // FR-005: Captura snapshot do estado vazio
+        initialDraft = TodoDraft(
+            title = "",
+            notes = "",
+            difficulty = Difficulty.Easy,
+            tags = "",
+            checklistItems = emptyList(),
+            checklistInput = ""
+        )
     }
 
     fun openEditModal(todo: Todo) {
@@ -179,8 +221,19 @@ fun TodosScreen(
         checklistItems = emptyList()
         isConfirmingDelete = false
         isConfirmingCancel = false
+        deleteConfirmState = DeleteConfirmState.None
         isCreating = false
         editingTodo = todo
+        showDiscard = false
+        // FR-005: Captura snapshot do estado atual do todo
+        initialDraft = TodoDraft(
+            title = todo.title,
+            notes = todo.notes,
+            difficulty = todo.difficulty,
+            tags = todo.tags.joinToString(", "),
+            checklistItems = emptyList(),
+            checklistInput = ""
+        )
     }
 
     fun addChecklistItem() {
@@ -358,109 +411,144 @@ fun TodosScreen(
         }
     }
 
-    // Modal (HeroLogModal)
+    // Modal (HeroLogModal) — FR-001/FR-005/FR-007: shell compartilhado com dirty state
     if (isModalOpen) {
+        // FR-007: Unica rota de solicitacao de fechamento
+        val requestClose: () -> Unit = {
+            if (isDirty) {
+                showDiscard = true
+            } else {
+                resetForm()
+            }
+        }
+
         HeroLogModal(
             isOpen = isModalOpen,
-            onClose = {
-                if (isConfirmingCancel) {
-                    resetForm()
-                } else {
-                    isConfirmingCancel = true
-                }
-            },
+            onClose = requestClose,
             title = if (editingTodo != null) "Editar Tarefa" else "Nova Tarefa",
             variant = ModalVariant.Amber,
-            allowBackdropClose = true
+            allowBackdropClose = true,
+            contentPadding = PaddingValues(0.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+            QuestFormShell(
+                isDirty = isDirty,
+                showDiscard = showDiscard,
+                isEditing = editingTodo != null,
+                onDiscard = { resetForm() },
+                onContinueEditing = { showDiscard = false },
+                onRequestClose = requestClose,
+                onConfirmDelete = {
+                    val idToDelete = editingTodo?.id
+                    if (idToDelete != null) {
+                        onDeleteTodo(idToDelete)
+                    }
+                    resetForm()
+                },
+                onSubmit = {
+                    val parsedTags = formTagInput
+                        .split(",")
+                        .map { it.trim().lowercase() }
+                        .filter { it.isNotEmpty() }
+
+                    // FR-008: Incluir texto pendente do checklist antes de submeter
+                    val allChecklistItems = if (checklistInput.isNotBlank()) {
+                        checklistItems + checklistInput.trim()
+                    } else {
+                        checklistItems
+                    }
+
+                    val currentEditing = editingTodo
+                    if (currentEditing != null) {
+                        onEditTodo(
+                            currentEditing.copy(
+                                title = formTitle.trim(),
+                                notes = formNotes.trim(),
+                                difficulty = formDifficulty,
+                                tags = parsedTags
+                            )
+                        )
+                    } else {
+                        onAddTodo(
+                            formTitle.trim(),
+                            formNotes.trim(),
+                            formDifficulty,
+                            parsedTags,
+                            allChecklistItems
+                        )
+                    }
+                    resetForm()
+                },
+                deleteConfirmState = deleteConfirmState,
+                onDeleteConfirmChange = { deleteConfirmState = it },
+                submitEnabled = formTitle.isNotBlank(),
+                submitLabel = if (editingTodo != null) "Salvar" else "Criar"
             ) {
                 // Título
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "Título",
-                        fontFamily = Inter,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Zinc300,
-                        letterSpacing = 0.5.sp
-                    )
-                    BasicTextField(
-                        value = formTitle,
-                        onValueChange = { formTitle = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Stone900, RoundedCornerShape(6.dp))
-                            .border(
-                                1.dp,
-                                if (formTitle.isBlank()) Color(0x33F59E0B) else Amber500,
-                                RoundedCornerShape(6.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        textStyle = TextStyle(
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontFamily = Inter
-                        ),
-                        singleLine = true,
-                        cursorBrush = SolidColor(Amber400),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        decorationBox = { innerTextField ->
-                            Box {
-                                if (formTitle.isEmpty()) {
-                                    Text(
-                                        text = "Ex: Resolver 3 problemas de Algoritmo, Escrever redação...",
-                                        color = Stone500,
-                                        fontSize = 12.sp
-                                    )
-                                }
-                                innerTextField()
+                FormFieldLabel("Título")
+                BasicTextField(
+                    value = formTitle,
+                    onValueChange = { formTitle = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Stone900, RoundedCornerShape(6.dp))
+                        .border(
+                            1.dp,
+                            if (formTitle.isBlank()) Color(0x33F59E0B) else Amber500,
+                            RoundedCornerShape(6.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    textStyle = TextStyle(
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontFamily = Inter
+                    ),
+                    singleLine = true,
+                    cursorBrush = SolidColor(Amber400),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (formTitle.isEmpty()) {
+                                Text(
+                                    text = "Ex: Resolver 3 problemas de Algoritmo, Escrever redação...",
+                                    color = Stone500,
+                                    fontSize = 12.sp
+                                )
                             }
+                            innerTextField()
                         }
-                    )
-                }
+                    }
+                )
 
-                // Notas (h-14 ~ 56dp)
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = "Notas",
-                        fontFamily = Inter,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Zinc300,
-                        letterSpacing = 0.5.sp
-                    )
-                    BasicTextField(
-                        value = formNotes,
-                        onValueChange = { formNotes = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .background(Stone900, RoundedCornerShape(6.dp))
-                            .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        textStyle = TextStyle(
-                            color = Amber100,
-                            fontSize = 12.sp,
-                            fontFamily = Inter
-                        ),
-                        cursorBrush = SolidColor(Amber400),
-                        decorationBox = { innerTextField ->
-                            Box {
-                                if (formNotes.isEmpty()) {
-                                    Text(
-                                        text = "Ex: Utilizar abordagem de árvore binária de busca, revisar testes unitários...",
-                                        color = Stone500,
-                                        fontSize = 13.sp
-                                    )
-                                }
-                                innerTextField()
+                // Notas — FR-002: multiline, altura minima 96dp
+                FormFieldLabel("Notas")
+                BasicTextField(
+                    value = formNotes,
+                    onValueChange = { formNotes = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 96.dp)
+                        .background(Stone900, RoundedCornerShape(6.dp))
+                        .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    textStyle = TextStyle(
+                        color = Amber100,
+                        fontSize = 12.sp,
+                        fontFamily = Inter
+                    ),
+                    cursorBrush = SolidColor(Amber400),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (formNotes.isEmpty()) {
+                                Text(
+                                    text = "Ex: Utilizar abordagem de árvore binária de busca, revisar testes unitários...",
+                                    color = Stone500,
+                                    fontSize = 13.sp
+                                )
                             }
+                            innerTextField()
                         }
-                    )
-                }
+                    }
+                )
 
                 // Linha dupla: Dificuldade + Categorias (Tags)
                 Row(
@@ -473,14 +561,7 @@ fun TodosScreen(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = "Dificuldade",
-                            fontFamily = Inter,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Zinc300,
-                            letterSpacing = 0.5.sp
-                        )
+                        FormFieldLabel("Dificuldade")
 
                         var difficultyMenuExpanded by remember { mutableStateOf(false) }
 
@@ -545,14 +626,7 @@ fun TodosScreen(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = "Categorias (Tags, separadas por vírgula)",
-                            fontFamily = Inter,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Zinc300,
-                            letterSpacing = 0.5.sp
-                        )
+                        FormFieldLabel("Categorias (Tags, separadas por vírgula)")
                         BasicTextField(
                             value = formTagInput,
                             onValueChange = { formTagInput = it },
@@ -581,17 +655,10 @@ fun TodosScreen(
                     }
                 }
 
-                // Checklist Criador — SOMENTE MODO CRIAÇÃO (editingTodo == null)
+                // Checklist — SOMENTE MODO CRIAÇÃO (editingTodo == null)
                 if (editingTodo == null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = "Checklist",
-                            fontFamily = Inter,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Zinc300,
-                            letterSpacing = 0.5.sp
-                        )
+                        FormFieldLabel("Checklist")
 
                         // Input + Botão Add
                         Row(
@@ -632,7 +699,7 @@ fun TodosScreen(
 
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(44.dp)
                                     .clip(RoundedCornerShape(6.dp))
                                     .background(Color(0x33F59E0B))
                                     .border(1.dp, Amber400, RoundedCornerShape(6.dp))
@@ -693,201 +760,21 @@ fun TodosScreen(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Rodapé (Actions)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left side: Delete button if editing
-                    if (editingTodo != null) {
-                        if (!isConfirmingDelete) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0x1ADC2626))
-                                    .border(1.dp, Color(0x4DDC2626), RoundedCornerShape(6.dp))
-                                    .clickable { isConfirmingDelete = true }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = "Excluir",
-                                    color = Color(0xFFF87171),
-                                    fontFamily = Inter,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = "Excluir?",
-                                    color = Color(0xFFF87171),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFFDC2626))
-                                        .clickable {
-                                            val idToDelete = editingTodo?.id
-                                            if (idToDelete != null) {
-                                                onDeleteTodo(idToDelete)
-                                            }
-                                            resetForm()
-                                        }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Sim",
-                                        color = Color.White,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Stone800)
-                                        .clickable { isConfirmingDelete = false }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Não",
-                                        color = Stone400,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.width(1.dp))
-                    }
-
-                    // Right side: Cancel + Submit buttons
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Cancel button flow
-                        if (!isConfirmingCancel) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0x331C1917))
-                                    .border(1.dp, Color(0x3344403C), RoundedCornerShape(6.dp))
-                                    .clickable { isConfirmingCancel = true }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = "Cancelar",
-                                    color = Stone400,
-                                    fontFamily = Inter,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        } else {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Descartar?",
-                                    color = Amber300,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0x33F59E0B))
-                                        .border(1.dp, Amber400, RoundedCornerShape(4.dp))
-                                        .clickable { resetForm() }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Sim",
-                                        color = Amber200,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Stone800)
-                                        .clickable { isConfirmingCancel = false }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Não",
-                                        color = Stone400,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        // Submit (Criar / Salvar)
-                        val isSubmitEnabled = formTitle.isNotBlank()
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x33F59E0B))
-                                .border(1.dp, Color(0x66FBBF24), RoundedCornerShape(6.dp))
-                                .clickable(enabled = isSubmitEnabled) {
-                                    val parsedTags = formTagInput
-                                        .split(",")
-                                        .map { it.trim().lowercase() }
-                                        .filter { it.isNotEmpty() }
-
-                                    val currentEditing = editingTodo
-                                    if (currentEditing != null) {
-                                        onEditTodo(
-                                            currentEditing.copy(
-                                                title = formTitle.trim(),
-                                                notes = formNotes.trim(),
-                                                difficulty = formDifficulty,
-                                                tags = parsedTags
-                                            )
-                                        )
-                                    } else {
-                                        onAddTodo(
-                                            formTitle.trim(),
-                                            formNotes.trim(),
-                                            formDifficulty,
-                                            parsedTags,
-                                            checklistItems
-                                        )
-                                    }
-                                    resetForm()
-                                }
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Text(
-                                text = if (editingTodo != null) "Salvar" else "Criar",
-                                color = if (isSubmitEnabled) Amber300 else Color(0x80FCD34D),
-                                fontFamily = Inter,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
-                        }
-                    }
-                }
             }
         }
     }
+}
+
+@Composable
+private fun FormFieldLabel(text: String) {
+    Text(
+        text = text,
+        fontFamily = Inter,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        color = Zinc300,
+        letterSpacing = 0.5.sp
+    )
 }
 
 @Composable
