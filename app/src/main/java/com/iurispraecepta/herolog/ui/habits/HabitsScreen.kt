@@ -432,15 +432,15 @@ fun HabitsScreen(
                     }
                 )
 
-                // Linha dupla: Caminhos Permitidos + Dificuldade
-                Row(
+                // Caminhos Permitidos em linha própria + Dificuldade em linha nova
+                // (paridade React mobile: grid grid-cols-1; sm:grid-cols-2 só em viewport larga)
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.Top
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     // Caminhos Permitidos
                     Column(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         FormFieldLabel("Caminhos Permitidos")
@@ -464,24 +464,14 @@ fun HabitsScreen(
                                     .clickable { formUp = !formUp },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Positivo",
-                                        tint = if (formUp) Emerald400 else Stone500,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = "Positivo (+)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = Inter,
-                                        color = if (formUp) Emerald400 else Stone500
-                                    )
-                                }
+                                // Melhoria consciente vs React "+ POSITIVO (+)": sem icone redundante
+                                Text(
+                                    text = "Positivo (+)".uppercase(),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = Inter,
+                                    color = if (formUp) Emerald400 else Stone500
+                                )
                             }
 
                             // Toggle Negativo (-)
@@ -499,31 +489,21 @@ fun HabitsScreen(
                                     .clickable { formDown = !formDown },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Remove,
-                                        contentDescription = "Negativo",
-                                        tint = if (formDown) Rose400 else Stone500,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = "Negativo (-)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = Inter,
-                                        color = if (formDown) Rose400 else Stone500
-                                    )
-                                }
+                                // Melhoria consciente vs React "− NEGATIVO (-)": sem icone redundante
+                                Text(
+                                    text = "Negativo (-)".uppercase(),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = Inter,
+                                    color = if (formDown) Rose400 else Stone500
+                                )
                             }
                         }
                     }
 
-                    // Dificuldade Dropdown
+                    // Dificuldade Dropdown — linha nova (paridade React mobile)
                     Column(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         FormFieldLabel("Dificuldade")
