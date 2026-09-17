@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,11 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.iurispraecepta.herolog.logic.achievements.Achievement
 import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
@@ -480,12 +483,90 @@ fun SessionNotesScreen(
 }
 
 @Composable
+fun AchievementUnlockScreen(
+    achievement: Achievement,
+    currentIndex: Int,
+    totalCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "🏆 CONQUISTA DESBLOQUEADA",
+            color = Color(0xFFE5C158),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.5.sp
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Ícone central da conquista
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .shadow(12.dp, CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFFD4AF37).copy(alpha = 0.3f),
+                            Color(0xFFD4AF37).copy(alpha = 0.05f)
+                        )
+                    )
+                )
+                .border(2.dp, Color(0xFFD4AF37).copy(alpha = 0.4f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = achievement.icon, fontSize = 40.sp)
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = achievement.name,
+            fontFamily = Cinzel,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = Color(0xFFF5F5F4),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = achievement.desc,
+            fontFamily = Cinzel,
+            fontSize = 13.sp,
+            color = Color(0xFFA8A29E),
+            textAlign = TextAlign.Center,
+            lineHeight = 18.sp
+        )
+
+        if (totalCount > 1) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "${currentIndex + 1} de $totalCount",
+                fontFamily = JetBrainsMono,
+                fontSize = 11.sp,
+                color = Color(0xFF78716C)
+            )
+        }
+    }
+}
+
+@Composable
 fun FocusCompletionFlow(
     rewardsCalculation: FocusRewardsCalculation,
     pauseCount: Int,
     streak: Int,
     shouldShowStreakCelebration: Boolean,
     skillTags: List<String>,
+    newAchievements: List<Achievement> = emptyList(),
     initialNotes: String = "",
     onConfirm: (editedNotes: String, selectedTag: String) -> Unit,
     initialStepIndex: Int = 0,
@@ -495,11 +576,13 @@ fun FocusCompletionFlow(
         rewardsCalculation.lootedItems.isNotEmpty() || rewardsCalculation.droppedTitle != null
     }
 
-    val steps = remember(shouldShowStreakCelebration, hasLoot) {
+    val steps = remember(shouldShowStreakCelebration, hasLoot, newAchievements.size) {
         buildList {
             if (shouldShowStreakCelebration) add("streak")
             add("summary")
             if (hasLoot) add("loot")
+            // Etapa de conquista: uma entrada por achievement desbloqueado (FR-003/US-03)
+            newAchievements.forEach { _ -> add("achievement") }
             add("notes")
         }
     }
@@ -513,6 +596,12 @@ fun FocusCompletionFlow(
     val streakPreview = if (shouldShowStreakCelebration) streak + 1 else streak
     val currentStep = steps.getOrElse(stepIndex) { "summary" }
     val isLastStep = stepIndex == steps.lastIndex
+
+    // Calcular o índice da conquista atual (dentro do subconjunto de steps "achievement")
+    val achievementStepsBeforeCurrent = steps.take(stepIndex).count { it == "achievement" }
+    val currentAchievement = if (currentStep == "achievement" && achievementStepsBeforeCurrent < newAchievements.size) {
+        newAchievements[achievementStepsBeforeCurrent]
+    } else null
 
     CompletionShell(
         onNext = {
@@ -536,6 +625,15 @@ fun FocusCompletionFlow(
                 lootedItems = rewardsCalculation.lootedItems,
                 droppedTitle = rewardsCalculation.droppedTitle
             )
+            "achievement" -> {
+                if (currentAchievement != null) {
+                    AchievementUnlockScreen(
+                        achievement = currentAchievement,
+                        currentIndex = achievementStepsBeforeCurrent,
+                        totalCount = newAchievements.size
+                    )
+                }
+            }
             "notes" -> SessionNotesScreen(
                 completionNotes = completionNotes,
                 onNotesChange = { completionNotes = it },

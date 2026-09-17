@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.iurispraecepta.herolog.data.createInitialCharacterState
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
+import com.iurispraecepta.herolog.logic.CombatLogic
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.character.LevelUpEvent
@@ -28,7 +29,6 @@ import com.iurispraecepta.herolog.model.Todo
 import com.iurispraecepta.herolog.logic.quests.DailyLogic
 import com.iurispraecepta.herolog.logic.quests.HabitLogic
 import com.iurispraecepta.herolog.logic.quests.QuestApplyLogic
-import com.iurispraecepta.herolog.logic.quests.QuestCatalog
 import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.quests.RolloverLogic
 import com.iurispraecepta.herolog.logic.quests.TodoLogic
@@ -49,6 +49,9 @@ import com.iurispraecepta.herolog.model.DailyReportData
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.LogEntry
 import com.iurispraecepta.herolog.model.OrbConcept
+import com.iurispraecepta.herolog.logic.achievements.Achievement
+import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog
+import com.iurispraecepta.herolog.logic.achievements.AchievementDetection
 import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
 import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Job
@@ -106,6 +109,38 @@ class HeroLogViewModel(
 
     private val _systemLogs = MutableStateFlow<List<LogEntry>>(emptyList())
     val systemLogs: StateFlow<List<LogEntry>> = _systemLogs.asStateFlow()
+
+    // ── Fila global de anúncios de conquistas (FR-009) ────────────────────────
+    // Estado efêmero, separado dos IDs persistidos em CharacterState.achievements.
+    private val _achievementAnnouncementQueue = MutableStateFlow<List<Achievement>>(emptyList())
+    val achievementAnnouncementQueue: StateFlow<List<Achievement>> = _achievementAnnouncementQueue.asStateFlow()
+
+    // Novas conquistas detectadas durante conclusão de foco (para o FocusCompletionFlow).
+    // Limpa ao iniciar nova sessão; populada em confirmFocusSession antes do save.
+    private val _pendingFocusAchievements = MutableStateFlow<List<Achievement>>(emptyList())
+    val pendingFocusAchievements: StateFlow<List<Achievement>> = _pendingFocusAchievements.asStateFlow()
+
+    /**
+     * Descarta a primeira conquista da fila de anúncios (FR-009).
+     * Usado quando o usuário avança no overlay de anúncio fora do foco.
+     */
+    fun dismissNextAchievementAnnouncement() {
+        val queue = _achievementAnnouncementQueue.value
+        if (queue.isNotEmpty()) {
+            _achievementAnnouncementQueue.value = queue.drop(1)
+        }
+    }
+
+    /**
+     * Descarta a primeira conquista da fila de anúncios de foco.
+     * Usado quando o usuário avança na etapa de conquista do FocusCompletionFlow.
+     */
+    fun dismissNextFocusAchievement() {
+        val list = _pendingFocusAchievements.value
+        if (list.isNotEmpty()) {
+            _pendingFocusAchievements.value = list.drop(1)
+        }
+    }
 
     private val _dailyReport = MutableStateFlow<DailyReportData?>(null)
     val dailyReport: StateFlow<DailyReportData?> = _dailyReport.asStateFlow()
@@ -332,7 +367,17 @@ class HeroLogViewModel(
         val habit = current.habits.find { it.id == habitId } ?: return
         val result = HabitLogic.trigger(habit, current, isUp, referenceDate = Date(clock()))
         val updatedHabits = current.habits.map { if (it.id == habitId) result.updatedHabit else it }
-        saveCharacterState(result.updatedState.copy(habits = updatedHabits))
+        val candidateState = result.updatedState.copy(habits = updatedHabits)
+
+        // FR-004/FR-010: detecção central de conquistas para ações fora do foco
+        val newAchievements = AchievementDetection.detectNewAchievements(current, candidateState)
+        val stateWithAchievements = AchievementDetection.withAchievements(candidateState, newAchievements.map { it.id })
+        saveCharacterState(stateWithAchievements)
+
+        // Fila global de anúncios (FR-009)
+        if (newAchievements.isNotEmpty()) {
+            _achievementAnnouncementQueue.value = _achievementAnnouncementQueue.value + newAchievements
+        }
 
         val rewards = getDifficultyRewards(habit.difficulty)
         if (isUp) {
@@ -340,14 +385,14 @@ class HeroLogViewModel(
             val gold = if (current.charClass == CharClass.Warrior) floor(rewards.gold * 1.2).toInt() else rewards.gold
             addSystemLog("✨ Prática Virtuosa: Completou o hábito positivo \"${habit.title}\"! Ganhou +${gold} GP e +${xp} XP.", true)
             sfxManager.playCoins()
-            if (result.updatedState.combatLevel > current.combatLevel) {
+            if (candidateState.combatLevel > current.combatLevel) {
                 sfxManager.playLevelUp()
             }
         } else {
             val damage = if (current.charClass == CharClass.Ranger) max(1, floor(rewards.damage * 0.7).toInt()) else rewards.damage
             addSystemLog("⚠️ Desvio Espiritual: Sofreu dano pelo hábito negativo \"${habit.title}\"! Perdeu -${damage} HP de sua integridade.", false)
             sfxManager.playWildernessWarning()
-            if (result.updatedState.isPlayerDead && !current.isPlayerDead) {
+            if (candidateState.isPlayerDead && !current.isPlayerDead) {
                 sfxManager.playDeath()
             }
         }
@@ -506,23 +551,6 @@ class HeroLogViewModel(
         }
     }
 
-    fun guildQuestsProcessed(state: CharacterState, referenceDate: Date = Date()): List<ProcessedQuest> {
-        return QuestCatalog.GUILD_QUESTS.map { quest ->
-            val progress = quest.getProgress(state)
-            ProcessedQuest(
-                id = quest.id,
-                name = quest.name,
-                desc = quest.desc,
-                target = quest.target,
-                rewardGold = quest.rewardGold,
-                rewardXp = quest.rewardXp,
-                progress = progress,
-                isCompleted = progress >= quest.target,
-                isClaimed = QuestLogic.isQuestClaimed(state, quest.id, referenceDate)
-            )
-        }
-    }
-
     fun claimQuestReward(questId: String, goldReward: Int, xpReward: Int) {
         val current = _characterState.value ?: return
         val updated = QuestApplyLogic.claimQuestReward(current, questId, goldReward, xpReward)
@@ -546,7 +574,14 @@ class HeroLogViewModel(
         val current = _characterState.value ?: return
         when (val result = TitleLogic.buyTitle(current.gold, current.ownedTitles, titleId, price)) {
             is TitlePurchaseResult.Success -> {
-                saveCharacterState(current.copy(gold = result.newGold, ownedTitles = result.newOwnedTitles))
+                val candidateState = current.copy(gold = result.newGold, ownedTitles = result.newOwnedTitles)
+                // FR-004/FR-010: detecção central (Arsenal de Títulos)
+                val newAchievements = AchievementDetection.detectNewAchievements(current, candidateState)
+                val stateWithAchievements = AchievementDetection.withAchievements(candidateState, newAchievements.map { it.id })
+                saveCharacterState(stateWithAchievements)
+                if (newAchievements.isNotEmpty()) {
+                    _achievementAnnouncementQueue.value = _achievementAnnouncementQueue.value + newAchievements
+                }
                 sfxManager.playCoins()
             }
             TitlePurchaseResult.InsufficientGold -> { /* no-op: mesma regra da fonte */ }
@@ -556,7 +591,14 @@ class HeroLogViewModel(
 
     fun claimAchievementTitle(titleId: String) {
         val current = _characterState.value ?: return
-        saveCharacterState(current.copy(ownedTitles = TitleLogic.claimAchievementTitle(current.ownedTitles, titleId)))
+        val candidateState = current.copy(ownedTitles = TitleLogic.claimAchievementTitle(current.ownedTitles, titleId))
+        // FR-004/FR-010: detecção central (Arsenal de Títulos)
+        val newAchievements = AchievementDetection.detectNewAchievements(current, candidateState)
+        val stateWithAchievements = AchievementDetection.withAchievements(candidateState, newAchievements.map { it.id })
+        saveCharacterState(stateWithAchievements)
+        if (newAchievements.isNotEmpty()) {
+            _achievementAnnouncementQueue.value = _achievementAnnouncementQueue.value + newAchievements
+        }
         sfxManager.playLevelUp()
     }
 
@@ -913,16 +955,21 @@ class HeroLogViewModel(
             addSystemLog("⚔️ Masmorra Progresso: (${nextSessions}/4) focos consecutivos selados. Só mais ${4 - nextSessions} sessões para a glória eterna!", true)
         }
 
-        // Conquistas novas (comparar antes/depois)
-        (newState.achievements.toSet() - charState.achievements.toSet()).forEach { id ->
-            if (id == "survive_wilderness") {
+        // Conquistas novas (FR-004: detecção central, idempotente)
+        val newAchievements = AchievementDetection.detectNewAchievements(charState, newState)
+        val stateWithAchievements = AchievementDetection.withAchievements(newState, newAchievements.map { it.id })
+        newAchievements.forEach { ach ->
+            if (ach.id == "survive_wilderness") {
                 addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueaste o selo [Sobrevivente da Wilderness]!", true)
             } else {
-                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueada rúnica especial [${id.uppercase()}]!", true)
+                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueada rúnica especial [${ach.name}]!", true)
             }
         }
 
-        saveCharacterState(newState)
+        // Armazenar conquistas para o FocusCompletionFlow (etapa entre Loot e Notas)
+        _pendingFocusAchievements.value = newAchievements
+
+        saveCharacterState(stateWithAchievements)
         sfxManager.playCoins()
 
         if (config?.isDungeonMode == true) {
@@ -1088,6 +1135,41 @@ class HeroLogViewModel(
                 )
             )
         }
+
+        // Pré-detecção de conquistas (FR-003/US-03): espelha os campos numéricos que
+        // FocusApplyLogic.apply() vai alterar, para que o FocusCompletionFlow já tenha
+        // a lista de conquistas antes do usuário confirmar.
+        val totalGoldGained = calc.goldEarned + calc.dungeonClearGoldBonus
+        val todayString = QuestLogic.toDateStringJs(Date(clock()))
+        val newStreak = if (charState.lastStudyDate != todayString) charState.streak + 1 else charState.streak
+
+        var combatXPApplied = charState.combatXP + (calc.xpEarned * 0.4).toInt()
+        var currentCombatLevel = charState.combatLevel
+        var combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
+        while (combatXPApplied >= combatXPReq) {
+            combatXPApplied -= combatXPReq
+            currentCombatLevel += 1
+            combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
+        }
+
+        val candidateState = charState.copy(
+            gold = charState.gold + totalGoldGained,
+            totalGoldEarned = charState.totalGoldEarned + totalGoldGained,
+            totalXP = charState.totalXP + calc.xpEarned,
+            totalSessions = charState.totalSessions + 1,
+            totalMinutes = charState.totalMinutes + durationMins,
+            combatLevel = currentCombatLevel,
+            combatXP = combatXPApplied,
+            streak = newStreak,
+            bestStreak = maxOf(newStreak, charState.bestStreak),
+            wildernessWins = charState.wildernessWins + if (calc.isWildernessChecked) 1 else 0,
+            combo = charState.combo + 1,
+            todayMinutes = charState.todayMinutes + durationMins,
+            todayXP = charState.todayXP + calc.xpEarned
+        )
+
+        val focusAchievements = AchievementDetection.detectNewAchievements(charState, candidateState)
+        _pendingFocusAchievements.value = focusAchievements
     }
 
     fun updateCharacterProfile(name: String, charClass: CharClass) {

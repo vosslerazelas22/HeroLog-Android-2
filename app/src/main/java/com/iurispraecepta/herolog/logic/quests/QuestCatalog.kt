@@ -183,28 +183,4 @@ object QuestCatalog {
             getProgress = { s -> min(s.dailies.count { it.completed }, 2) }
         )
     )
-
-    val GUILD_QUESTS: List<QuestDef> = listOf(
-        QuestDef(
-            id = "guild_1",
-            name = "Iniciado da Guilda",
-            desc = "Atinja Combat Level 5 ou superior.",
-            target = 5, rewardGold = 400, rewardXp = 200,
-            getProgress = { s -> min(s.combatLevel, 5) }
-        ),
-        QuestDef(
-            id = "guild_2",
-            name = "Maratona Mágica",
-            desc = "Conclua um total de 12 sessões acumuladas.",
-            target = 12, rewardGold = 500, rewardXp = 300,
-            getProgress = { s -> min(s.totalSessions, 12) }
-        ),
-        QuestDef(
-            id = "guild_3",
-            name = "Campeão da Constância",
-            desc = "Atinja ou supere uma série recorde de 3 dias de estudo.",
-            target = 3, rewardGold = 350, rewardXp = 150,
-            getProgress = { s -> min(s.bestStreak, 3) }
-        )
-    )
 }

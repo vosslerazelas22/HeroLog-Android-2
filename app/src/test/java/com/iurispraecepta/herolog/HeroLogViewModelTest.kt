@@ -2230,4 +2230,195 @@ class HeroLogViewModelTest {
 
         db.close()
     }
+
+    // ── Spec-001: anúncios de conquistas fora do foco (FR-009/FR-010) ─────────
+
+    @Test
+    fun triggerHabit_crossingStreak7_enqueuesAnnouncementAndPersistsId() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Meditar",
+            notes = "",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 0,
+            downCount = 0,
+            streak = 6,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // ID persistido
+        assertTrue(viewModel.characterState.value!!.achievements.contains("habit_streak_7"))
+        // Anúncio na fila efêmera
+        val queue = viewModel.achievementAnnouncementQueue.value
+        assertEquals(1, queue.size)
+        assertEquals("habit_streak_7", queue.first().id)
+
+        db.close()
+    }
+
+    @Test
+    fun triggerHabit_belowStreak7_doesNotAnnounce() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Meditar",
+            notes = "",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 0,
+            downCount = 0,
+            streak = 2,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.characterState.value!!.achievements.contains("habit_streak_7"))
+        assertTrue(viewModel.achievementAnnouncementQueue.value.isEmpty())
+
+        db.close()
+    }
+
+    @Test
+    fun triggerHabit_alreadyUnlocked_noDuplicateAnnouncement() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Meditar",
+            notes = "",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 0,
+            downCount = 0,
+            streak = 7,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        repository.saveCharacterState(
+            createBaseState().copy(
+                habits = listOf(habit),
+                achievements = listOf("habit_streak_7")
+            )
+        )
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, viewModel.characterState.value!!.achievements.count { it == "habit_streak_7" })
+        assertTrue(viewModel.achievementAnnouncementQueue.value.isEmpty())
+
+        db.close()
+    }
+
+    @Test
+    fun buyTitle_fifthTitle_enqueuesArsenalDeTitulos() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        repository.saveCharacterState(
+            createBaseState().copy(
+                gold = 10000,
+                ownedTitles = listOf("t1", "t2", "t3", "t4")
+            )
+        )
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.buyTitle("t5", price = 100)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.characterState.value!!.achievements.contains("titles_5"))
+        assertEquals("titles_5", viewModel.achievementAnnouncementQueue.value.firstOrNull()?.id)
+
+        db.close()
+    }
+
+    @Test
+    fun claimAchievementTitle_fifthTitle_enqueuesArsenalDeTitulos() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        repository.saveCharacterState(
+            createBaseState().copy(
+                ownedTitles = listOf("t1", "t2", "t3", "t4")
+            )
+        )
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.claimAchievementTitle("t5")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.characterState.value!!.achievements.contains("titles_5"))
+        assertEquals("titles_5", viewModel.achievementAnnouncementQueue.value.firstOrNull()?.id)
+
+        db.close()
+    }
+
+    @Test
+    fun dismissNextAchievementAnnouncement_removesOnlyFromQueue_keepsPersistedId() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val habit = Habit(
+            id = "h1",
+            title = "Meditar",
+            notes = "",
+            up = true,
+            down = false,
+            difficulty = Difficulty.Easy,
+            upCount = 0,
+            downCount = 0,
+            streak = 6,
+            tags = emptyList(),
+            lastTriggeredDate = null
+        )
+        repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
+
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHabit("h1", isUp = true)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, viewModel.achievementAnnouncementQueue.value.size)
+
+        viewModel.dismissNextAchievementAnnouncement()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.achievementAnnouncementQueue.value.isEmpty())
+        // A conquista permanece persistida — fechar o anúncio nunca revoga
+        assertTrue(viewModel.characterState.value!!.achievements.contains("habit_streak_7"))
+
+        db.close()
+    }
 }

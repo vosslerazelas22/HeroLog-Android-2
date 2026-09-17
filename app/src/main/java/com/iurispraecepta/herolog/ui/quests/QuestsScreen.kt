@@ -2,7 +2,6 @@ package com.iurispraecepta.herolog.ui.quests
 
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -67,20 +66,13 @@ private val Amber300 = Color(0xFFFCD34D)
 private val Amber600 = Color(0xFFD97706)
 private val Emerald400 = Color(0xFF34D399)
 private val Emerald500 = Color(0xFF10B981)
-private val Stone500 = Color(0xFF78716C)
 
 @Composable
 fun QuestsScreen(
     dailyQuests: List<ProcessedQuest>,
-    guildQuests: List<ProcessedQuest>,
-    activeSubTab: String,
-    onSubTabChange: (String) -> Unit,
     onClaimQuestReward: (questId: String, goldReward: Int, xpReward: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isJourney = activeSubTab == "guild" || activeSubTab == "journey"
-    val displayedQuests = if (isJourney) guildQuests else dailyQuests
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -112,39 +104,9 @@ fun QuestsScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // ── Seletor de Sub-Abas ─────────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(Stone950.copy(alpha = 0.4f))
-                .border(1.dp, Color(0x1AF59E0B), RoundedCornerShape(8.dp))
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            SubTabButton(
-                title = "Contratos Diários",
-                isSelected = !isJourney,
-                onClick = { onSubTabChange("daily") },
-                modifier = Modifier.weight(1f)
-            )
-            SubTabButton(
-                title = "Marcos da Jornada",
-                isSelected = isJourney,
-                onClick = { onSubTabChange("guild") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // ═══ LEGENDA (muda conforme a sub-aba ativa) ═══
+        // ── Legenda ──────────────────────────────────────────────────
         Text(
-            text = if (!isJourney) {
-                "Sorteio rotativo — 3 missões por dia. Renova à meia-noite."
-            } else {
-                "Marcos de progresso do herói e conquistas de longo prazo."
-            },
+            text = "Sorteio rotativo — 3 missões por dia. Renova à meia-noite.",
             color = Amber200.copy(alpha = 0.7f),
             fontSize = 9.sp,
             fontWeight = FontWeight.Medium,
@@ -152,13 +114,9 @@ fun QuestsScreen(
         )
 
         // ═══ LISTA DE CONTRATOS ═══
-        if (displayedQuests.isEmpty()) {
+        if (dailyQuests.isEmpty()) {
             EmptyQuestsPlaceholder(
-                message = if (isJourney) {
-                    "Nenhum contrato da jornada disponível no momento."
-                } else {
-                    "Nenhum contrato diário ativo para hoje."
-                }
+                message = "Nenhum contrato diário ativo para hoje."
             )
         } else {
             LazyColumn(
@@ -167,7 +125,7 @@ fun QuestsScreen(
                 contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
             ) {
                 items(
-                    items = displayedQuests,
+                    items = dailyQuests,
                     key = { it.id }
                 ) { quest ->
                     QuestCard(
@@ -179,48 +137,6 @@ fun QuestsScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SubTabButton(
-    title: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) Amber500.copy(alpha = 0.1f) else Color.Transparent,
-        label = "subtab_bg"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) Amber500.copy(alpha = 0.2f) else Color.Transparent,
-        label = "subtab_border"
-    )
-    val textColor by animateColorAsState(
-        targetValue = if (isSelected) Amber300 else Stone500,
-        label = "subtab_text"
-    )
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(6.dp))
-            .background(backgroundColor)
-            .border(1.dp, borderColor, RoundedCornerShape(6.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = title.uppercase(),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.08.em,
-            color = textColor,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
