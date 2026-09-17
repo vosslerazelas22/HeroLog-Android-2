@@ -106,7 +106,8 @@ fun QuestFormShell(
                                 .padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "Excluir",
+                                // Paridade React: botoes do rodape usam classe CSS `uppercase`
+                                text = "Excluir".uppercase(),
                                 color = Color(0xFFF87171),
                                 fontFamily = Inter,
                                 fontSize = 12.sp,
@@ -120,7 +121,7 @@ fun QuestFormShell(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Text(
-                                text = "Excluir?",
+                                text = "Excluir?".uppercase(),
                                 color = Color(0xFFF87171),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -136,7 +137,7 @@ fun QuestFormShell(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Sim",
+                                    text = "Sim".uppercase(),
                                     color = Color.White,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
@@ -150,7 +151,7 @@ fun QuestFormShell(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Não",
+                                    text = "Não".uppercase(),
                                     color = Stone400,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
@@ -175,7 +176,7 @@ fun QuestFormShell(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Descartar?",
+                            text = "Descartar?".uppercase(),
                             color = Amber300,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
@@ -188,9 +189,9 @@ fun QuestFormShell(
                                 .clickable { onDiscard() }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Text(
-                                text = "Sim",
-                                color = Amber200,
+                                Text(
+                                    text = "Sim".uppercase(),
+                                    color = Amber200,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -199,11 +200,11 @@ fun QuestFormShell(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(Stone800)
-                                .clickable { onContinueEditing() }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Não",
+                                    .clickable { onContinueEditing() }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Não".uppercase(),
                                 color = Stone400,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -221,7 +222,7 @@ fun QuestFormShell(
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = "Cancelar",
+                            text = "Cancelar".uppercase(),
                             color = Stone400,
                             fontFamily = Inter,
                             fontSize = 12.sp,
@@ -244,7 +245,7 @@ fun QuestFormShell(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = submitLabel,
+                        text = submitLabel.uppercase(),
                         color = if (submitEnabled) Amber300 else Amber300.copy(alpha = 0.4f),
                         fontFamily = Inter,
                         fontSize = 12.sp,
