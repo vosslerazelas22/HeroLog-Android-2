@@ -7,6 +7,8 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.iurispraecepta.herolog.model.ChecklistItem
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Todo
+import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
+import com.iurispraecepta.herolog.ui.form.TodoDraft
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.todos.TodoFilter
 import com.iurispraecepta.herolog.ui.todos.TodosScreen
@@ -361,5 +363,74 @@ class TodosScreenScreenshotTest {
         }
 
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/todos_screen_filters_disabled_modal_open.png")
+    }
+
+    @Test
+    fun todosScreen_confirmDeleteState_screenshot() {
+        val sampleTodo = Todo(
+            id = "t7",
+            title = "Todo a ser excluído",
+            notes = "Testando o fluxo de exclusão",
+            difficulty = Difficulty.Trivial,
+            completed = false,
+            tags = listOf("temporario"),
+            checklist = emptyList()
+        )
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                TodosScreen(
+                    todos = listOf(sampleTodo),
+                    onToggleTodo = {},
+                    onToggleChecklistItem = { _, _ -> },
+                    onAddTodo = { _, _, _, _, _ -> },
+                    onEditTodo = {},
+                    onDeleteTodo = {},
+                    initialEditingTodo = sampleTodo,
+                    initialDeleteConfirmState = DeleteConfirmState.Confirming
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/todos_screen_confirm_delete.png")
+    }
+
+    @Test
+    fun todosScreen_confirmCancelState_screenshot() {
+        val sampleTodo = Todo(
+            id = "t8",
+            title = "Todo em edição",
+            notes = "Modificações que podem ser descartadas",
+            difficulty = Difficulty.Medium,
+            completed = false,
+            tags = listOf("foco"),
+            checklist = emptyList()
+        )
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                TodosScreen(
+                    todos = listOf(sampleTodo),
+                    onToggleTodo = {},
+                    onToggleChecklistItem = { _, _ -> },
+                    onAddTodo = { _, _, _, _, _ -> },
+                    onEditTodo = {},
+                    onDeleteTodo = {},
+                    initialEditingTodo = sampleTodo,
+                    initialShowDiscard = true,
+                    // Snapshot difere do formulario (tags "foco" vs vazio) → isDirty = true
+                    initialSnapshot = TodoDraft(
+                        title = "Todo em edição",
+                        notes = "Modificações que podem ser descartadas",
+                        difficulty = Difficulty.Medium,
+                        tags = "",
+                        checklistItems = emptyList(),
+                        checklistInput = ""
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/todos_screen_confirm_cancel.png")
     }
 }

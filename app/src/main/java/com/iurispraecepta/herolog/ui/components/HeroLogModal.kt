@@ -18,6 +18,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -122,6 +124,7 @@ fun HeroLogModal(
     hideHeader: Boolean = false,
     allowBackdropClose: Boolean = true,
     disableEscClose: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     var shouldRenderDialog by remember { mutableStateOf(isOpen) }
@@ -197,7 +200,8 @@ fun HeroLogModal(
         }
         Box(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             // Backdrop (spec-002 FR-003): hazeEffect amostra a cena real (blur de
@@ -357,7 +361,7 @@ fun HeroLogModal(
                                 .fillMaxWidth()
                                 .heightIn(max = screenHeight * ModalTokens.ContentMaxHeightFraction)
                                 .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 20.dp, vertical = 20.dp)
+                                .padding(contentPadding)
                         ) {
                             // text-stone-200 do slot React: herdado pelos filhos sem cor própria.
                             CompositionLocalProvider(

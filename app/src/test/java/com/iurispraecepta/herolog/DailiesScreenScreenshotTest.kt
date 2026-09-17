@@ -9,6 +9,8 @@ import com.iurispraecepta.herolog.model.Daily
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.RepeatInterval
 import com.iurispraecepta.herolog.ui.dailies.DailiesScreen
+import com.iurispraecepta.herolog.ui.form.DailyDraft
+import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import org.junit.Rule
 import org.junit.Test
@@ -281,5 +283,85 @@ class DailiesScreenScreenshotTest {
         }
 
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/dailies_screen_edit_modal_no_checklist.png")
+    }
+
+    @Test
+    fun dailiesScreen_confirmDeleteState_screenshot() {
+        val sampleDaily = Daily(
+            id = "d7",
+            title = "Daily a ser excluída",
+            notes = "Testando o fluxo de exclusão",
+            difficulty = Difficulty.Trivial,
+            completed = false,
+            streak = 1,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = listOf("temporario"),
+            checklist = emptyList(),
+            value = 1
+        )
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                DailiesScreen(
+                    dailies = listOf(sampleDaily),
+                    onToggleDaily = {},
+                    onToggleChecklistItem = { _, _ -> },
+                    onAddDaily = { _, _, _, _, _, _, _, _ -> },
+                    onEditDaily = {},
+                    onDeleteDaily = {},
+                    initialEditingDaily = sampleDaily,
+                    initialDeleteConfirmState = DeleteConfirmState.Confirming
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/dailies_screen_confirm_delete.png")
+    }
+
+    @Test
+    fun dailiesScreen_confirmCancelState_screenshot() {
+        val sampleDaily = Daily(
+            id = "d8",
+            title = "Daily em edição",
+            notes = "Modificações que podem ser descartadas",
+            difficulty = Difficulty.Medium,
+            completed = false,
+            streak = 2,
+            repeats = RepeatInterval.Daily,
+            every = 1,
+            tags = listOf("foco"),
+            checklist = emptyList(),
+            value = 3
+        )
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                DailiesScreen(
+                    dailies = listOf(sampleDaily),
+                    onToggleDaily = {},
+                    onToggleChecklistItem = { _, _ -> },
+                    onAddDaily = { _, _, _, _, _, _, _, _ -> },
+                    onEditDaily = {},
+                    onDeleteDaily = {},
+                    initialEditingDaily = sampleDaily,
+                    initialShowDiscard = true,
+                    // Snapshot difere do formulario (tags "foco" vs vazio) → isDirty = true
+                    initialSnapshot = DailyDraft(
+                        title = "Daily em edição",
+                        notes = "Modificações que podem ser descartadas",
+                        difficulty = Difficulty.Medium,
+                        repeats = RepeatInterval.Daily.name,
+                        every = "1",
+                        streak = "2",
+                        tags = "",
+                        checklistItems = emptyList(),
+                        checklistInput = ""
+                    )
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/dailies_screen_confirm_cancel.png")
     }
 }

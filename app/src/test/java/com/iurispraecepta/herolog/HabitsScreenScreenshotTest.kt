@@ -6,6 +6,8 @@ import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Habit
+import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
+import com.iurispraecepta.herolog.ui.form.HabitDraft
 import com.iurispraecepta.herolog.ui.habits.HabitsScreen
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import org.junit.Rule
@@ -219,7 +221,7 @@ class HabitsScreenScreenshotTest {
                     onEditHabit = {},
                     onDeleteHabit = {},
                     initialEditingHabit = sampleHabit,
-                    initialConfirmDelete = true
+                    initialDeleteConfirmState = DeleteConfirmState.Confirming
                 )
             }
         }
@@ -252,7 +254,16 @@ class HabitsScreenScreenshotTest {
                     onEditHabit = {},
                     onDeleteHabit = {},
                     initialEditingHabit = sampleHabit,
-                    initialConfirmCancel = true
+                    initialShowDiscard = true,
+                    // Snapshot difere do formulario (tags "foco" vs vazio) → isDirty = true
+                    initialSnapshot = HabitDraft(
+                        title = "Hábito em edição",
+                        notes = "Modificações que podem ser descartadas",
+                        up = true,
+                        down = true,
+                        difficulty = Difficulty.Medium,
+                        tags = ""
+                    )
                 )
             }
         }
