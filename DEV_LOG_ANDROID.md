@@ -5275,3 +5275,55 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 **Desvios de escopo aprovados:**
 - Nenhum. Backlogs seguem: `LevelUpOverlay` (Voltar), overflow `DailyReportModal`,
   quirk API 31, gap dos 24 baselines ausentes.
+
+## [2026-09-17] spec-001-achievements — catálogo 42, detecção central, fila de anúncios, remoção guild
+
+**Arquivos criados:**
+- `logic/achievements/AchievementDetection.kt` (função pura de detecção central)
+- `ui/components/AchievementAnnouncementOverlay.kt` (fila global efêmera)
+- `test/.../AchievementDetectionTest.kt` (11 testes)
+
+**Arquivos alterados:**
+- `logic/achievements/AchievementCatalog.kt` (8→42 itens)
+- `logic/quests/QuestCatalog.kt` (−GUILD_QUESTS)
+- `ui/HeroLogViewModel.kt` (detecção em 4 fluxos + pré-detecção em onFocusSessionCompleted + fila efêmera + remoção guildQuestsProcessed + remoção dead code clearPendingFocusAchievements)
+- `ui/focus/FocusCompletionFlow.kt` (etapa "Conquista desbloqueada" entre Loot e Notas)
+- `ui/quests/QuestsScreen.kt` (só contratos diários, sem subaba guild)
+- `MainActivity.kt` (wiring overlay + focusAchievements + remoção guild do QuestFab)
+- `AchievementCatalogTest.kt` (50 testes: 42 limiares, IDs únicos, null-safe)
+- `HeroLogViewModelTest.kt` (+6 integração)
+- `QuestCatalogTest.kt` (guild removido)
+- `QuestsViewModelIntegrationTest.kt` (guild removido)
+
+**Commits (branch spec-001-achievements, PR #12):**
+- `75a9e14` feat: spec-001 completa
+- `a83e120` chore: remove dead code clearPendingFocusAchievements
+- `7c0c5a4` refactor: AnimatedVisibility dirigido por recomposição + KDoc
+- `84cb63e` fix: pré-detecção de conquistas em onFocusSessionCompleted
+
+**Resumo:**
+- Substitui Marcos da Jornada por catálogo de 42 conquistas sem recompensa econômica
+- AchievementDetection: função pura, idempotente (FR-005), sem retroativos (FR-006)
+- FocusCompletionFlow: etapa de conquista entre Loot e Notas (US-03), validada em emulador
+- AchievementAnnouncementOverlay: fila global para unlocks fora do foco (FR-009), visibilidade dirigida por recomposição
+- Pré-detecção em onFocusSessionCompleted com estado candidato que espelha FocusApplyLogic.apply()
+- Remoção completa de GUILD_QUESTS (catálogo, ViewModel, subaba, QuestFab, testes)
+- IDs legados claimed_guild_* permanecem inertes em saves existentes
+- Bug encontrado e corrigido durante validação emulador: achievement step não aparecia porque _pendingFocusAchievements só era setado em confirmFocusSession (após confirmação), não em onFocusSessionCompleted (quando o flow inicia)
+
+**Validação:**
+- Build: ./gradlew assembleDebug → BUILD SUCCESSFUL
+- Testes: ./gradlew testDebugUnitTest → 557/557, 0 falhas/erros (XML bruto verificado)
+  - AchievementCatalogTest: 50 PASSED
+  - AchievementDetectionTest: 11 PASSED
+  - HeroLogViewModelTest: 63 PASSED (+6 novos)
+  - QuestCatalogTest: 5 PASSED
+  - QuestsViewModelIntegrationTest: 2 PASSED
+- Visual emulador 390×844: APROVADO
+  - FocusCompletionFlow: Streak → Loot → Conquista (PRIMEIRA INCURSAO) → Notas ✓
+  - QuestsScreen: sem guild quests ✓
+  - Catálogo 42 itens visível ✓
+
+**Desvios de escopo aprovados:**
+- AchievementAnnouncementOverlay não usa BackHandler — padrão de Back-em-modal tem bug conhecido de dispatcher de janela (AGENTS.md §9.6), validação pendente de device real
+- Importação de save não dispara detecção (FR-007), por construção
