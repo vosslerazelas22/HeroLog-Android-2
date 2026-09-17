@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.iurispraecepta.herolog.data.createInitialCharacterState
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
+import com.iurispraecepta.herolog.logic.CombatLogic
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.character.LevelUpEvent
@@ -1134,6 +1135,41 @@ class HeroLogViewModel(
                 )
             )
         }
+
+        // Pré-detecção de conquistas (FR-003/US-03): espelha os campos numéricos que
+        // FocusApplyLogic.apply() vai alterar, para que o FocusCompletionFlow já tenha
+        // a lista de conquistas antes do usuário confirmar.
+        val totalGoldGained = calc.goldEarned + calc.dungeonClearGoldBonus
+        val todayString = QuestLogic.toDateStringJs(Date(clock()))
+        val newStreak = if (charState.lastStudyDate != todayString) charState.streak + 1 else charState.streak
+
+        var combatXPApplied = charState.combatXP + (calc.xpEarned * 0.4).toInt()
+        var currentCombatLevel = charState.combatLevel
+        var combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
+        while (combatXPApplied >= combatXPReq) {
+            combatXPApplied -= combatXPReq
+            currentCombatLevel += 1
+            combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
+        }
+
+        val candidateState = charState.copy(
+            gold = charState.gold + totalGoldGained,
+            totalGoldEarned = charState.totalGoldEarned + totalGoldGained,
+            totalXP = charState.totalXP + calc.xpEarned,
+            totalSessions = charState.totalSessions + 1,
+            totalMinutes = charState.totalMinutes + durationMins,
+            combatLevel = currentCombatLevel,
+            combatXP = combatXPApplied,
+            streak = newStreak,
+            bestStreak = maxOf(newStreak, charState.bestStreak),
+            wildernessWins = charState.wildernessWins + if (calc.isWildernessChecked) 1 else 0,
+            combo = charState.combo + 1,
+            todayMinutes = charState.todayMinutes + durationMins,
+            todayXP = charState.todayXP + calc.xpEarned
+        )
+
+        val focusAchievements = AchievementDetection.detectNewAchievements(charState, candidateState)
+        _pendingFocusAchievements.value = focusAchievements
     }
 
     fun updateCharacterProfile(name: String, charClass: CharClass) {
