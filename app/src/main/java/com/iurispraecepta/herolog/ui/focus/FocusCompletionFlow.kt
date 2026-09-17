@@ -62,6 +62,7 @@ import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Amber100
@@ -98,7 +99,7 @@ fun CompletionShell(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
+            .background(QuestPanel)
             .imePadding()
             .padding(
                 start = 24.dp,
