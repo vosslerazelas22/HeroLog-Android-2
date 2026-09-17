@@ -45,10 +45,9 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-import com.iurispraecepta.herolog.ui.theme.Amber100
-import com.iurispraecepta.herolog.ui.theme.Amber300
-import com.iurispraecepta.herolog.ui.theme.Amber400
-import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Red400
 import com.iurispraecepta.herolog.ui.theme.Red500
 import com.iurispraecepta.herolog.ui.theme.Stone400
@@ -56,6 +55,7 @@ import com.iurispraecepta.herolog.ui.theme.Stone700
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 
 private val PRESETS = listOf(25, 50, 90)
 
@@ -117,7 +117,7 @@ fun TimerSettingsModal(
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp,
                         letterSpacing = 1.2.sp,
-                        color = Amber400
+                        color = Champagne500
                     )
                 )
 
@@ -133,11 +133,11 @@ fun TimerSettingsModal(
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(
-                                    if (isActive) Amber500.copy(alpha = 0.2f) else Stone900
+                                    if (isActive) Champagne500.copy(alpha = 0.1f) else Stone900
                                 )
                                 .border(
                                     width = 1.dp,
-                                    color = if (isActive) Amber400 else Stone800,
+                                    color = if (isActive) Champagne400 else Stone800,
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable(
@@ -156,8 +156,8 @@ fun TimerSettingsModal(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
                                     color = when {
-                                        isControlsDisabled -> Stone400.copy(alpha = 0.5f)
-                                        isActive -> Amber300
+                                        isControlsDisabled -> Zinc300.copy(alpha = 0.6f)
+                                        isActive -> Champagne300
                                         else -> Stone400
                                     }
                                 )
@@ -173,7 +173,7 @@ fun TimerSettingsModal(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(Stone900.copy(alpha = 0.6f))
-                    .border(1.dp, if (isCustomActive) Amber500.copy(alpha = 0.3f) else Stone800, RoundedCornerShape(12.dp))
+                    .border(1.dp, if (isCustomActive) Champagne500.copy(alpha = 0.3f) else Stone800, RoundedCornerShape(12.dp))
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -187,16 +187,16 @@ fun TimerSettingsModal(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "Duração Personalizada",
+                            text = "DURAÇÃO PERSONALIZADA",
                             style = TextStyle(
                                 fontFamily = FontFamily.Serif,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
-                                color = if (isCustomActive) Amber300 else Amber100
+                                color = Champagne300
                             )
                         )
                         Text(
-                            text = "Defina tempos sob medida para foco e descanso",
+                            text = "Define tempos customizados para foco e pausas",
                             style = TextStyle(
                                 fontSize = 11.sp,
                                 color = Stone400
@@ -234,7 +234,7 @@ fun TimerSettingsModal(
                             // Foco (1-180 min)
                             CustomDurationInputField(
                                 label = "Foco",
-                                limitHint = "1-180m",
+                                limitHint = "1-180 min",
                                 value = customFocusInput,
                                 onValueChange = { customFocusInput = it.filter { c -> c.isDigit() } },
                                 isValid = isFocusValid,
@@ -244,8 +244,8 @@ fun TimerSettingsModal(
 
                             // Pausa Curta (1-60 min)
                             CustomDurationInputField(
-                                label = "P. Curta",
-                                limitHint = "1-60m",
+                                label = "Pausa Curta",
+                                limitHint = "1-60 min",
                                 value = customShortBreakInput,
                                 onValueChange = { customShortBreakInput = it.filter { c -> c.isDigit() } },
                                 isValid = isShortValid,
@@ -255,8 +255,8 @@ fun TimerSettingsModal(
 
                             // Pausa Longa (1-60 min)
                             CustomDurationInputField(
-                                label = "P. Longa",
-                                limitHint = "1-60m",
+                                label = "Pausa Longa",
+                                limitHint = "1-60 min",
                                 value = customLongBreakInput,
                                 onValueChange = { customLongBreakInput = it.filter { c -> c.isDigit() } },
                                 isValid = isLongValid,
@@ -291,14 +291,14 @@ fun TimerSettingsModal(
                                 .height(44.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Amber500,
-                                contentColor = Stone950,
+                                containerColor = Champagne500.copy(alpha = 0.1f),
+                                contentColor = Champagne300,
                                 disabledContainerColor = Stone800,
                                 disabledContentColor = Stone400.copy(alpha = 0.5f)
                             )
                         ) {
                             Text(
-                                text = "Salvar Personalizado",
+                                text = "SALVAR CUSTOMIZADO",
                                 style = TextStyle(
                                     fontFamily = FontFamily.Serif,
                                     fontWeight = FontWeight.Bold,
@@ -322,14 +322,14 @@ fun TimerSettingsModal(
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp,
                         letterSpacing = 1.2.sp,
-                        color = Amber400
+                        color = Champagne500
                     )
                 )
 
                 // Toggle 1: Início automático de descanso
                 OptionToggleRow(
                     title = "Auto-Iniciar Descanso",
-                    description = "Inicia o timer de descanso ao concluir uma sessão de foco",
+                    description = "Inicia o descanso automaticamente ao fim da sessão de foco",
                     checked = pomodoroSettings.autoStartBreak,
                     onToggle = onToggleAutoStartBreak
                 )
@@ -337,7 +337,7 @@ fun TimerSettingsModal(
                 // Toggle 2: Início automático de foco
                 OptionToggleRow(
                     title = "Auto-Iniciar Foco",
-                    description = "Inicia a próxima sessão ao concluir o descanso",
+                    description = "Inicia a próxima sessão de foco automaticamente ao fim do descanso",
                     checked = pomodoroSettings.autoStartFocus,
                     onToggle = onToggleAutoStartFocus
                 )
@@ -371,7 +371,7 @@ private fun CustomDurationInputField(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
-                    color = Amber100
+                    color = Champagne400
                 )
             )
             Text(
@@ -394,16 +394,16 @@ private fun CustomDurationInputField(
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
-                color = if (isValid) Color.White else Red400
+                color = Champagne300
             ),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Stone950,
                 unfocusedContainerColor = Stone950,
                 disabledContainerColor = Stone950.copy(alpha = 0.5f),
-                focusedBorderColor = if (isValid) Amber400 else Red500,
+                focusedBorderColor = if (isValid) Champagne500 else Red500,
                 unfocusedBorderColor = if (isValid) Stone800 else Red500,
                 disabledBorderColor = Stone800.copy(alpha = 0.5f),
-                cursorColor = Amber400
+                cursorColor = Champagne400
             ),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -442,7 +442,7 @@ private fun OptionToggleRow(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = Amber100
+                    color = Champagne400
                 )
             )
             Text(
@@ -471,7 +471,7 @@ fun HeroLogToggleSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val trackColor = if (checked) Amber500 else Stone800
+    val trackColor = if (checked) Champagne500 else Stone800
     val thumbColor = if (checked) Stone950 else Stone400
 
     Box(

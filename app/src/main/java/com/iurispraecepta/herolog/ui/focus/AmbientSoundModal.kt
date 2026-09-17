@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,8 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-import com.iurispraecepta.herolog.ui.theme.Amber400
-import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Emerald400
@@ -36,6 +35,7 @@ import com.iurispraecepta.herolog.ui.theme.Stone600
 import com.iurispraecepta.herolog.ui.theme.Stone700
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
+import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Zinc300
 
 @Composable
@@ -63,8 +63,8 @@ fun AmbientSoundModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Stone900)
-                    .border(1.dp, Stone800, RoundedCornerShape(8.dp))
+                    .background(Stone950.copy(alpha = 0.4f))
+                    .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -113,9 +113,9 @@ fun AmbientSoundModal(
                     onValueChange = { onSetVolume(it.toInt()) },
                     valueRange = 0f..100f,
                     colors = SliderDefaults.colors(
-                        thumbColor = Amber400,
-                        activeTrackColor = Amber500,
-                        inactiveTrackColor = Stone700
+                    thumbColor = Champagne500,
+                    activeTrackColor = Champagne500,
+                    inactiveTrackColor = Stone700
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )

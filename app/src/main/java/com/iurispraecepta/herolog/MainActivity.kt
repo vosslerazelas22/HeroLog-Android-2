@@ -789,7 +789,7 @@ fun FocusOrbPreviewScreen(
                     Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
                 }
             }
-        } else if (isFocusMode && (focusState.isRunning || breakTimerState.isBreakActive)) {
+        } else if (isFocusMode) {
             if (breakTimerState.isBreakActive) {
                 // Descanso em tela cheia — espelha o React: `sessionConfig.isFocusMode`
                 // retorna <FocusModeScreen> independente do estado de break (App.tsx:2055).
