@@ -625,7 +625,8 @@ fun HabitsScreen(
 @Composable
 private fun FormFieldLabel(text: String) {
     Text(
-        text = text,
+        // Paridade React: labels usam classe CSS `uppercase`
+        text = text.uppercase(),
         fontFamily = Inter,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,

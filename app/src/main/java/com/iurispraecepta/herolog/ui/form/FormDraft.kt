@@ -54,6 +54,15 @@ fun parseTags(raw: String): List<String> =
 fun normalizeTags(raw: String): List<String> =
     parseTags(raw).sorted()
 
+/**
+ * FR-008 (divergencia consciente da spec vs React): incluir o texto pendente
+ * do input do checklist na lista ao submeter. O React usa apenas
+ * `checklistItems` no submit; a spec manda incorporar `checklistInput`
+ * quando nao-vazio (trim).
+ */
+fun mergePendingChecklistInput(items: List<String>, input: String): List<String> =
+    if (input.isNotBlank()) items + input.trim() else items
+
 fun HabitDraft.isEqualTo(other: HabitDraft): Boolean =
     title == other.title &&
         notes == other.notes &&

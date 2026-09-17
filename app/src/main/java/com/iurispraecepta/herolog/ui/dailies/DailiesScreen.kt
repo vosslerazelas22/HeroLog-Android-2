@@ -91,6 +91,7 @@ import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.DailyDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
+import com.iurispraecepta.herolog.ui.form.mergePendingChecklistInput
 import com.iurispraecepta.herolog.ui.form.parseTags
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -411,11 +412,7 @@ fun DailiesScreen(
                     val parsedStreak = (formStreak.toIntOrNull() ?: 0).coerceAtLeast(0)
 
                     // FR-008: Incluir texto pendente do checklist antes de submeter
-                    val allChecklistItems = if (checklistInput.isNotBlank()) {
-                        checklistItems + checklistInput.trim()
-                    } else {
-                        checklistItems
-                    }
+                    val allChecklistItems = mergePendingChecklistInput(checklistItems, checklistInput)
 
                     val currentEditing = editingDaily
                     if (currentEditing != null) {
@@ -890,7 +887,8 @@ fun DailiesScreen(
 @Composable
 private fun FormFieldLabel(text: String) {
     Text(
-        text = text,
+        // Paridade React: labels usam classe CSS `uppercase`
+        text = text.uppercase(),
         fontFamily = Inter,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,

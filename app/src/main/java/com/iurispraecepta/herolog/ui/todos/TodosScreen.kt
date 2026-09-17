@@ -91,6 +91,7 @@ import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.TodoDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
+import com.iurispraecepta.herolog.ui.form.mergePendingChecklistInput
 import com.iurispraecepta.herolog.ui.form.parseTags
 import java.util.Date
 
@@ -441,11 +442,7 @@ fun TodosScreen(
                     val parsedTags = parseTags(formTagInput)
 
                     // FR-008: Incluir texto pendente do checklist antes de submeter
-                    val allChecklistItems = if (checklistInput.isNotBlank()) {
-                        checklistItems + checklistInput.trim()
-                    } else {
-                        checklistItems
-                    }
+                    val allChecklistItems = mergePendingChecklistInput(checklistItems, checklistInput)
 
                     val currentEditing = editingTodo
                     if (currentEditing != null) {
@@ -758,7 +755,8 @@ fun TodosScreen(
 @Composable
 private fun FormFieldLabel(text: String) {
     Text(
-        text = text,
+        // Paridade React: labels usam classe CSS `uppercase`
+        text = text.uppercase(),
         fontFamily = Inter,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
