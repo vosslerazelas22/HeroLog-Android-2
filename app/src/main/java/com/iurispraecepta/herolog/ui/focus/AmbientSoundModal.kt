@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,14 +26,17 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-
-private val Amber400 = Color(0xFFFBBF24)
-private val Amber500 = Color(0xFFF59E0B)
-private val Stone900 = Color(0xFF1C1917)
-private val Stone800 = Color(0xFF292524)
-private val Stone700 = Color(0xFF44403C)
-private val Stone500 = Color(0xFF78716C)
-private val Stone300 = Color(0xFFD6D3D1)
+import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Emerald400
+import com.iurispraecepta.herolog.ui.theme.Stone500
+import com.iurispraecepta.herolog.ui.theme.Stone600
+import com.iurispraecepta.herolog.ui.theme.Stone700
+import com.iurispraecepta.herolog.ui.theme.Stone800
+import com.iurispraecepta.herolog.ui.theme.Stone900
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 
 @Composable
 fun AmbientSoundModal(
@@ -48,7 +51,7 @@ fun AmbientSoundModal(
     HeroLogModal(
         isOpen = isOpen,
         onClose = onClose,
-        title = "Sons do Santuário",
+        title = "Sons Ambiente",
         variant = ModalVariant.Amber
     ) {
         Column(
@@ -75,24 +78,34 @@ fun AmbientSoundModal(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.lucide_ic_volume_2),
+                            painter = painterResource(
+                                if (volume == 0) R.drawable.lucide_ic_volume_x else R.drawable.lucide_ic_volume_2
+                            ),
                             contentDescription = null,
-                            tint = Amber400,
+                            tint = if (volume == 0) Stone500 else Champagne400,
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = "Volume",
-                            color = Stone300,
+                            text = "Volume do Eco",
+                            color = Zinc300.copy(alpha = 0.8f),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
-                    Text(
-                        text = "$volume%",
-                        color = Amber400,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Champagne500.copy(alpha = 0.1f))
+                            .border(1.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "$volume%",
+                            color = Champagne400.copy(alpha = 0.9f),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Slider(
@@ -118,7 +131,7 @@ fun AmbientSoundModal(
                     AmbientTrackRow(
                         track = track,
                         isSelected = isSelected,
-                        onClick = { onSelectTrack(track.id) }
+                        onClick = { onSelectTrack(if (isSelected) null else track.id) }
                     )
                 }
             }
@@ -141,8 +154,8 @@ private fun AmbientTrackRow(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) Amber400 else Stone800
-    val bgColor = if (isSelected) Stone900 else Stone900.copy(alpha = 0.5f)
+    val borderColor = if (isSelected) Champagne500.copy(alpha = 0.3f) else Stone800
+    val bgColor = if (isSelected) Champagne500.copy(alpha = 0.05f) else Stone900.copy(alpha = 0.5f)
 
     Row(
         modifier = Modifier
@@ -166,14 +179,14 @@ private fun AmbientTrackRow(
             Column {
                 Text(
                     text = track.nome,
-                    color = if (isSelected) Amber400 else Color(0xFFE7E5E4),
+                    color = Zinc300.copy(alpha = 0.9f),
                     fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    fontWeight = FontWeight.Black
                 )
                 if (isSelected) {
                     Text(
                         text = "Ativo e em Sintonia",
-                        color = Amber500,
+                        color = Emerald400.copy(alpha = 0.8f),
                         fontSize = 11.sp
                     )
                 }
@@ -185,7 +198,7 @@ private fun AmbientTrackRow(
                 if (isSelected) R.drawable.lucide_ic_toggle_right else R.drawable.lucide_ic_toggle_left
             ),
             contentDescription = null,
-            tint = if (isSelected) Color(0xFFE5C158) else Color(0xFFA1A1AA)
+            tint = if (isSelected) Emerald400 else Stone600
         )
     }
 }

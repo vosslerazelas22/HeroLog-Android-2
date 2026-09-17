@@ -183,7 +183,7 @@ fun SkillSelectorModal(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Text(
-                                                text = "Nível ${sk.level}",
+                                                text = "Nv. ${sk.level}",
                                                 fontFamily = FontFamily.Monospace,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp,

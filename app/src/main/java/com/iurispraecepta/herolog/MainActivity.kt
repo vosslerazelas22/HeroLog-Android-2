@@ -789,9 +789,7 @@ fun FocusOrbPreviewScreen(
                     Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
                 }
             }
-        } else if ((focusState.isRunning && isFocusMode) || characterState.isPlayerDead ||
-            (breakTimerState.isBreakActive && isFocusMode)
-        ) {
+        } else if (isFocusMode && (focusState.isRunning || breakTimerState.isBreakActive)) {
             if (breakTimerState.isBreakActive) {
                 // Descanso em tela cheia — espelha o React: `sessionConfig.isFocusMode`
                 // retorna <FocusModeScreen> independente do estado de break (App.tsx:2055).
@@ -1254,7 +1252,7 @@ fun FocusOrbPreviewScreen(
                         // Contratos Diários
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = "CONTRATOS DIÁRIOS",
+                                text = "🎯 Contratos Diários",
                                 fontFamily = Cinzel,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp,
@@ -1276,15 +1274,30 @@ fun FocusOrbPreviewScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = q.name,
-                                            fontSize = 12.sp,
-                                            fontFamily = Cinzel,
-                                            color = if (q.isClaimed) Color(0x40E5C158)
-                                            else if (q.isCompleted) Champagne400
-                                            else Color(0xCCD6D3D1),
-                                            fontWeight = FontWeight.Black
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (q.isClaimed) Color(0xFF6B7280)
+                                                        else if (q.isCompleted) Champagne400
+                                                        else Color(0x4DF59E0B)
+                                                    )
+                                            )
+                                            Text(
+                                                text = q.name,
+                                                fontSize = 12.sp,
+                                                fontFamily = Cinzel,
+                                                color = if (q.isClaimed) Color(0x40E5C158)
+                                                else if (q.isCompleted) Champagne400
+                                                else Color(0xCCD6D3D1),
+                                                fontWeight = FontWeight.Black
+                                            )
+                                        }
                                         Text(
                                             text = "${q.progress}/${q.target}",
                                             fontSize = 11.sp,

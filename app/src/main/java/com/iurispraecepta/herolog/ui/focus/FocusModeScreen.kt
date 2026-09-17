@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -177,17 +176,21 @@ fun FocusModeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(
-                        border = BorderStroke(1.dp, Amber500.copy(alpha = 0.10f)),
-                        shape = RoundedCornerShape(0.dp)
-                    )
+                    .drawBehind {
+                        drawLine(
+                            color = Amber500.copy(alpha = 0.10f),
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx()
+                        )
+                    }
                     .padding(top = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isPaused) {
                     Button(
                         onClick = onTogglePause,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier.weight(1f).padding(horizontal = 24.dp, vertical = 10.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = PausedBg,
@@ -199,7 +202,7 @@ fun FocusModeScreen(
                 } else {
                     OutlinedButton(
                         onClick = onTogglePause,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier.weight(1f).padding(horizontal = 24.dp, vertical = 10.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Amber500),
                         border = BorderStroke(1.dp, RunningBorder)
@@ -210,7 +213,7 @@ fun FocusModeScreen(
 
                 OutlinedButton(
                     onClick = onExit,
-                    modifier = Modifier.weight(1f).height(48.dp),
+                    modifier = Modifier.weight(1f).padding(horizontal = 24.dp, vertical = 10.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = StoneExitText),
                     border = BorderStroke(1.dp, StoneExitBorder)

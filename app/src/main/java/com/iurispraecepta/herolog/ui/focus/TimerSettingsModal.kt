@@ -45,20 +45,17 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-
-private val Stone950 = Color(0xFF0C0A09)
-private val Stone900 = Color(0xFF1C1917)
-private val Stone800 = Color(0xFF292524)
-private val Stone700 = Color(0xFF44403C)
-private val Stone400 = Color(0xFFA8A29E)
-
-private val Amber500 = Color(0xFFF59E0B)
-private val Amber400 = Color(0xFFFBBF24)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber100 = Color(0xFFFEF3C7)
-
-private val Red500 = Color(0xFFEF4444)
-private val Red400 = Color(0xFFF87171)
+import com.iurispraecepta.herolog.ui.theme.Amber100
+import com.iurispraecepta.herolog.ui.theme.Amber300
+import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Red400
+import com.iurispraecepta.herolog.ui.theme.Red500
+import com.iurispraecepta.herolog.ui.theme.Stone400
+import com.iurispraecepta.herolog.ui.theme.Stone700
+import com.iurispraecepta.herolog.ui.theme.Stone800
+import com.iurispraecepta.herolog.ui.theme.Stone900
+import com.iurispraecepta.herolog.ui.theme.Stone950
 
 private val PRESETS = listOf(25, 50, 90)
 
@@ -101,7 +98,7 @@ fun TimerSettingsModal(
     HeroLogModal(
         isOpen = isOpen,
         onClose = onClose,
-        title = "Ajustes do Timer",
+        title = "⚙️ Ajustes do Timer",
         variant = ModalVariant.Amber
     ) {
         Column(
@@ -331,7 +328,7 @@ fun TimerSettingsModal(
 
                 // Toggle 1: Início automático de descanso
                 OptionToggleRow(
-                    title = "Iniciar descanso automaticamente",
+                    title = "Auto-Iniciar Descanso",
                     description = "Inicia o timer de descanso ao concluir uma sessão de foco",
                     checked = pomodoroSettings.autoStartBreak,
                     onToggle = onToggleAutoStartBreak
@@ -339,7 +336,7 @@ fun TimerSettingsModal(
 
                 // Toggle 2: Início automático de foco
                 OptionToggleRow(
-                    title = "Iniciar foco automaticamente",
+                    title = "Auto-Iniciar Foco",
                     description = "Inicia a próxima sessão ao concluir o descanso",
                     checked = pomodoroSettings.autoStartFocus,
                     onToggle = onToggleAutoStartFocus
