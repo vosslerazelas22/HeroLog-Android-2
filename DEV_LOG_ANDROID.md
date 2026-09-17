@@ -5327,3 +5327,36 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 **Desvios de escopo aprovados:**
 - AchievementAnnouncementOverlay não usa BackHandler — padrão de Back-em-modal tem bug conhecido de dispatcher de janela (AGENTS.md §9.6), validação pendente de device real
 - Importação de save não dispara detecção (FR-007), por construção
+
+## Bloco Spec-003 — Quest Form UX (branch `spec-003-quest-form-ux`, PR #11, 5 commits)
+
+- `5ad781f` Implement Spec 003: Quest Form UX improvements
+- `f4546f6` Correcoes revisao Spec 003: estado morto, ordem Daily, impureza teste
+- `8cd8275` Spec 003: FR-008 testavel + labels em maiusculas + screenshots delete/discard
+- `134c94f` Spec 003: botoes do rodape em maiusculas (paridade React)
+- `5b85089` Spec 003: layout Caminhos/Dificuldade + fix redundancia toggles
+- Rebase limpo sobre `origin/main` pós-merge da spec-001 (PR #12); sem merge da spec-003
+
+**Resumo:**
+- `QuestFormShell.kt` (novo): shell compartilhado dos 3 formulários — 3 regiões (corpo rolável + divisor + rodapé fixo), `imePadding` via `HeroLogModal` (`contentPadding` novo, default 20dp), dirty state por snapshot + rota única `requestClose` (FR-001/004/005/007)
+- `FormDraft.kt` (novo): `HabitDraft`/`DailyDraft`/`TodoDraft` + `isEqualTo` com `normalizeTags` (FR-006: split/trim/lowercase/filtra/ordena); `parseTags` sem sort para o submit (preserva ordem de entrada, paridade React); `mergePendingChecklistInput` (FR-008)
+- Notas multiline `heightIn(min=96.dp)` (FR-002); ordem de campos por tela (FR-003); `showDiscard` + `deleteConfirmState` com params iniciais `initialDeleteConfirmState`/`initialShowDiscard`/`initialSnapshot` para testes
+- B1 (revisão): removido estado morto `isConfirmingDelete`/`isConfirmingCancel` + params `initialConfirmDelete`/`initialConfirmCancel` (zero leituras) das 3 telas
+- I2: Checklist do Daily movido para antes de Streak/Categorias (fidelidade `DailiesTab.tsx:216` vs `:256`)
+- Labels (`FormFieldLabel`) e 9 textos do rodapé em `uppercase()` — paridade com a classe CSS `uppercase` do React (fonte literal: `HabitsTab.tsx:131`+, `DailiesTab.tsx:152`+, `TodosTab.tsx:193`+; rodapé `HabitsTab.tsx:203-271`)
+- Habits: Caminhos Permitidos em linha própria + Dificuldade em linha nova (fidelidade mobile `grid-cols-1`, `HabitsTab.tsx:152`; `sm:grid-cols-2` só em viewport larga, N/A no Android)
+- 12 screenshots de estado de modal (4 por tela: create, edit, confirm-delete, confirm-cancel)
+- Roborazzi: `testDebugUnitTest` NÃO verifica nem grava baselines neste ambiente (só `recordRoborazziDebug` grava; `finalizeTestRoborazziDebug` pula) — baselines gerados exclusivamente via `record`, PNGs de lista/filtro revertidos para manter o diff só nos modais
+
+**Validação:**
+- Build: `./gradlew assembleDebug` → BUILD SUCCESSFUL (também pós-rebase)
+- Testes: `./gradlew testDebugUnitTest` → **601/601, 0 falhas/erros** (XML bruto verificado por método; inclui 61 testes da spec-001 vindos da main)
+  - Novos: `DailyDraftTest` 13/13, `HabitDraftTest` 7/7, `TodoDraftTest` 15/15, `MergePendingChecklistInputTest` 5/5
+  - Screenshots: `HabitsScreenScreenshotTest` 8/8, `DailiesScreenScreenshotTest` 10/10, `TodosScreenScreenshotTest` 14/14
+- Visual: PNGs Roborazzi inspecionados um a um nesta sessão (old-vs-new nos estados de confirmação do Habits; novos estados de Dailies/Todos; maiúsculas em labels e rodapé; layout Caminhos/Dificuldade) — "Descartar?"/"Excluir?" renderizam de fato pelo mecanismo novo. Comparação formal lado a lado com o React em device: **pendente**
+
+**Desvios conscientes de escopo (divergências intencionais vs React):**
+1. FR-008: spec manda incorporar `checklistInput` pendente no submit (`mergePendingChecklistInput`); React (`DailiesTab.tsx:103`) submete só `checklistItems`
+2. Toggles sem ícone inicial redundante: React renderiza "+ POSITIVO (+)" (ícone Lucide `Plus` + texto com CSS `uppercase`); Android renderiza "POSITIVO (+)" / "NEGATIVO (-)" (texto `uppercase()`, sem ícone)
+3. `openEditModal` usa `isCreating = false` enquanto o React `startEdit` faz `setIsCreating(true)` — mesmo resultado visível (modal abre); `isCreating` não é lido nos paths de render do Dailies (risco baixo)
+4. Mecanismo de confirmação unificado (`deleteConfirmState`/`showDiscard` + `requestClose` único, FR-007) em vez das duas flags independentes do React (`isConfirmingDelete`/`isConfirmingCancel`) — paridade de comportamento, implementação distinta
