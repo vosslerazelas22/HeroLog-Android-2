@@ -45,17 +45,9 @@ class DailyDraftTest {
 
     @Test
     fun `normalized tags should be equal`() {
-        val draft1 = DailyDraft("Title", "Notes", Difficulty.Easy, "every day", "1", "3", "tag1, tag2", emptyList(), "tag1, tag2")
-        val draft2 = DailyDraft("Title", "Notes", Difficulty.Easy, "every day", "1", "3", "tag2, tag1", emptyList(), "tag2, tag1")
-
-        val normalized1 = normalizeTags(draft1.tags)
-        val normalized2 = normalizeTags(draft2.tags)
-
-        println("normalized1: $normalized1")
-        println("normalized2: $normalized2")
-        println("normalized1 == normalized2: ${normalized1 == normalized2}")
-
-        assertTrue("Tags should be normalized", normalized1 == normalized2)
+        val draft1 = DailyDraft("Title", "Notes", Difficulty.Easy, "every day", "1", "3", "tag1, tag2", emptyList(), "")
+        val draft2 = DailyDraft("Title", "Notes", Difficulty.Easy, "every day", "1", "3", "tag2, tag1", emptyList(), "")
+        assertTrue(draft1.isEqualTo(draft2))
     }
 
     @Test

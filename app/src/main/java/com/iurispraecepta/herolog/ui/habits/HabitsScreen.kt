@@ -70,6 +70,7 @@ import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.HabitDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
+import com.iurispraecepta.herolog.ui.form.parseTags
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
@@ -107,8 +108,9 @@ fun HabitsScreen(
     modifier: Modifier = Modifier,
     initialIsCreating: Boolean = false,
     initialEditingHabit: Habit? = null,
-    initialConfirmDelete: Boolean = false,
-    initialConfirmCancel: Boolean = false
+    initialDeleteConfirmState: DeleteConfirmState = DeleteConfirmState.None,
+    initialShowDiscard: Boolean = false,
+    initialSnapshot: HabitDraft? = null
 ) {
     var isCreating by remember { mutableStateOf(initialIsCreating) }
     var editingHabit by remember { mutableStateOf(initialEditingHabit) }
@@ -120,13 +122,11 @@ fun HabitsScreen(
     var formDifficulty by remember { mutableStateOf(initialEditingHabit?.difficulty ?: Difficulty.Easy) }
     var formTagInput by remember { mutableStateOf(initialEditingHabit?.tags?.joinToString(", ") ?: "") }
 
-    var isConfirmingDelete by remember { mutableStateOf(initialConfirmDelete) }
-    var isConfirmingCancel by remember { mutableStateOf(initialConfirmCancel) }
-    var deleteConfirmState by remember { mutableStateOf(DeleteConfirmState.None) }
-    var showDiscard by remember { mutableStateOf(false) }
+    var deleteConfirmState by remember { mutableStateOf(initialDeleteConfirmState) }
+    var showDiscard by remember { mutableStateOf(initialShowDiscard) }
 
     // FR-005: Snapshot imutavel capturado ao abrir o formulario
-    var initialDraft by remember { mutableStateOf<HabitDraft?>(null) }
+    var initialDraft by remember { mutableStateOf<HabitDraft?>(initialSnapshot) }
 
     // FR-005: Comparacao estrutural do rascunho atual com o snapshot
     val isDirty by remember {
@@ -151,8 +151,6 @@ fun HabitsScreen(
         formDown = false
         formDifficulty = Difficulty.Easy
         formTagInput = ""
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         initialDraft = null
         showDiscard = false
@@ -167,8 +165,6 @@ fun HabitsScreen(
         formDown = false
         formDifficulty = Difficulty.Easy
         formTagInput = ""
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         editingHabit = null
         isCreating = true
@@ -191,8 +187,6 @@ fun HabitsScreen(
         formDown = habit.down
         formDifficulty = habit.difficulty
         formTagInput = habit.tags.joinToString(", ")
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         isCreating = false
         editingHabit = habit
@@ -344,10 +338,7 @@ fun HabitsScreen(
                     resetForm()
                 },
                 onSubmit = {
-                    val parsedTags = formTagInput
-                        .split(",")
-                        .map { it.trim().lowercase() }
-                        .filter { it.isNotEmpty() }
+                    val parsedTags = parseTags(formTagInput)
 
                     val currentEditing = editingHabit
                     if (currentEditing != null) {

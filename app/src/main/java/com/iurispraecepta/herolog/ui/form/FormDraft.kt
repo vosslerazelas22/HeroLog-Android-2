@@ -38,15 +38,21 @@ data class TodoDraft(
 )
 
 /**
- * Normaliza tags para comparacao semantica: separa por virgula, trim, lowercase, descarta vazios.
+ * Parse de tags preservando a ordem de entrada: separa por virgula, trim,
+ * lowercase, descarta vazios. Usado no submit (paridade com o React).
+ */
+fun parseTags(raw: String): List<String> =
+    raw.split(",")
+        .map { it.trim().lowercase() }
+        .filter { it.isNotEmpty() }
+
+/**
+ * Normaliza tags para comparacao semantica: parse + ordenacao.
  * FR-006: "Categorias devem ter comparacao semantica: separar por virgula, trim,
  * descartar vazios e normalizar caixa antes de comparar."
  */
 fun normalizeTags(raw: String): List<String> =
-    raw.split(",")
-        .map { it.trim().lowercase() }
-        .filter { it.isNotEmpty() }
-        .sorted()
+    parseTags(raw).sorted()
 
 fun HabitDraft.isEqualTo(other: HabitDraft): Boolean =
     title == other.title &&

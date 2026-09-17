@@ -91,6 +91,7 @@ import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.TodoDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
+import com.iurispraecepta.herolog.ui.form.parseTags
 import java.util.Date
 
 private val Champagne400 = Color(0xFFE5C158)
@@ -130,8 +131,9 @@ fun TodosScreen(
     initialEditingTodo: Todo? = null,
     initialExpandedTodoId: String? = null,
     initialChecklistItems: List<String> = emptyList(),
-    initialConfirmDelete: Boolean = false,
-    initialConfirmCancel: Boolean = false
+    initialDeleteConfirmState: DeleteConfirmState = DeleteConfirmState.None,
+    initialShowDiscard: Boolean = false,
+    initialSnapshot: TodoDraft? = null
 ) {
     var filter by remember { mutableStateOf(initialFilter) }
     var isCreating by remember { mutableStateOf(initialIsCreating) }
@@ -145,14 +147,11 @@ fun TodosScreen(
     var checklistInput by remember { mutableStateOf("") }
     var checklistItems by remember { mutableStateOf(initialChecklistItems) }
 
-    var isConfirmingDelete by remember { mutableStateOf(initialConfirmDelete) }
-    var isConfirmingCancel by remember { mutableStateOf(initialConfirmCancel) }
-
-    var deleteConfirmState by remember { mutableStateOf(DeleteConfirmState.None) }
-    var showDiscard by remember { mutableStateOf(false) }
+    var deleteConfirmState by remember { mutableStateOf(initialDeleteConfirmState) }
+    var showDiscard by remember { mutableStateOf(initialShowDiscard) }
 
     // FR-005: Snapshot imutavel capturado ao abrir o formulario
-    var initialDraft by remember { mutableStateOf<TodoDraft?>(null) }
+    var initialDraft by remember { mutableStateOf<TodoDraft?>(initialSnapshot) }
 
     // FR-005: Comparacao estrutural do rascunho atual com o snapshot
     val isDirty by remember {
@@ -179,8 +178,6 @@ fun TodosScreen(
         formTagInput = ""
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         initialDraft = null
         showDiscard = false
@@ -195,8 +192,6 @@ fun TodosScreen(
         formTagInput = ""
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         editingTodo = null
         isCreating = true
@@ -219,8 +214,6 @@ fun TodosScreen(
         formTagInput = todo.tags.joinToString(", ")
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         isCreating = false
         editingTodo = todo
@@ -445,10 +438,7 @@ fun TodosScreen(
                     resetForm()
                 },
                 onSubmit = {
-                    val parsedTags = formTagInput
-                        .split(",")
-                        .map { it.trim().lowercase() }
-                        .filter { it.isNotEmpty() }
+                    val parsedTags = parseTags(formTagInput)
 
                     // FR-008: Incluir texto pendente do checklist antes de submeter
                     val allChecklistItems = if (checklistInput.isNotBlank()) {

@@ -91,6 +91,7 @@ import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.DailyDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
+import com.iurispraecepta.herolog.ui.form.parseTags
 
 private val Champagne400 = Color(0xFFE5C158)
 private val Stone700 = Color(0xFF44403C)
@@ -140,8 +141,9 @@ fun DailiesScreen(
     initialEditingDaily: Daily? = null,
     initialExpandedDailyId: String? = null,
     initialChecklistItems: List<String> = emptyList(),
-    initialConfirmDelete: Boolean = false,
-    initialConfirmCancel: Boolean = false
+    initialDeleteConfirmState: DeleteConfirmState = DeleteConfirmState.None,
+    initialShowDiscard: Boolean = false,
+    initialSnapshot: DailyDraft? = null
 ) {
     var isCreating by remember { mutableStateOf(initialIsCreating) }
     var editingDaily by remember { mutableStateOf(initialEditingDaily) }
@@ -157,14 +159,11 @@ fun DailiesScreen(
     var checklistInput by remember { mutableStateOf("") }
     var checklistItems by remember { mutableStateOf(initialChecklistItems) }
 
-    var isConfirmingDelete by remember { mutableStateOf(initialConfirmDelete) }
-    var isConfirmingCancel by remember { mutableStateOf(initialConfirmCancel) }
-
-    var deleteConfirmState by remember { mutableStateOf(DeleteConfirmState.None) }
-    var showDiscard by remember { mutableStateOf(false) }
+    var deleteConfirmState by remember { mutableStateOf(initialDeleteConfirmState) }
+    var showDiscard by remember { mutableStateOf(initialShowDiscard) }
 
     // FR-005: Snapshot imutavel capturado ao abrir o formulario
-    var initialDraft by remember { mutableStateOf<DailyDraft?>(null) }
+    var initialDraft by remember { mutableStateOf<DailyDraft?>(initialSnapshot) }
 
     // FR-005: Comparacao estrutural do rascunho atual com o snapshot
     val isDirty by remember {
@@ -195,8 +194,6 @@ fun DailiesScreen(
         formTagInput = ""
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         initialDraft = null
         showDiscard = false
@@ -214,8 +211,6 @@ fun DailiesScreen(
         formTagInput = ""
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         editingDaily = null
         isCreating = true
@@ -244,8 +239,6 @@ fun DailiesScreen(
         formTagInput = daily.tags.joinToString(", ")
         checklistInput = ""
         checklistItems = emptyList()
-        isConfirmingDelete = false
-        isConfirmingCancel = false
         deleteConfirmState = DeleteConfirmState.None
         isCreating = false
         editingDaily = daily
@@ -412,10 +405,7 @@ fun DailiesScreen(
                     resetForm()
                 },
                 onSubmit = {
-                    val parsedTags = formTagInput
-                        .split(",")
-                        .map { it.trim().lowercase() }
-                        .filter { it.isNotEmpty() }
+                    val parsedTags = parseTags(formTagInput)
 
                     val parsedEvery = (formEvery.toIntOrNull() ?: 1).coerceIn(1, 99)
                     val parsedStreak = (formStreak.toIntOrNull() ?: 0).coerceAtLeast(0)
@@ -704,89 +694,8 @@ fun DailiesScreen(
                     }
                 }
 
-                // Linha dupla: Série Inicial (Streak) + Categorias (FR-003: antes do Checklist)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    // Streak inicial
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        FormFieldLabel("Série Inicial (Streak)")
-                        BasicTextField(
-                            value = formStreak,
-                            onValueChange = { input ->
-                                val filtered = input.filter { it.isDigit() }
-                                formStreak = filtered
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Stone900, RoundedCornerShape(6.dp))
-                                .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            textStyle = TextStyle(
-                                color = Amber100,
-                                fontSize = 13.sp,
-                                fontFamily = JetBrainsMono
-                            ),
-                            singleLine = true,
-                            cursorBrush = SolidColor(Amber400),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Next
-                            ),
-                            decorationBox = { innerTextField ->
-                                Box {
-                                    if (formStreak.isEmpty()) {
-                                        Text(text = "0", color = Stone500, fontSize = 13.sp)
-                                    }
-                                    innerTextField()
-                                }
-                            }
-                        )
-                    }
-
-                    // Tags
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        FormFieldLabel("Categorias (Tags, separadas por vírgula)")
-                        BasicTextField(
-                            value = formTagInput,
-                            onValueChange = { formTagInput = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Stone900, RoundedCornerShape(6.dp))
-                                .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                            textStyle = TextStyle(
-                                color = Amber100,
-                                fontSize = 12.sp,
-                                fontFamily = Inter
-                            ),
-                            singleLine = true,
-                            cursorBrush = SolidColor(Amber400),
-                            decorationBox = { innerTextField ->
-                                Box {
-                                    if (formTagInput.isEmpty()) {
-                                        Text(
-                                            text = "study, workout, health...",
-                                            color = Stone500,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                    innerTextField()
-                                }
-                            }
-                        )
-                    }
-                }
-
                 // Checklist — SOMENTE MODO CRIAÇÃO (editingDaily == null)
+                // FR-003: fidelidade React (DailiesTab) — Checklist antes de Streak/Categorias
                 if (editingDaily == null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         FormFieldLabel("Checklist")
@@ -889,6 +798,88 @@ fun DailiesScreen(
                                 }
                             }
                         }
+                    }
+                }
+
+                // Linha dupla: Série Inicial (Streak) + Categorias
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Streak inicial
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FormFieldLabel("Série Inicial (Streak)")
+                        BasicTextField(
+                            value = formStreak,
+                            onValueChange = { input ->
+                                val filtered = input.filter { it.isDigit() }
+                                formStreak = filtered
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Stone900, RoundedCornerShape(6.dp))
+                                .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            textStyle = TextStyle(
+                                color = Amber100,
+                                fontSize = 13.sp,
+                                fontFamily = JetBrainsMono
+                            ),
+                            singleLine = true,
+                            cursorBrush = SolidColor(Amber400),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            decorationBox = { innerTextField ->
+                                Box {
+                                    if (formStreak.isEmpty()) {
+                                        Text(text = "0", color = Stone500, fontSize = 13.sp)
+                                    }
+                                    innerTextField()
+                                }
+                            }
+                        )
+                    }
+
+                    // Tags
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FormFieldLabel("Categorias (Tags, separadas por vírgula)")
+                        BasicTextField(
+                            value = formTagInput,
+                            onValueChange = { formTagInput = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Stone900, RoundedCornerShape(6.dp))
+                                .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            textStyle = TextStyle(
+                                color = Amber100,
+                                fontSize = 12.sp,
+                                fontFamily = Inter
+                            ),
+                            singleLine = true,
+                            cursorBrush = SolidColor(Amber400),
+                            decorationBox = { innerTextField ->
+                                Box {
+                                    if (formTagInput.isEmpty()) {
+                                        Text(
+                                            text = "study, workout, health...",
+                                            color = Stone500,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            }
+                        )
                     }
                 }
             }
