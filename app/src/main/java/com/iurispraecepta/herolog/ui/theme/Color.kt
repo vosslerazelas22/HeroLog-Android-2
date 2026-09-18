@@ -27,7 +27,7 @@ val Champagne600 = Color(0xFFB48C26)
 
 val Emerald400 = Color(0xFF34D399)
 
-val Zinc300 = Color(0xFFCBD5E1)
+val Zinc300 = Color(0xFFD4D4D8)
 
 val Red500 = Color(0xFFEF4444)
 val Red400 = Color(0xFFF87171)

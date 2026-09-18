@@ -5518,3 +5518,21 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 - `./gradlew testDebugUnitTest` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
 - Baselines Roborazzi **inalterados** (primeira composição já rende no target — animação só dispara em trocas de estado subsequentes; `git status` limpo em `screenshots/`), logo sem re-record.
 - Visual em device/emulador: **PENDENTE**.
+
+## [2026-09-18] TimerSettingsModal — auditoria D1–D10 + residuais R1–R12 (`specs/auditoria-timer-settings-modal.md`)
+
+**Fonte React:** modal inline em `App.tsx:2496-2745` (lido na íntegra) + `Modal.tsx:107-108` (título com `uppercase` CSS) + `useTimerControls.ts:24-43` (guards). **Arquivos alterados:** `ui/focus/TimerSettingsModal.kt` (reescrito 2x), `ui/theme/Color.kt` (1 linha: token `Zinc300`).
+
+**Round 1 — D1–D10 aplicadas:** fontes reais (`Cinzel`/`Inter`/`JetBrainsMono` de `Type.kt`, removendo `FontFamily.Serif/.SansSerif/.Monospace`); token `Zinc300` `#CBD5E1` (slate-300) → `#D4D4D8` (zinc-300 real); presets inativos `Stone900/40%` + borda `White/10%`; título custom `Champagne300` → `Stone100/90%`; aviso de validação `Cinzel` 10sp sem itálico + `text-center`; `HeroLogToggleSwitch` (pílula custom) → ícones Lucide `ToggleRight`/`ToggleLeft` 32dp (`lucide_ic_toggle_right/left` confirmados no AAR); track-off `Stone800` → `Stone600`; tamanhos (headers 12sp, descrições 9sp, título custom 11sp, toggles 11sp, labels 10sp, hints 8sp, presets 12sp, salvar 12sp); raios (4dp presets/rows/salvar/inputs, 8dp bloco); espaçamentos (16/12/16/8dp).
+
+**Re-audit (skill `herolog-parity-audit`, plan mode):** D1–D10 confirmados verdes + 12 residuais novos (R1–R12) + item "A verificar" resolvido (ver abaixo).
+
+**Round 2 — R1–R12 aplicadas:** R1 — `AnimatedVisibility` removido; bloco custom sempre visível com `alpha` animado (`animateFloatAsState` 1f↔0.4f, `tween(300)`) — sem colapso de altura; R2 — divisores `White/10%` 1dp + 8dp antes das seções 2 e 3 (`pt-2 border-t`); R3 — cards próprios nos 3 inputs (`Stone900/40%`, borda `Stone800`, `padding 8.dp`, centralizado); R4 — seção 2 reestruturada em 2 cards (toggle `Stone900/20%` + campos `Stone950/60%`, bordas `White/10%`), removida borda condicional champagne; R5 — toggle rows `Stone900/20%`, borda `White/10%`, `padding 10.dp`, gap 16dp; R6 — input `Stone900`, borda `White/10%`, erro unfocused `Red500/50%`; R7 — descrições `Zinc300/50%`; R8 — clique em preset reseta `isCustomTime = false` (`App.tsx:2530`); R9 — presets sem altura fixa (`padding vertical 8.dp`, ~33dp intrínseco); R10 — headers `letterSpacing 0.6.sp`, salvar `1.2.sp` (`tracking-widest`), descrições `lineHeight 11.sp`; R11 — bold só em preset ativo, labels/valores em `Normal`; R12 — **parcial/bloqueado**: `contentPadding` não existe no `OutlinedTextField` do BOM `2024.09.00` (erro de compilação revertido) — exige bump do BOM, fora de escopo. Inputs/salvar/aviso agora consideram `isCustomActive` (exigido pelo bloco sempre-visível). Botão salvar mantido em 44dp (fora dos Rs).
+
+**"A verificar" FECHADO — não é bug:** o guard existe no React em 2 camadas externas ao trecho original — botão "Ajustes" `disabled={isRunning || isBreakActive}` (`App.tsx:3058`) e early-return em `changeDuration`/`selectCustomTime`/`applyCustomTime` (`useTimerControls.ts:25,38,43`). Android espelha a camada A (`QuickActionsBar isSettingsEnabled=false` nos branches running/break, `MainActivity.kt:971,1130-1131`). O `isControlsDisabled` in-modal é defesa em profundidade para estado inalcançável via UI — mantido como decisão consciente. Toggles da seção 3 habilitados nos dois lados (consistente).
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL (1 erro intermediário de compilação no R12, revertido — ver acima).
+- `./gradlew testDebugUnitTest --rerun-tasks` → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
+- Baselines Roborazzi regerados pelo run (26 PNGs): 5 `timer_settings_modal_*` (nova UI, inspecionados em pixel — presets, toggles Lucide, divisores, 2 cards, input cards, bloco dimmed) + 21 de dailies/habits/todos/focus/skill_selector (efeito colateral legítimo do token `Zinc300` corrigido; `habits_screen_confirm_cancel.png` inspecionado — modal íntegro).
+- Visual em device/emulador: **PENDENTE**.

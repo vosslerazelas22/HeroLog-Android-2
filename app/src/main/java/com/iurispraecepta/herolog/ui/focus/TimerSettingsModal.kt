@@ -1,8 +1,7 @@
 package com.iurispraecepta.herolog.ui.focus
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,11 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -31,29 +30,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.theme.Champagne300
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Emerald400
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Red400
 import com.iurispraecepta.herolog.ui.theme.Red500
-import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone100
+import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone500
+import com.iurispraecepta.herolog.ui.theme.Stone600
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -97,6 +101,14 @@ fun TimerSettingsModal(
     val isLongValid = longInt != null && longInt in 1..60
     val isCustomValid = isFocusValid && isShortValid && isLongValid
 
+    // R1 — React mantém o bloco sempre visível e só anima opacity (opacity-100 ↔
+    // opacity-40, transition-all duration-300). Sem AnimatedVisibility (sem colapso).
+    val customBlockAlpha by animateFloatAsState(
+        targetValue = if (isCustomActive) 1f else 0.4f,
+        animationSpec = tween(durationMillis = 300),
+        label = "customBlockAlpha"
+    )
+
     HeroLogModal(
         isOpen = isOpen,
         onClose = onClose,
@@ -105,7 +117,7 @@ fun TimerSettingsModal(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // 1. Presets de Duração
             Column(
@@ -115,10 +127,10 @@ fun TimerSettingsModal(
                 Text(
                     text = "PRESETS DE DURAÇÃO",
                     style = TextStyle(
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.2.sp,
+                        fontSize = 12.sp,
+                        letterSpacing = 0.6.sp,
                         color = Champagne500
                     )
                 )
@@ -132,31 +144,35 @@ fun TimerSettingsModal(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(RoundedCornerShape(4.dp))
                                 .background(
-                                    if (isActive) Champagne500.copy(alpha = 0.1f) else Stone900
+                                    if (isActive) Champagne500.copy(alpha = 0.1f)
+                                    else Stone900.copy(alpha = 0.4f)
                                 )
                                 .border(
                                     width = 1.dp,
-                                    color = if (isActive) Champagne400 else Stone800,
-                                    shape = RoundedCornerShape(10.dp)
+                                    color = if (isActive) Champagne400 else Color.White.copy(alpha = 0.1f),
+                                    shape = RoundedCornerShape(4.dp)
                                 )
                                 .clickable(
                                     enabled = !isControlsDisabled,
                                     onClick = {
+                                        // R8 — React reseta isCustomTime ao clicar num preset.
+                                        isCustomTime = false
                                         onSavePresetDuration(preset)
                                         onClose()
                                     }
-                                ),
+                                )
+                                .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "$preset MIN",
                                 style = TextStyle(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
+                                    fontFamily = Cinzel,
+                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 0.6.sp,
                                     color = when {
                                         isControlsDisabled -> Zinc300.copy(alpha = 0.6f)
                                         isActive -> Champagne300
@@ -169,186 +185,222 @@ fun TimerSettingsModal(
                 }
             }
 
-            // 2. Duração Personalizada
+            // 2. Duração Personalizada (pt-2 border-t border-white/10 — R2)
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Stone900.copy(alpha = 0.6f))
-                    .border(1.dp, if (isCustomActive) Champagne500.copy(alpha = 0.3f) else Stone800, RoundedCornerShape(12.dp))
-                    .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.1f))
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                        modifier = Modifier.weight(1f)
+                    // Toggle row — card próprio (bg-stone-900/20 p-2.5 rounded
+                    // border-white/10 — R5)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Stone900.copy(alpha = 0.2f))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "DURAÇÃO PERSONALIZADA",
-                            style = TextStyle(
-                                fontFamily = FontFamily.Serif,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = Champagne300
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "DURAÇÃO PERSONALIZADA",
+                                style = TextStyle(
+                                    fontFamily = Cinzel,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    color = Stone100.copy(alpha = 0.9f)
+                                )
                             )
-                        )
-                        Text(
-                            text = "Define tempos customizados para foco e pausas",
-                            style = TextStyle(
-                                fontSize = 11.sp,
-                                color = Stone400
+                            Text(
+                                text = "Define tempos customizados para foco e pausas",
+                                style = TextStyle(
+                                    fontFamily = Inter,
+                                    fontSize = 9.sp,
+                                    lineHeight = 11.sp,
+                                    color = Zinc300.copy(alpha = 0.5f)
+                                )
                             )
+                        }
+
+                        Spacer(modifier = Modifier.size(16.dp))
+
+                        HeroLogToggleIcon(
+                            checked = isCustomActive,
+                            enabled = !isControlsDisabled,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    isCustomTime = true
+                                } else {
+                                    isCustomTime = false
+                                    onSavePresetDuration(25)
+                                }
+                            }
                         )
                     }
 
-                    HeroLogToggleSwitch(
-                        checked = isCustomActive,
-                        enabled = !isControlsDisabled,
-                        onCheckedChange = { checked ->
-                            if (checked) {
-                                isCustomTime = true
-                            } else {
-                                isCustomTime = false
-                                onSavePresetDuration(25)
-                            }
-                        }
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = isCustomActive,
-                    enter = fadeIn(),
-                    exit = fadeOut()
-                ) {
+                    // Bloco de campos — sempre visível, só escurece (R1);
+                    // bg-stone-950/60 border-white/10 rounded-lg p-3 space-y-4 (R4)
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Stone950.copy(alpha = 0.6f))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                            .padding(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Foco (1-180 min)
-                            CustomDurationInputField(
-                                label = "FOCO",
-                                limitHint = "1-180 min",
-                                value = customFocusInput,
-                                onValueChange = { customFocusInput = it.filter { c -> c.isDigit() } },
-                                isValid = isFocusValid,
-                                enabled = !isControlsDisabled,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            // Pausa Curta (1-60 min)
-                            CustomDurationInputField(
-                                label = "PAUSA CURTA",
-                                limitHint = "1-60 min",
-                                value = customShortBreakInput,
-                                onValueChange = { customShortBreakInput = it.filter { c -> c.isDigit() } },
-                                isValid = isShortValid,
-                                enabled = !isControlsDisabled,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            // Pausa Longa (1-60 min)
-                            CustomDurationInputField(
-                                label = "PAUSA LONGA",
-                                limitHint = "1-60 min",
-                                value = customLongBreakInput,
-                                onValueChange = { customLongBreakInput = it.filter { c -> c.isDigit() } },
-                                isValid = isLongValid,
-                                enabled = !isControlsDisabled,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        if (!isCustomValid) {
-                            Text(
-                                text = "Por favor, insira valores dentro dos limites indicados.",
-                                style = TextStyle(
-                                    fontFamily = FontFamily.SansSerif,
-                                    fontSize = 11.sp,
-                                    fontStyle = FontStyle.Italic,
-                                    color = Red400
-                                ),
-                                modifier = Modifier.padding(horizontal = 2.dp)
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                if (isCustomValid && focusInt != null && shortInt != null && longInt != null) {
-                                    onSaveCustomSettings(focusInt, shortInt, longInt)
-                                    onClose()
-                                }
-                            },
-                            enabled = isCustomValid && !isControlsDisabled,
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp)
-                                .border(
-                                    1.dp,
-                                    Champagne500.copy(alpha = 0.3f),
-                                    RoundedCornerShape(10.dp)
-                                ),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Champagne500.copy(alpha = 0.1f),
-                                contentColor = Champagne300,
-                                disabledContainerColor = Stone800,
-                                disabledContentColor = Stone400.copy(alpha = 0.5f)
-                            )
+                                .alpha(customBlockAlpha),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = "SALVAR PERSONALIZADO",
-                                style = TextStyle(
-                                    fontFamily = FontFamily.Serif,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = Champagne300
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // Foco (1-180 min)
+                                CustomDurationInputField(
+                                    label = "FOCO",
+                                    limitHint = "1-180 min",
+                                    value = customFocusInput,
+                                    onValueChange = { customFocusInput = it.filter { c -> c.isDigit() } },
+                                    isValid = isFocusValid,
+                                    enabled = !isControlsDisabled && isCustomActive,
+                                    modifier = Modifier.weight(1f)
                                 )
-                            )
+
+                                // Pausa Curta (1-60 min)
+                                CustomDurationInputField(
+                                    label = "PAUSA CURTA",
+                                    limitHint = "1-60 min",
+                                    value = customShortBreakInput,
+                                    onValueChange = { customShortBreakInput = it.filter { c -> c.isDigit() } },
+                                    isValid = isShortValid,
+                                    enabled = !isControlsDisabled && isCustomActive,
+                                    modifier = Modifier.weight(1f)
+                                )
+
+                                // Pausa Longa (1-60 min)
+                                CustomDurationInputField(
+                                    label = "PAUSA LONGA",
+                                    limitHint = "1-60 min",
+                                    value = customLongBreakInput,
+                                    onValueChange = { customLongBreakInput = it.filter { c -> c.isDigit() } },
+                                    isValid = isLongValid,
+                                    enabled = !isControlsDisabled && isCustomActive,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
+                            if (!isCustomValid && isCustomActive) {
+                                Text(
+                                    text = "Por favor, insira valores dentro dos limites indicados.",
+                                    style = TextStyle(
+                                        fontFamily = Cinzel,
+                                        fontSize = 10.sp,
+                                        color = Red400,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            Button(
+                                onClick = {
+                                    if (isCustomValid && focusInt != null && shortInt != null && longInt != null) {
+                                        onSaveCustomSettings(focusInt, shortInt, longInt)
+                                        onClose()
+                                    }
+                                },
+                                enabled = isCustomValid && isCustomActive && !isControlsDisabled,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                                    .border(
+                                        1.dp,
+                                        Champagne500.copy(alpha = 0.3f),
+                                        RoundedCornerShape(4.dp)
+                                    ),
+                                shape = RoundedCornerShape(4.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Champagne500.copy(alpha = 0.1f),
+                                    contentColor = Champagne300,
+                                    disabledContainerColor = Stone800,
+                                    disabledContentColor = Stone400.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = "SALVAR PERSONALIZADO",
+                                    style = TextStyle(
+                                        fontFamily = Cinzel,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        letterSpacing = 1.2.sp,
+                                        color = Champagne300
+                                    )
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // 3. Opções Adicionais
+            // 3. Opções Adicionais (pt-2 border-t border-white/10 — R2)
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "OPÇÕES ADICIONAIS",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Serif,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.2.sp,
-                        color = Champagne500
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Color.White.copy(alpha = 0.1f))
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "OPÇÕES ADICIONAIS",
+                        style = TextStyle(
+                            fontFamily = Cinzel,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            letterSpacing = 0.6.sp,
+                            color = Champagne500
+                        )
                     )
-                )
 
-                // Toggle 1: Início automático de descanso
-                OptionToggleRow(
-                    title = "AUTO-INICIAR DESCANSO",
-                    description = "Inicia o descanso automaticamente ao fim da sessão de foco",
-                    checked = pomodoroSettings.autoStartBreak,
-                    onToggle = onToggleAutoStartBreak
-                )
+                    // Toggle 1: Início automático de descanso
+                    OptionToggleRow(
+                        title = "AUTO-INICIAR DESCANSO",
+                        description = "Inicia o descanso automaticamente ao fim da sessão de foco",
+                        checked = pomodoroSettings.autoStartBreak,
+                        onToggle = onToggleAutoStartBreak
+                    )
 
-                // Toggle 2: Início automático de foco
-                OptionToggleRow(
-                    title = "AUTO-INICIAR FOCO",
-                    description = "Inicia a próxima sessão de foco automaticamente ao fim do descanso",
-                    checked = pomodoroSettings.autoStartFocus,
-                    onToggle = onToggleAutoStartFocus
-                )
+                    // Toggle 2: Início automático de foco
+                    OptionToggleRow(
+                        title = "AUTO-INICIAR FOCO",
+                        description = "Inicia a próxima sessão de foco automaticamente ao fim do descanso",
+                        checked = pomodoroSettings.autoStartFocus,
+                        onToggle = onToggleAutoStartFocus
+                    )
+                }
             }
         }
     }
@@ -364,16 +416,24 @@ private fun CustomDurationInputField(
     enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // R3 — card próprio: bg-stone-900/40 border-stone-800 p-2 rounded,
+    // conteúdo centralizado (flex-col items-center text-center).
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(Stone900.copy(alpha = 0.4f))
+            .border(1.dp, Stone800, RoundedCornerShape(4.dp))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = label,
             style = TextStyle(
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.Normal,
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center,
                 color = Zinc300.copy(alpha = 0.5f)
             )
         )
@@ -385,31 +445,33 @@ private fun CustomDurationInputField(
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textStyle = TextStyle(
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
+                fontFamily = JetBrainsMono,
+                fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 color = Champagne300
             ),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Stone950,
-                unfocusedContainerColor = Stone950,
-                disabledContainerColor = Stone950.copy(alpha = 0.5f),
+                focusedContainerColor = Stone900,
+                unfocusedContainerColor = Stone900,
+                disabledContainerColor = Stone900.copy(alpha = 0.5f),
                 focusedBorderColor = if (isValid) Champagne500 else Red500,
-                unfocusedBorderColor = if (isValid) Stone800 else Red500,
-                disabledBorderColor = Stone800.copy(alpha = 0.5f),
+                unfocusedBorderColor = if (isValid) Color.White.copy(alpha = 0.1f)
+                else Red500.copy(alpha = 0.5f),
+                disabledBorderColor = Color.White.copy(alpha = 0.05f),
                 cursorColor = Emerald400
             ),
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(4.dp),
             modifier = Modifier.fillMaxWidth()
         )
 
         Text(
             text = limitHint,
             style = TextStyle(
-                fontSize = 9.sp,
+                fontSize = 8.sp,
+                textAlign = TextAlign.Center,
                 color = Stone500,
-                fontFamily = FontFamily.Monospace
+                fontFamily = JetBrainsMono
             )
         )
     }
@@ -425,14 +487,14 @@ private fun OptionToggleRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Stone900.copy(alpha = 0.4f))
-            .border(1.dp, Stone800, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(4.dp))
+            .background(Stone900.copy(alpha = 0.2f))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
             .clickable(
                 role = Role.Switch,
                 onClick = onToggle
             )
-            .padding(12.dp),
+            .padding(10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -443,24 +505,26 @@ private fun OptionToggleRow(
             Text(
                 text = title,
                 style = TextStyle(
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = Stone100.copy(alpha = 0.9f)
                 )
             )
             Text(
                 text = description,
                 style = TextStyle(
-                    fontSize = 10.sp,
-                    color = Stone400
+                    fontFamily = Inter,
+                    fontSize = 9.sp,
+                    lineHeight = 11.sp,
+                    color = Zinc300.copy(alpha = 0.5f)
                 )
             )
         }
 
-        Spacer(modifier = Modifier.size(8.dp))
+        Spacer(modifier = Modifier.size(16.dp))
 
-        HeroLogToggleSwitch(
+        HeroLogToggleIcon(
             checked = checked,
             enabled = true,
             onCheckedChange = { onToggle() }
@@ -469,20 +533,20 @@ private fun OptionToggleRow(
 }
 
 @Composable
-fun HeroLogToggleSwitch(
+private fun HeroLogToggleIcon(
     checked: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    val trackColor = if (checked) Emerald400 else Stone800
-    val thumbColor = if (checked) Stone950 else Stone400
-
-    Box(
-        modifier = modifier
-            .size(width = 44.dp, height = 24.dp)
-            .clip(CircleShape)
-            .background(trackColor.copy(alpha = if (enabled) 1f else 0.5f))
+    Icon(
+        painter = painterResource(
+            id = if (checked) LucideR.drawable.lucide_ic_toggle_right
+            else LucideR.drawable.lucide_ic_toggle_left
+        ),
+        contentDescription = null,
+        tint = if (checked) Emerald400 else Stone600,
+        modifier = Modifier
+            .size(32.dp)
             .clickable(
                 enabled = enabled,
                 role = Role.Switch,
@@ -490,14 +554,5 @@ fun HeroLogToggleSwitch(
                 indication = null,
                 onClick = { onCheckedChange(!checked) }
             )
-            .padding(2.dp),
-        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .background(thumbColor)
-        )
-    }
+    )
 }
