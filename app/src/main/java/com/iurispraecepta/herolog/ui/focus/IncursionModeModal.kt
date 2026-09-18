@@ -69,7 +69,7 @@ fun IncursionModeModal(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "Selecione o estilo de jornada para sua próxima sessão de foco:",
+                text = "SELECIONE O ESTILO DE JORNADA PARA SUA PRÓXIMA SESSÃO DE FOCO:",
                 style = TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontSize = 12.sp,
@@ -80,7 +80,7 @@ fun IncursionModeModal(
 
             // Card 1: Padrão
             IncursionModeCard(
-                title = "🎯 Padrão",
+                title = "🎯 PADRÃO",
                 description = "Chance de saque baseada na duração da sessão.",
                 iconRes = LucideR.drawable.lucide_ic_sparkles,
                 iconTint = Champagne400,
@@ -103,7 +103,7 @@ fun IncursionModeModal(
 
             // Card 2: Masmorra
             IncursionModeCard(
-                title = "⚔️ Masmorra",
+                title = "⚔️ MASMORRA",
                 description = "4 sessões seguidas sem abandonar. +2.500 GP e Quad Loot ao concluir.",
                 iconRes = LucideR.drawable.lucide_ic_swords,
                 iconTint = Purple400,
@@ -127,7 +127,7 @@ fun IncursionModeModal(
 
             // Card 3: Selvagem
             IncursionModeCard(
-                title = "💀 Selvagem",
+                title = "💀 SELVAGEM",
                 description = "+25% XP & GP. Minimizar a aba cancela o bônus.",
                 iconRes = LucideR.drawable.lucide_ic_skull,
                 iconTint = Red400,

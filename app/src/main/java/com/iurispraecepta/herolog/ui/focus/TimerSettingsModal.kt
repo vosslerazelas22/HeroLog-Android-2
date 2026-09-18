@@ -48,10 +48,12 @@ import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.theme.Champagne300
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Emerald400
 import com.iurispraecepta.herolog.ui.theme.Red400
 import com.iurispraecepta.herolog.ui.theme.Red500
 import com.iurispraecepta.herolog.ui.theme.Stone400
-import com.iurispraecepta.herolog.ui.theme.Stone700
+import com.iurispraecepta.herolog.ui.theme.Stone100
+import com.iurispraecepta.herolog.ui.theme.Stone500
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -158,7 +160,7 @@ fun TimerSettingsModal(
                                     color = when {
                                         isControlsDisabled -> Zinc300.copy(alpha = 0.6f)
                                         isActive -> Champagne300
-                                        else -> Stone400
+                                        else -> Zinc300.copy(alpha = 0.6f)
                                     }
                                 )
                             )
@@ -233,7 +235,7 @@ fun TimerSettingsModal(
                         ) {
                             // Foco (1-180 min)
                             CustomDurationInputField(
-                                label = "Foco",
+                                label = "FOCO",
                                 limitHint = "1-180 min",
                                 value = customFocusInput,
                                 onValueChange = { customFocusInput = it.filter { c -> c.isDigit() } },
@@ -244,7 +246,7 @@ fun TimerSettingsModal(
 
                             // Pausa Curta (1-60 min)
                             CustomDurationInputField(
-                                label = "Pausa Curta",
+                                label = "PAUSA CURTA",
                                 limitHint = "1-60 min",
                                 value = customShortBreakInput,
                                 onValueChange = { customShortBreakInput = it.filter { c -> c.isDigit() } },
@@ -255,7 +257,7 @@ fun TimerSettingsModal(
 
                             // Pausa Longa (1-60 min)
                             CustomDurationInputField(
-                                label = "Pausa Longa",
+                                label = "PAUSA LONGA",
                                 limitHint = "1-60 min",
                                 value = customLongBreakInput,
                                 onValueChange = { customLongBreakInput = it.filter { c -> c.isDigit() } },
@@ -288,7 +290,12 @@ fun TimerSettingsModal(
                             enabled = isCustomValid && !isControlsDisabled,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(44.dp),
+                                .height(44.dp)
+                                .border(
+                                    1.dp,
+                                    Champagne500.copy(alpha = 0.3f),
+                                    RoundedCornerShape(10.dp)
+                                ),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Champagne500.copy(alpha = 0.1f),
@@ -298,11 +305,12 @@ fun TimerSettingsModal(
                             )
                         ) {
                             Text(
-                                text = "SALVAR CUSTOMIZADO",
+                                text = "SALVAR PERSONALIZADO",
                                 style = TextStyle(
                                     fontFamily = FontFamily.Serif,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp
+                                    fontSize = 13.sp,
+                                    color = Champagne300
                                 )
                             )
                         }
@@ -328,7 +336,7 @@ fun TimerSettingsModal(
 
                 // Toggle 1: Início automático de descanso
                 OptionToggleRow(
-                    title = "Auto-Iniciar Descanso",
+                    title = "AUTO-INICIAR DESCANSO",
                     description = "Inicia o descanso automaticamente ao fim da sessão de foco",
                     checked = pomodoroSettings.autoStartBreak,
                     onToggle = onToggleAutoStartBreak
@@ -336,7 +344,7 @@ fun TimerSettingsModal(
 
                 // Toggle 2: Início automático de foco
                 OptionToggleRow(
-                    title = "Auto-Iniciar Foco",
+                    title = "AUTO-INICIAR FOCO",
                     description = "Inicia a próxima sessão de foco automaticamente ao fim do descanso",
                     checked = pomodoroSettings.autoStartFocus,
                     onToggle = onToggleAutoStartFocus
@@ -360,28 +368,15 @@ private fun CustomDurationInputField(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                style = TextStyle(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    color = Champagne400
-                )
+        Text(
+            text = label,
+            style = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                color = Zinc300.copy(alpha = 0.5f)
             )
-            Text(
-                text = limitHint,
-                style = TextStyle(
-                    fontSize = 9.sp,
-                    color = Stone400
-                )
-            )
-        }
+        )
 
         OutlinedTextField(
             value = value,
@@ -403,10 +398,19 @@ private fun CustomDurationInputField(
                 focusedBorderColor = if (isValid) Champagne500 else Red500,
                 unfocusedBorderColor = if (isValid) Stone800 else Red500,
                 disabledBorderColor = Stone800.copy(alpha = 0.5f),
-                cursorColor = Champagne400
+                cursorColor = Emerald400
             ),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.fillMaxWidth()
+        )
+
+        Text(
+            text = limitHint,
+            style = TextStyle(
+                fontSize = 9.sp,
+                color = Stone500,
+                fontFamily = FontFamily.Monospace
+            )
         )
     }
 }
@@ -442,7 +446,7 @@ private fun OptionToggleRow(
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = Champagne400
+                    color = Stone100.copy(alpha = 0.9f)
                 )
             )
             Text(
@@ -471,7 +475,7 @@ fun HeroLogToggleSwitch(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val trackColor = if (checked) Champagne500 else Stone800
+    val trackColor = if (checked) Emerald400 else Stone800
     val thumbColor = if (checked) Stone950 else Stone400
 
     Box(

@@ -191,6 +191,7 @@ class MainActivity : ComponentActivity() {
             HeroLogTheme {
                 // Estado de navegação em string, fiel ao `activeTab` da fonte React (`useState<string>('focus')`).
                 var activeTab by remember { mutableStateOf("focus") }
+                var isFocusMode by remember { mutableStateOf(false) }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
                 var isRestoreSaveOpen by remember { mutableStateOf(false) }
                 var isGeneralSettingsOpen by remember { mutableStateOf(false) }
@@ -245,6 +246,66 @@ class MainActivity : ComponentActivity() {
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
+
+                // spec-002: Full-screen focus replaces the entire app layout,
+                // mirroring React (App.tsx:2055) — when isFocusMode, return
+                // <FocusModeScreen> at the top level, no header, no bottom nav.
+                val csForFullscreen = characterState
+                if (isFocusMode && csForFullscreen != null) {
+                    val focusState = heroLogViewModel.focusSessionState.value
+                    val breakTimerState = heroLogViewModel.breakTimerState.value
+                    val selectedSkillIdx = focusState.config?.selectedSkillIdx ?: 0
+                    val validSkillIdx = selectedSkillIdx.coerceIn(0, (csForFullscreen.skills.size - 1).coerceAtLeast(0))
+                    val selectedSkillForSession = csForFullscreen.skills.getOrNull(validSkillIdx)
+                    val skillName = selectedSkillForSession?.name ?: "Habilidade"
+                    val skillEmoji = selectedSkillForSession?.emoji ?: "💻"
+
+                    if (breakTimerState.isBreakActive) {
+                        FocusModeScreen(
+                            skillName = skillName,
+                            skillEmoji = skillEmoji,
+                            isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                            dungeonSessions = breakTimerState.lastSessionDungeonSessions,
+                            isWildernessChecked = breakTimerState.wasLastSessionWildernessMode,
+                            timeLeft = breakTimerState.secondsLeft,
+                            totalSeconds = breakTimerState.selectedBreakMins * 60,
+                            isRunning = false,
+                            isPaused = false,
+                            onTogglePause = {},
+                            onExit = { isFocusMode = false },
+                            isGraceActive = false,
+                            graceSecondsLeft = 3,
+                            isPlayerDead = false,
+                            onReturnToFocusCap = {},
+                            onRespawn = {},
+                            orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
+                            isBreakActive = true,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        val config = focusState.config
+                        FocusModeScreen(
+                            skillName = skillName,
+                            skillEmoji = skillEmoji,
+                            isDungeonMode = config?.isDungeonMode ?: false,
+                            dungeonSessions = config?.dungeonSessions ?: 0,
+                            isWildernessChecked = config?.isWildernessChecked ?: false,
+                            timeLeft = focusState.timeLeft,
+                            totalSeconds = focusState.totalSeconds,
+                            isRunning = focusState.isRunning,
+                            isPaused = focusState.isPaused,
+                            onTogglePause = { heroLogViewModel.togglePauseQuest() },
+                            onExit = { isFocusMode = false },
+                            isGraceActive = focusState.isGraceActive,
+                            graceSecondsLeft = focusState.graceSecondsLeft,
+                            isPlayerDead = csForFullscreen.isPlayerDead,
+                            onReturnToFocusCap = { heroLogViewModel.returnToFocusFromGrace() },
+                            onRespawn = { heroLogViewModel.respawnHero() },
+                            orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                } else {
 
                 // spec-002: hazeSource no Scaffold inteiro para que o
                 // AppHeader (topBar) também faça parte da fonte do blur.
@@ -518,14 +579,15 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
-                            "focus" -> {
-                                FocusOrbPreviewScreen(
-                                    viewModel = heroLogViewModel,
-                                    characterState = characterState,
-                                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
-                                    ambientController = ambientController,
-                                    onNavigateToTab = { tab -> activeTab = tab }
-                                )
+                             "focus" -> {
+                                 FocusOrbPreviewScreen(
+                                     viewModel = heroLogViewModel,
+                                     characterState = characterState,
+                                     orbConcept = characterState?.orbConcept ?: OrbConcept.D,
+                                     ambientController = ambientController,
+                                     onNavigateToTab = { tab -> activeTab = tab },
+                                     onEnterFullscreen = { isFocusMode = true }
+                                 )
                             }
                             // Contratos e Crônicas Diárias (Missões) e todo o módulo Reino
                             // (Bazar/Títulos/Heatmap/Estatísticas/Conquistas/Registros/Tutorial)
@@ -682,7 +744,8 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     } // CompositionLocalProvider
-                }
+                } // Scaffold
+                } // else (not focusMode)
             }
         }
     }
@@ -695,7 +758,8 @@ fun FocusOrbPreviewScreen(
     ambientController: AmbientSoundController,
     orbConcept: OrbConcept = OrbConcept.D,
     onNavigateToTab: (String) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onEnterFullscreen: () -> Unit = {}
 ) {
     if (characterState == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -724,7 +788,6 @@ fun FocusOrbPreviewScreen(
     var isSkillSelectorOpen by remember { mutableStateOf(false) }
     var isTimerSettingsOpen by remember { mutableStateOf(false) }
     var selectedSkillIdx by remember { mutableStateOf(0) }
-    var isFocusMode by remember { mutableStateOf(false) }
     var isAmbientModalOpen by remember { mutableStateOf(false) }
     var showFocusTooltip by remember { mutableStateOf(false) }
     var isQuestFabOpen by remember { mutableStateOf(false) }
@@ -788,61 +851,6 @@ fun FocusOrbPreviewScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
                 }
-            }
-        } else if (isFocusMode) {
-            if (breakTimerState.isBreakActive) {
-                // Descanso em tela cheia — espelha o React: `sessionConfig.isFocusMode`
-                // retorna <FocusModeScreen> independente do estado de break (App.tsx:2055).
-                val selectedSkillForSession = characterState.skills.getOrNull(validSkillIdx)
-                FocusModeScreen(
-                    skillName = selectedSkillForSession?.name ?: "Habilidade",
-                    skillEmoji = selectedSkillForSession?.emoji ?: "💻",
-                    isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
-                    dungeonSessions = breakTimerState.lastSessionDungeonSessions,
-                    isWildernessChecked = breakTimerState.wasLastSessionWildernessMode,
-                    timeLeft = breakTimerState.secondsLeft,
-                    totalSeconds = breakTimerState.selectedBreakMins * 60,
-                    isRunning = false,
-                    isPaused = false,
-                    onTogglePause = {},
-                    onExit = { isFocusMode = false },
-                    isGraceActive = false,
-                    graceSecondsLeft = 3,
-                    isPlayerDead = false,
-                    onReturnToFocusCap = {},
-                    onRespawn = {},
-                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
-                    isBreakActive = true,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                val config = focusState.config
-                val selectedSkillForSession = characterState.skills.getOrNull(config?.selectedSkillIdx ?: 0)
-                val skillName = selectedSkillForSession?.name ?: "Habilidade"
-                val skillEmoji = selectedSkillForSession?.emoji ?: "💻"
-
-                FocusModeScreen(
-                    skillName = skillName,
-                    skillEmoji = skillEmoji,
-                    isDungeonMode = config?.isDungeonMode ?: false,
-                    dungeonSessions = config?.dungeonSessions ?: 0,
-                    isWildernessChecked = config?.isWildernessChecked ?: false,
-                    timeLeft = focusState.timeLeft,
-                    totalSeconds = focusState.totalSeconds,
-                    isRunning = focusState.isRunning,
-                    isPaused = focusState.isPaused,
-                    onTogglePause = { viewModel.togglePauseQuest() },
-                    onExit = {
-                        isFocusMode = false
-                    },
-                    isGraceActive = focusState.isGraceActive,
-                    graceSecondsLeft = focusState.graceSecondsLeft,
-                    isPlayerDead = characterState.isPlayerDead,
-                    onReturnToFocusCap = { viewModel.returnToFocusFromGrace() },
-                    onRespawn = { viewModel.respawnHero() },
-                    orbConcept = characterState?.orbConcept ?: OrbConcept.D,
-                    modifier = Modifier.fillMaxSize()
-                )
             }
         } else if (breakTimerState.isBreakPrep) {
             // Break prep inline — React (App.tsx:2413-2475) mantém banner + carousel +
@@ -962,7 +970,7 @@ fun FocusOrbPreviewScreen(
                         onOpenAmbientModal = { isAmbientModalOpen = true },
                         isSettingsEnabled = false,
                         onOpenSettingsModal = {},
-                        onEnterFullscreen = { isFocusMode = true }
+                        onEnterFullscreen = { onEnterFullscreen() }
                     )
                 }
             }
@@ -1121,7 +1129,7 @@ fun FocusOrbPreviewScreen(
                     onOpenAmbientModal = { isAmbientModalOpen = true },
                     isSettingsEnabled = false,
                     onOpenSettingsModal = {},
-                    onEnterFullscreen = { isFocusMode = true }
+                    onEnterFullscreen = { onEnterFullscreen() }
                 )
 
                 Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
@@ -1231,7 +1239,7 @@ fun FocusOrbPreviewScreen(
                         onOpenAmbientModal = { isAmbientModalOpen = true },
                         isSettingsEnabled = true,
                         onOpenSettingsModal = { isTimerSettingsOpen = true },
-                        onEnterFullscreen = { /* fonte: sem sessão ativa, tela cheia não faz sentido */ }
+                        onEnterFullscreen = { onEnterFullscreen() }
                     )
 
                     Spacer(modifier = Modifier.height(LocalBottomBarInset.current))

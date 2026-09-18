@@ -73,7 +73,7 @@ fun SkillSelectorModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Escolha qual habilidade receberá o bônus de XP obtido durante esta sessão de foco:",
+                text = "ESCOLHA QUAL HABILIDADE RECEBERÁ O BÔNUS DE XP OBTIDO DURANTE ESTA SESSÃO DE FOCO:",
                 style = androidx.compose.ui.text.TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontSize = 12.sp,
@@ -160,7 +160,7 @@ fun SkillSelectorModal(
                                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             Text(
-                                                text = sk.name,
+                                                text = sk.name.uppercase(),
                                                 fontFamily = FontFamily.Serif,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp,
@@ -208,13 +208,13 @@ fun SkillSelectorModal(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
                                             .clip(CircleShape)
-                                            .background(Champagne500.copy(alpha = 0.1f))
+                                            .background(Champagne400)
                                             .border(1.dp, Champagne500.copy(alpha = 0.2f), CircleShape)
                                             .padding(horizontal = 8.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = "ATIVA",
-                                            color = Champagne400,
+                                            color = Stone950,
                                             fontSize = 9.sp,
                                             fontFamily = FontFamily.Serif,
                                             fontWeight = FontWeight.Black,
