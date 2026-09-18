@@ -136,7 +136,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D4 | **FocusCompletionFlow — background** | `bg-quest-panel` (custom theme color, ~`#1C1A17`) | `Stone950` (`#0C0A08`) | **Média** | Background mais escuro no Android |
+| D4 | **FocusCompletionFlow — background** | `bg-quest-panel` (custom theme color, ~`#1C1A17`) | ~~`Stone950` (`#0C0A08`)~~ `QuestPanel` (`#0B0915`) | ~~**Média**~~ **RESOLVIDO** | Background corrigido em 17/09 (PR #13, commit `2d83d2e`); pixel sampling confirma `#0B0915` |
 | D5 | **FocusCompletionFlow — button casing** | "Continuar" (title-case) | "CONTINUAR" (uppercase) | **Baixa** | Padrão Android usa uppercase em botões |
 | D6 | **FocusCompletionFlow — streak label** | "SEQUÊNCIA" | "SEQUÊNCIA DE CHAMA" | **Baixa** | Texto extra no Android |
 | D7 | **FocusCompletionFlow — loot grid** | `grid-cols-1 sm:grid-cols-2` (responsivo 2-col) | Sempre 1 coluna | **Média** | Android não adapta grid ao tamanho da tela |

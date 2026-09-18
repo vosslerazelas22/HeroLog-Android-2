@@ -5360,3 +5360,59 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 2. Toggles sem ícone inicial redundante: React renderiza "+ POSITIVO (+)" (ícone Lucide `Plus` + texto com CSS `uppercase`); Android renderiza "POSITIVO (+)" / "NEGATIVO (-)" (texto `uppercase()`, sem ícone)
 3. `openEditModal` usa `isCreating = false` enquanto o React `startEdit` faz `setIsCreating(true)` — mesmo resultado visível (modal abre); `isCreating` não é lido nos paths de render do Dailies (risco baixo)
 4. Mecanismo de confirmação unificado (`deleteConfirmState`/`showDiscard` + `requestClose` único, FR-007) em vez das duas flags independentes do React (`isConfirmingDelete`/`isConfirmingCancel`) — paridade de comportamento, implementação distinta
+
+---
+
+## [2026-09-17] Bloco: S006 — FocusCompletionFlow visual parity (code review fixes)
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt
+- app/src/test/java/com/iurispraecepta/herolog/FocusCompletionFlowScreenshotTest.kt
+
+**Resumo:**
+- Fix 1: dados de teste migrados de literais inventados para `AchievementCatalog.ACHIEVEMENTS_LIST`
+  (consistência com catálogo real, regra AGENTS.md §5.3)
+- Fix 3: `Modifier.blur(24.dp)` em StreakCelebrationScreen envolvido com guard
+  `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` (padrão do projeto: DailyReportModal,
+  GeneralSettingsModal, ItemInspectModal)
+- Fix 4: `Modifier.shadow` em 5 Text composables substituído por
+  `TextStyle(shadow = Shadow(color, offset, blurRadius))` — equivalente fiel do
+  `drop-shadow-[...]` do React. Emojis mantidos com `Modifier.shadow` (bounding box
+  compacto, efeito aceitável)
+- Fix 5: corner accents (4 Box por card) adicionados aos loot cards (Comum/Especial)
+  e ao droppedTitle, replicando React :281-284 e :315-318
+
+**Validação:**
+- Build: sucesso
+- Testes: `FocusCompletionFlowScreenshotTest` — 9 testes, todos PASSED (3 SmallScreen + 3
+  MediumScreen + 3 Screenshot core). XML nominal: `TEST-com.iurispraecepta.herolog.FocusCompletionFlow*.xml`
+- Visual: pendente — screenshot screencap device A05s comparando side-by-side com React viewport
+  390×844
+
+**Desvios de escopo aprovados:**
+- Nenhum. Fecha o item D4 já catalogado em PARIDADE.md.
+
+---
+
+## [2026-09-17] Bloco: S006 — FocusCompletionFlow backdrop do CompletionShell (QuestPanel)
+
+**Arquivos alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt
+  - Adicionado: `import com.iurispraecepta.herolog.ui.theme.QuestPanel`
+  - Linha 101: `.background(Stone950)` → `.background(QuestPanel)`
+
+**Resumo:**
+- Substituição do fundo hardcoded do CompletionShell (`Stone950` #0C0A09, preto quase puro)
+  pelo `QuestPanel` (#0B0915), a mesma cor do Scaffold root e do `bg-quest-panel` do React.
+  O FocusCompletionFlow é um overlay Box solto na `MainActivity` (não herda o Scaffold
+  `containerColor`), por isso ficou de fora do refactor de 09/09 que atualizou 12 outras telas.
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL
+- `./gradlew testDebugUnitTest --tests "*FocusCompletionFlow*"` → 9 PASSED, 0 falhas
+- `./gradlew recordRoborazziDebug` → 15 PNGs regravadas; pixel sampling de backdrop confirma
+  #0B0915 em todos os steps (antes: #0B0908/#0C0A09)
+- Visual: pendente — screenshot screencap device A05s comparando side-by-side com React viewport
+  390×844
+
+**Decisão consciente / desvio:** Nenhum. Fecha o item D4 já catalogado em PARIDADE.md.
