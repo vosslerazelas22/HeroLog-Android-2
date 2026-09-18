@@ -146,7 +146,11 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
             }
         }
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = achievement.name,
                     fontFamily = Cinzel,
@@ -155,7 +159,8 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                     letterSpacing = 0.025.em,
                     color = Amber100.copy(alpha = 0.90f),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 if (isUnlocked) {
                     Row(
