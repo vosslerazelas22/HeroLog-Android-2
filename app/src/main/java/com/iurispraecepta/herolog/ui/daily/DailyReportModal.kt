@@ -22,10 +22,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -209,9 +212,16 @@ private fun CardContainer(
         label = "iconScale"
     )
 
+    // Teto de altura (Opção A): o .verticalScroll() anterior não tinha limite e a
+    // coluna crescia além do viewport. Agora o limite vive AQUI (max 80% da altura
+    // da tela, como o max-h + painel do HeroLogModal), com margem externa de 16dp
+    // (p-4 do React) e largura máxima de 448dp (sm:max-w-md do React) — o backdrop
+    // continua full-bleed de propósito (preto 95% sob as system bars transparentes).
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     Column(
         modifier = Modifier
-            .padding(horizontal = 24.dp)
+            .padding(16.dp)
+            .widthIn(max = 448.dp)
             .fillMaxWidth()
             .shadow(
                 elevation = 50.dp,
@@ -221,6 +231,7 @@ private fun CardContainer(
             .clip(RoundedCornerShape(16.dp))
             .background(Stone950)
             .border(2.dp, Amber500, RoundedCornerShape(16.dp))
+            .heightIn(max = screenHeight * 0.8f)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
