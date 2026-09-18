@@ -1,5 +1,6 @@
 package com.iurispraecepta.herolog.ui.focus
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,26 +19,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.annotation.DrawableRes
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.logic.focus.formatDungeonCooldown
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-import com.composables.icons.lucide.R as LucideR
-import com.iurispraecepta.herolog.ui.theme.Amber300
-import com.iurispraecepta.herolog.ui.theme.Amber400
-import com.iurispraecepta.herolog.ui.theme.Amber500
-import com.iurispraecepta.herolog.ui.theme.Amber950
 import com.iurispraecepta.herolog.ui.theme.Champagne300
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
-import com.iurispraecepta.herolog.ui.theme.Emerald400
+import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Purple200
 import com.iurispraecepta.herolog.ui.theme.Purple300
 import com.iurispraecepta.herolog.ui.theme.Purple400
@@ -47,9 +45,21 @@ import com.iurispraecepta.herolog.ui.theme.Red300
 import com.iurispraecepta.herolog.ui.theme.Red400
 import com.iurispraecepta.herolog.ui.theme.Red500
 import com.iurispraecepta.herolog.ui.theme.Red950
-import com.iurispraecepta.herolog.ui.theme.Stone300
-import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Stone900
+import com.iurispraecepta.herolog.ui.theme.Stone950
+
+// Fonte: HeroLog-React-ref/src/modules/focus/IncursionModeModal.tsx
+// zinc-300 Tailwind = #d4d4d8. NOTA (18/09): o token Zinc300 de Color.kt foi
+// corrigido para #D4D4D8 em trabalho paralelo (TimerSettingsModal, ainda não
+// commitado) — mesmo valor deste literal, que é mantido de propósito para
+// este commit não depender de arquivo alheio não commitado. Cleanup futuro
+// pode migrar os 2 usos para o token sem mudar 1 pixel.
+
+// purple-100 Tailwind = #f3e8ff (descrição card Masmorra, .tsx:105)
+// red-100 Tailwind = #fee2e2 (descrição card Selvagem, .tsx:136)
+private val Zinc300React = Color(0xFFD4D4D8)
+private val Purple100React = Color(0xFFF3E8FF)
+private val Red100React = Color(0xFFFEE2E2)
 
 @Composable
 fun IncursionModeModal(
@@ -60,6 +70,9 @@ fun IncursionModeModal(
     onSelectMode: (RaidMode) -> Unit,
 ) {
     val isDungeonOnCooldown = dungeonCooldownRemainingMs > 0L
+    val isPadraoActive = currentMode == RaidMode.PADRAO
+    val isMasmorraActive = currentMode == RaidMode.MASMORRA && !isDungeonOnCooldown
+    val isSelvagemActive = currentMode == RaidMode.SELVAGEM
 
     HeroLogModal(
         isOpen = isOpen,
@@ -69,31 +82,44 @@ fun IncursionModeModal(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "SELECIONE O ESTILO DE JORNADA PARA SUA PRÓXIMA SESSÃO DE FOCO:",
+                // .tsx:34-35 — sentence-case literal; a caixa alta visual vem da
+                // Cinzel (fonte unicase), sem .uppercase() manual (D1).
+                text = "Selecione o estilo de jornada para sua próxima sessão de foco:",
                 style = TextStyle(
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = Cinzel,
                     fontSize = 12.sp,
-                    color = Stone300.copy(alpha = 0.6f),
-                    lineHeight = 16.sp
+                    color = Zinc300React.copy(alpha = 0.6f),
+                    lineHeight = 19.5.sp
                 )
             )
 
-            // Card 1: Padrão
+            // Card 1: Padrão (.tsx:45-49)
             IncursionModeCard(
-                title = "🎯 PADRÃO",
+                title = "🎯 Padrão",
                 description = "Chance de saque baseada na duração da sessão.",
                 iconRes = LucideR.drawable.lucide_ic_sparkles,
                 iconTint = Champagne400,
-                isActive = currentMode == RaidMode.PADRAO,
+                isActive = isPadraoActive,
+                // "ATIVO" hardcoded: o React tem string "Ativo" + classe CSS
+                // `uppercase` (.tsx:59) e a badge usa JetBrainsMono (tem
+                // minúsculas de verdade, ao contrário da Cinzel) — sem
+                // TextTransform nesta toolchain, a string já vai em caps.
                 activeBadgeText = "ATIVO",
                 activeBadgeBg = Champagne500.copy(alpha = 0.2f),
                 activeBadgeTextColor = Champagne300,
                 activeBadgeBorderColor = Champagne500.copy(alpha = 0.4f),
-                activeBorderColor = Champagne400,
-                baseBorderColor = Amber500.copy(alpha = 0.20f),
-                baseBgColor = Amber950.copy(alpha = 0.15f),
+                borderColor = if (isPadraoActive) {
+                    Champagne400.copy(alpha = 0.8f)
+                } else {
+                    Color.White.copy(alpha = 0.10f)
+                },
+                bgColor = if (isPadraoActive) {
+                    Champagne500.copy(alpha = 0.15f)
+                } else {
+                    Stone900.copy(alpha = 0.4f)
+                },
                 titleColor = Champagne300,
-                descriptionColor = Color(0xB3D6D3D1),
+                descriptionColor = Zinc300React.copy(alpha = 0.7f),
                 enabled = true,
                 onClick = {
                     onSelectMode(RaidMode.PADRAO)
@@ -101,23 +127,45 @@ fun IncursionModeModal(
                 }
             )
 
-            // Card 2: Masmorra
+            // Card 2: Masmorra (.tsx:79-85) — 3 estados: cooldown / ativo / inativo
             IncursionModeCard(
-                title = "⚔️ MASMORRA",
+                title = "⚔️ Masmorra",
                 description = "4 sessões seguidas sem abandonar. +2.500 GP e Quad Loot ao concluir.",
                 iconRes = LucideR.drawable.lucide_ic_swords,
                 iconTint = Purple400,
-                isActive = currentMode == RaidMode.MASMORRA && !isDungeonOnCooldown,
-                activeBadgeText = if (isDungeonOnCooldown) "⏳ ${formatDungeonCooldown(dungeonCooldownRemainingMs)}" else "ATIVO",
-                activeBadgeBg = if (isDungeonOnCooldown) Purple950 else Purple500.copy(alpha = 0.2f),
-                activeBadgeTextColor = if (isDungeonOnCooldown) Purple200 else Purple300,
-                activeBadgeBorderColor = if (isDungeonOnCooldown) Purple500.copy(alpha = 0.40f) else null,
+                isActive = isMasmorraActive,
+                activeBadgeText = if (isDungeonOnCooldown) {
+                    "⏳ ${formatDungeonCooldown(dungeonCooldownRemainingMs)}"
+                } else {
+                    // Mesmo regime do card 1: `uppercase` real no React (.tsx:100).
+                    "ATIVO"
+                },
+                activeBadgeBg = if (isDungeonOnCooldown) {
+                    Purple950.copy(alpha = 0.8f)
+                } else {
+                    Purple500.copy(alpha = 0.2f)
+                },
+                activeBadgeTextColor = Purple300,
+                activeBadgeBorderColor = if (isDungeonOnCooldown) {
+                    Purple500.copy(alpha = 0.30f)
+                } else {
+                    Purple500.copy(alpha = 0.4f)
+                },
+                badgeFontWeight = if (isDungeonOnCooldown) FontWeight.Medium else FontWeight.Bold,
+                isCooldownBadge = isDungeonOnCooldown,
                 alwaysShowBadge = isDungeonOnCooldown,
-                activeBorderColor = Purple400,
-                baseBorderColor = Purple500.copy(alpha = 0.20f),
-                baseBgColor = Purple950.copy(alpha = 0.25f),
+                borderColor = when {
+                    isDungeonOnCooldown -> Purple500.copy(alpha = 0.15f)
+                    isMasmorraActive -> Purple400.copy(alpha = 0.8f)
+                    else -> Purple500.copy(alpha = 0.25f)
+                },
+                bgColor = when {
+                    isDungeonOnCooldown -> Stone950.copy(alpha = 0.4f)
+                    isMasmorraActive -> Purple950.copy(alpha = 0.8f)
+                    else -> Stone900.copy(alpha = 0.4f)
+                },
                 titleColor = Purple200,
-                descriptionColor = Color(0xB3E9D5FF),
+                descriptionColor = Purple100React.copy(alpha = 0.7f),
                 enabled = !isDungeonOnCooldown,
                 onClick = {
                     onSelectMode(RaidMode.MASMORRA)
@@ -125,22 +173,30 @@ fun IncursionModeModal(
                 }
             )
 
-            // Card 3: Selvagem
+            // Card 3: Selvagem (.tsx:117-121)
             IncursionModeCard(
-                title = "💀 SELVAGEM",
+                title = "💀 Selvagem",
                 description = "+25% XP & GP. Minimizar a aba cancela o bônus.",
                 iconRes = LucideR.drawable.lucide_ic_skull,
                 iconTint = Red400,
-                isActive = currentMode == RaidMode.SELVAGEM,
+                isActive = isSelvagemActive,
+                // `uppercase` real no React (.tsx:131) — ver nota no card 1.
                 activeBadgeText = "ATIVO",
                 activeBadgeBg = Red500.copy(alpha = 0.2f),
                 activeBadgeTextColor = Red300,
-                activeBorderColor = Red500,
                 activeBadgeBorderColor = Red500.copy(alpha = 0.4f),
-                baseBorderColor = Red500.copy(alpha = 0.25f),
-                baseBgColor = Red950.copy(alpha = 0.25f),
+                borderColor = if (isSelvagemActive) {
+                    Red500.copy(alpha = 0.8f)
+                } else {
+                    Red500.copy(alpha = 0.25f)
+                },
+                bgColor = if (isSelvagemActive) {
+                    Red950.copy(alpha = 0.8f)
+                } else {
+                    Stone900.copy(alpha = 0.4f)
+                },
                 titleColor = Color(0xFFFECACA),
-                descriptionColor = Color(0xB3FCA5A5),
+                descriptionColor = Red100React.copy(alpha = 0.7f),
                 enabled = true,
                 onClick = {
                     onSelectMode(RaidMode.SELVAGEM)
@@ -155,39 +211,43 @@ fun IncursionModeModal(
 private fun IncursionModeCard(
     title: String,
     description: String,
-    @androidx.annotation.DrawableRes iconRes: Int,
+    @DrawableRes iconRes: Int,
     iconTint: Color,
     isActive: Boolean,
     activeBadgeText: String,
     activeBadgeBg: Color,
     activeBadgeTextColor: Color,
-    activeBorderColor: Color,
-    baseBorderColor: Color,
-    baseBgColor: Color,
+    borderColor: Color,
+    bgColor: Color,
     titleColor: Color,
     descriptionColor: Color,
     enabled: Boolean,
     activeBadgeBorderColor: Color? = null,
+    badgeFontWeight: FontWeight = FontWeight.Bold,
+    isCooldownBadge: Boolean = false,
     alwaysShowBadge: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val borderColor = if (isActive) activeBorderColor else baseBorderColor
     val showBadge = isActive || alwaysShowBadge
+    val cardShape = RoundedCornerShape(8.dp)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Stone950)
-            .background(baseBgColor)
-            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
-            .then(if (!enabled) Modifier.alpha(0.55f) else Modifier)
+            // shadow-md do estado ativo (.tsx:47,83,119). O ring-1 colorido do
+            // React não tem equivalente direto no Compose — a borda ativa em
+            // 80% de alpha + esta sombra são a aproximação consciente.
+            .then(if (isActive) Modifier.shadow(6.dp, cardShape) else Modifier)
+            .clip(cardShape)
+            .background(bgColor)
+            .border(1.dp, borderColor, cardShape)
+            .then(if (!enabled) Modifier.alpha(0.5f) else Modifier)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(14.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -198,30 +258,22 @@ private fun IncursionModeCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Stone900)
-                            .border(1.dp, baseBorderColor, RoundedCornerShape(8.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = iconRes),
-                            contentDescription = null,
-                            tint = iconTint,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    // Ícone solto inline com o título (.tsx:53,89,125) — sem
+                    // wrapper Box; w-4 h-4 = 16dp (D7, D13).
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
 
                     Text(
                         text = title,
                         style = TextStyle(
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = Cinzel,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            color = titleColor,
-                            letterSpacing = 0.8.sp
+                            fontSize = 14.sp,
+                            color = titleColor
                         )
                     )
                 }
@@ -236,18 +288,43 @@ private fun IncursionModeCard(
                                     Modifier.border(1.dp, activeBadgeBorderColor, RoundedCornerShape(4.dp))
                                 } else Modifier
                             )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
-                        Text(
-                            text = activeBadgeText,
-                            style = TextStyle(
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp,
-                                color = activeBadgeTextColor,
-                                letterSpacing = 0.5.sp
+                        if (isCooldownBadge) {
+                            // .tsx:95-98 — font-medium, tracking-normal, Clock
+                            // w-3 h-3 (12dp) + gap-1 (4dp).
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = LucideR.drawable.lucide_ic_clock),
+                                    contentDescription = null,
+                                    tint = Purple400,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = activeBadgeText,
+                                    style = TextStyle(
+                                        fontFamily = JetBrainsMono,
+                                        fontWeight = badgeFontWeight,
+                                        fontSize = 9.sp,
+                                        color = activeBadgeTextColor
+                                    )
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = activeBadgeText,
+                                style = TextStyle(
+                                    fontFamily = JetBrainsMono,
+                                    fontWeight = badgeFontWeight,
+                                    fontSize = 9.sp,
+                                    color = activeBadgeTextColor,
+                                    letterSpacing = 0.5.sp
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -255,9 +332,9 @@ private fun IncursionModeCard(
             Text(
                 text = description,
                 style = TextStyle(
-                    fontFamily = FontFamily.SansSerif,
-                    fontSize = 11.sp,
-                    lineHeight = 15.sp,
+                    fontFamily = Inter,
+                    fontSize = 12.sp,
+                    lineHeight = 19.5.sp,
                     color = descriptionColor
                 )
             )

@@ -5458,3 +5458,51 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 1. UPPERCASE hardcoded no Android (helper + nomes de modos/skill/labels) onde o React real **não** tem classe `uppercase` (`SkillSelectorModal.tsx:29-30`, `IncursionModeModal.tsx:34-35,54,90,126`, `App.tsx:2551-2552`). Aplicado por pedido explícito do revisor (o que ele vê renderizado no AI Studio diverge do repo real). Se um dia o React real ganhar `uppercase`, o Android já está pronto; se não, manter como está.
 2. `TextTransform.Uppercase` não usado — `androidx.compose.ui.text.style.TextTransform` não resolveu nesta toolchain (Compose BOM 2024.09.00); strings já em maiúsculas, sem dependência de estilo.
 3. Cursor do input customizado em `Emerald400` (React não define cursor explícito) — segue o pedido "sliders verdes".
+
+---
+
+## [2026-09-18] Auditoria IncursionModeModal — correções D1–D16 (`specs/auditoria-incursion-mode-modal.md`)
+
+**Fonte React:** `HeroLog-React-ref/src/modules/focus/IncursionModeModal.tsx` (143L, lida na íntegra) + `index.css:4-6` (font vars).
+**Arquivo alterado:** `app/src/main/java/com/iurispraecepta/herolog/ui/focus/IncursionModeModal.kt` (único; `IncursionModeCard` é `private`, sem outros callers).
+
+**Resumo:** rewrite visual do modal aplicando as 16 divergências da auditoria. Lógica intocada (mesmos estados, callbacks, `formatDungeonCooldown`).
+- D1: strings voltam a sentence-case literal do React (`"Selecione o estilo..."`, `"🎯 Padrão"`, `"⚔️ Masmorra"`, `"💀 Selvagem"`) — **reversão consciente do desvio #1 da spec-007** (uppercase hardcoded por pedido do revisor). Aposta registrada na auditoria: Cinzel unicase resolve o visual sozinha; a confirmar em device.
+- D2: `FontFamily.Serif/.SansSerif/.Monospace` → `Cinzel`/`Inter`/`JetBrainsMono` de `Type.kt`.
+- D3: bg/border por estado resolvidos no call site (card1: `champagne-500/15`+`champagne-400/80` ativo / `stone-900/40`+`white/10` inativo; card2 com 3 estados incl. cooldown `stone-950/40`+`purple-500/15`; card3 `red-950/80`+`red-500/80` ativo). Removido duplo `.background(Stone950).background(base)`.
+- D4: `Modifier.shadow(6.dp)` no card ativo (≈ `shadow-md`); ring-1 sem equivalente — aproximação consciente documentada em comentário.
+- D5/D6: literais `Zinc300React #D4D4D8`, `Purple100React #F3E8FF`, `Red100React #FEE2E2` (não tokens — ver achado abaixo sobre `Zinc300`).
+- D7/D13: wrapper Box 36dp removido; ícone 16dp inline. D8: `lucide_ic_clock` 12dp no badge cooldown (compila — recurso existe na lib).
+- D9: badge cooldown fiel — `Purple300`, `Purple950/80%`, borda `Purple500/30%`, `FontWeight.Medium`, sem letterSpacing, Row com gap 4dp. Badge ativa card2 ganhou borda `Purple500/40%` (era `null`).
+- D10/D11/D12/D14/D15/D16: títulos 14sp sem letterSpacing; descrições 12sp/`19.5sp` (`leading-relaxed`); cards `8.dp`; gap interno `6.dp` (`space-y-1.5`); disabled `.alpha(0.5f)`.
+
+**Validação:**
+- `./gradlew compileDebugKotlin` → BUILD SUCCESSFUL (warnings pré-existentes só). `assembleDebug` completo **bloqueado por ambiente**: `debug.keystore` ausente (gitignored, nunca commitado) — falha em `validateSigningDebug`, sem relação com o código.
+- `./gradlew testDebugUnitTest` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes), incl. `IncursionModeModalScreenshotTest` 5/5.
+- Visual em device/emulador: **PENDENTE**.
+
+**Achados de processo (fora de escopo, registrados para blocos futuros):**
+1. `Zinc300` em `Color.kt` vale `#CBD5E1` (= slate-300, não zinc-300 `#D4D4D8`) — o "corrigido" da spec-007 round-1 continua errado; 6 telas consomem o token. Correção global em bloco próprio.
+2. `IncursionModeModalScreenshotTest` 5/5 **sem sinal visual**: baselines em `app/src/test/screenshots/` retratam UI antiga (header "MODOS DE INCURSÃO", sem intro, ícones shield/warning — nem o código pré-bloco) e os testes passam com qualquer UI (sem `RoborazziRule`; `captureRoboImage` não escreveu nem comparou nada nesta sessão — verificado por mtime + busca de PNGs recém-gerados). Baselines seguem stale; re-record de verdade exige wiring de verify/record fora deste escopo.
+
+## [2026-09-18] IncursionModeModal — correção do badge "ATIVO" (regressão do D1)
+
+**Causa:** o bloco D1–D16 removeu o uppercase manual de forma indiscriminada, usando a string literal do React (`"Ativo"`) também no badge. Mas o badge usa JetBrainsMono (minúsculas reais), não Cinzel unicase — e no React as 3 badges ativas têm classe CSS `uppercase` real (`.tsx:59,100,131`), que renderiza "ATIVO". O Android passou a mostrar "Ativo" mixed-case: regressão visual introduzida ontem (antes o hardcoded `"ATIVO"` estava visualmente certo).
+
+**Arquivo alterado:** `app/src/main/java/com/iurispraecepta/herolog/ui/focus/IncursionModeModal.kt` — `activeBadgeText = "Ativo"` → `"ATIVO"` nos 3 call sites (Padrão, Masmorra-ativa, Selvagem) + comentário distinguindo os dois regimes (Cinzel = literal + fonte resolve; JetBrainsMono = caps hardcoded porque o `uppercase` é classe CSS real; `TextTransform` não resolve nesta toolchain). Badge de cooldown intocada (React sem `uppercase`, `.tsx:95`).
+
+**Validação:**
+- `./gradlew compileDebugKotlin` → BUILD SUCCESSFUL.
+- `./gradlew testDebugUnitTest` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
+- **Re-record Roborazzi (`:app:recordRoborazziDebug`) + inspeção dos PNGs regerados:** badge "ATIVO" em caps confirmado em pixel; intro/títulos sentence-case rendendo caps via Cinzel (aposta D1 confirmada no render Robolectric); ícones inline sem wrapper; card ativo com bg/borda champagne. PNGs fora de escopo regravados pelo record (filtro `--tests` ignorado, comportamento já documentado) revertidos via `git checkout` — diff final só nos 4 `incursion_mode_modal_*`. Correção ao achado de ontem: `captureRoboImage` **grava** sim quando a task de record do plugin roda (`recordRoborazziDebug`); o que não funciona aqui é o `-Droborazzi.test.record=true` avulso sobre `testDebugUnitTest` (sem efeito observável, mesmo com `--no-configuration-cache`) e a via `verify` (passa sempre, sem comparar — anomalia já registrada na spec-002).
+- Visual em device/emulador: **PENDENTE** (comparação lado a lado com o React).
+
+## [2026-09-18] IncursionModeModal — fechamento (re-auditoria + token + commit)
+
+**Re-auditoria de paridade (skill `herolog-parity-audit`, plan mode):** `IncursionModeModal.tsx` × `IncursionModeModal.kt` comparados elemento a elemento com citação literal dos dois lados + inspeção dos 4 baselines regerados. Veredito: **fiel em texto, tipografia, cor, ícones, cantos e estados**; D1–D16 todos fechados. Residuais: **R1** (`transition-all` ~150ms nas trocas de estado não portado — candidato a stretch, ex. `animateColorAsState`; baixa), **R2** (tracking badge 0.5sp vs 0.45sp — sub-pixel, sem ação), **R3** (ring-1 sem equivalente, aproximação consciente já documentada), **R4** (`Bold` em JetBrainsMono sintetizado — ver decisão abaixo). Nenhum bloco de correção exigido.
+
+**R4 — NÃO adicionar `jetbrains_mono_bold.ttf`:** `index.html:10` do React carrega `JetBrains+Mono:wght@400;600` (só). O "bold" da badge já é 600/sintetizado no React; um 700 real no Android criaria divergência onde hoje há match por simetria. Decisão: não mexer (pedido do Bruno: sem registro em `Type.kt`).
+
+**Token `Zinc300`:** corrigido para `#D4D4D8` em trabalho paralelo (TimerSettingsModal, mesmo branch, ainda não commitado) — fecha meu achado #1 do bloco D1–D16. O literal `Zinc300React` foi mantido neste bloco de propósito (mesmo valor; commit independente de arquivo alheio não commitado); só o comentário foi atualizado. Cleanup futuro pode migrar os 2 usos para o token sem mudar 1 pixel.
+
+**Isolamento do trabalho paralelo:** `TimerSettingsModal.kt`, `Color.kt` e `opencode.json` (modificados pelo outro agente, não commitados) **não foram tocados nem stageados** — diff e commit deste bloco contêm exclusivamente: `IncursionModeModal.kt`, 4 PNGs `incursion_mode_modal_*`, `DEV_LOG_ANDROID.md`, `PARIDADE.md` (verificado via `git diff --stat` antes do commit; diffs de DEV_LOG/PARIDADE conferidos hunk a hunk como só meus).
