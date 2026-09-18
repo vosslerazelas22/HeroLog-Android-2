@@ -29,6 +29,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,18 +40,18 @@ import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
+import com.iurispraecepta.herolog.ui.theme.Amber100
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Stone400
+import com.iurispraecepta.herolog.ui.theme.Stone800
+import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Zinc300
 import kotlin.math.roundToInt
 
-private val Stone950 = Color(0xFF0C0A09)
 private val Stone900 = Color(0xFF1C1917)
-private val Stone850 = Color(0xFF211E1C) // Aproximação do token customizado stone-850 do React
-private val Stone800 = Color(0xFF292524)
-
-private val Amber500 = Color(0xFFF59E0B)
-private val Amber400 = Color(0xFFFBBF24)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber200 = Color(0xFFFDE68A)
-
+private val Stone850 = Color(0xFF211E1C)
 private val Yellow400 = Color(0xFFFACC15)
 private val Yellow300 = Color(0xFFFDE047)
 
@@ -72,12 +73,12 @@ fun SkillSelectorModal(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Escolha qual habilidade receberá o bônus de XP obtido durante esta sessão de foco:",
+                text = "ESCOLHA QUAL HABILIDADE RECEBERÁ O BÔNUS DE XP OBTIDO DURANTE ESTA SESSÃO DE FOCO:",
                 style = androidx.compose.ui.text.TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontSize = 12.sp,
                     fontStyle = FontStyle.Italic,
-                    color = Color(0x99FEF3C7), // amber-100/60
+                    color = Amber100.copy(alpha = 0.6f),
                     lineHeight = 16.sp
                 )
             )
@@ -98,16 +99,16 @@ fun SkillSelectorModal(
                                     Modifier.shadow(
                                         elevation = 8.dp,
                                         shape = RoundedCornerShape(12.dp),
-                                        ambientColor = Amber500.copy(alpha = 0.15f),
-                                        spotColor = Amber500.copy(alpha = 0.15f)
+                                        ambientColor = Champagne500.copy(alpha = 0.15f),
+                                        spotColor = Champagne500.copy(alpha = 0.15f)
                                     )
                                 } else Modifier
                             )
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isActive) Color(0x0AF59E0B) else Color(0x990C0A09))
+                            .background(if (isActive) Color(0x0AD4AF37) else Color(0x990C0A09))
                             .border(
                                 width = 1.dp,
-                                color = if (isActive) Amber400 else Stone800,
+                                color = if (isActive) Champagne400 else Stone800,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable {
@@ -135,10 +136,10 @@ fun SkillSelectorModal(
                                         modifier = Modifier
                                             .size(44.dp)
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isActive) Color(0x1AF59E0B) else Stone900)
+                                            .background(if (isActive) Color(0x1AD4AF37) else Stone900)
                                             .border(
                                                 width = 1.dp,
-                                                color = if (isActive) Color(0x66FBBF24) else Stone800,
+                                                color = if (isActive) Champagne400 else Stone800,
                                                 shape = RoundedCornerShape(8.dp)
                                             ),
                                         contentAlignment = Alignment.Center
@@ -159,11 +160,11 @@ fun SkillSelectorModal(
                                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             Text(
-                                                text = sk.name,
+                                                text = sk.name.uppercase(),
                                                 fontFamily = FontFamily.Serif,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp,
-                                                color = if (isActive) Amber300 else Color(0xE6FEF3C7),
+                                                color = if (isActive) Champagne300 else Zinc300.copy(alpha = 0.9f),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -183,11 +184,11 @@ fun SkillSelectorModal(
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Text(
-                                                text = "Nível ${sk.level}",
+                                                text = "Nv. ${sk.level}",
                                                 fontFamily = FontFamily.Monospace,
                                                 fontWeight = FontWeight.Bold,
                                                 fontSize = 12.sp,
-                                                color = Amber400
+                                                color = Champagne400
                                             )
 
                                             if (sk.prestige != null && sk.prestige > 0) {
@@ -207,7 +208,8 @@ fun SkillSelectorModal(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
                                             .clip(CircleShape)
-                                            .background(Amber400)
+                                            .background(Champagne400)
+                                            .border(1.dp, Champagne500.copy(alpha = 0.2f), CircleShape)
                                             .padding(horizontal = 8.dp, vertical = 2.dp)
                                     ) {
                                         Text(
@@ -241,9 +243,9 @@ fun SkillSelectorModal(
                                             .clip(CircleShape)
                                             .background(
                                                 if (isActive) {
-                                                    Brush.horizontalGradient(listOf(Amber500, Yellow300))
+                                                    Brush.horizontalGradient(listOf(Champagne500, Champagne300))
                                                 } else {
-                                                    SolidColor(Color(0xB3F59E0B))
+                                                    SolidColor(Color(0xB3D4AF37))
                                                 }
                                             )
                                     )
@@ -258,13 +260,13 @@ fun SkillSelectorModal(
                                         text = "Progresso: ${sk.xp} / $reqXP XP",
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 9.sp,
-                                        color = Color(0x66FEF3C7) // amber-100/40
+                                        color = Champagne400.copy(alpha = 0.4f)
                                     )
                                     Text(
                                         text = "${progressPercent.roundToInt()}%",
                                         fontFamily = FontFamily.Monospace,
                                         fontSize = 9.sp,
-                                        color = Color(0x66FEF3C7) // amber-100/40
+                                        color = Champagne400.copy(alpha = 0.4f)
                                     )
                                 }
                             }
@@ -301,13 +303,13 @@ fun SkillSelectorModal(
                                                 Icon(
                                                     imageVector = Icons.Outlined.Sell,
                                                     contentDescription = null,
-                                                    tint = Color(0x80FEF3C7),
+                                                    tint = Champagne400.copy(alpha = 0.5f),
                                                     modifier = Modifier.size(8.dp)
                                                 )
                                                 Text(
                                                     text = tag,
                                                     fontSize = 9.sp,
-                                                    color = Color(0x80FEF3C7),
+                                                    color = Zinc300.copy(alpha = 0.5f),
                                                     fontFamily = FontFamily.SansSerif
                                                 )
                                             }

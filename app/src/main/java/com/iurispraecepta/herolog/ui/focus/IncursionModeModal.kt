@@ -7,17 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,8 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -35,30 +29,27 @@ import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.logic.focus.formatDungeonCooldown
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
-
-private val Stone950 = Color(0xFF0C0A09)
-private val Stone900 = Color(0xFF1C1917)
-private val Stone800 = Color(0xFF292524)
-private val Stone400 = Color(0xFFA8A29E)
-private val Stone300 = Color(0xFFD6D3D1)
-
-private val Amber600 = Color(0xFFD97706)
-private val Amber500 = Color(0xFFF59E0B)
-private val Amber400 = Color(0xFFFBBF24)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber950 = Color(0xFF451A03)
-
-private val Purple600 = Color(0xFF9333EA)
-private val Purple500 = Color(0xFFA855F7)
-private val Purple400 = Color(0xFFC084FC)
-private val Purple300 = Color(0xFFD8B4FE)
-private val Purple200 = Color(0xFFE9D5FF)
-private val Purple950 = Color(0xFF3B0764)
-
-private val Red600 = Color(0xFFDC2626)
-private val Red500 = Color(0xFFEF4444)
-private val Red400 = Color(0xFFF87171)
-private val Red950 = Color(0xFF450A0A)
+import com.composables.icons.lucide.R as LucideR
+import com.iurispraecepta.herolog.ui.theme.Amber300
+import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Amber950
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Emerald400
+import com.iurispraecepta.herolog.ui.theme.Purple200
+import com.iurispraecepta.herolog.ui.theme.Purple300
+import com.iurispraecepta.herolog.ui.theme.Purple400
+import com.iurispraecepta.herolog.ui.theme.Purple500
+import com.iurispraecepta.herolog.ui.theme.Purple950
+import com.iurispraecepta.herolog.ui.theme.Red300
+import com.iurispraecepta.herolog.ui.theme.Red400
+import com.iurispraecepta.herolog.ui.theme.Red500
+import com.iurispraecepta.herolog.ui.theme.Red950
+import com.iurispraecepta.herolog.ui.theme.Stone300
+import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Stone900
 
 @Composable
 fun IncursionModeModal(
@@ -73,24 +64,36 @@ fun IncursionModeModal(
     HeroLogModal(
         isOpen = isOpen,
         onClose = onClose,
-        title = "Modos de Incursão",
+        title = "⚔️ Modo de Incursão",
         variant = ModalVariant.Amber
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "SELECIONE O ESTILO DE JORNADA PARA SUA PRÓXIMA SESSÃO DE FOCO:",
+                style = TextStyle(
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 12.sp,
+                    color = Stone300.copy(alpha = 0.6f),
+                    lineHeight = 16.sp
+                )
+            )
+
             // Card 1: Padrão
             IncursionModeCard(
-                title = "PADRÃO",
+                title = "🎯 PADRÃO",
                 description = "Chance de saque baseada na duração da sessão.",
-                icon = Icons.Default.AutoAwesome,
-                iconTint = Amber400,
+                iconRes = LucideR.drawable.lucide_ic_sparkles,
+                iconTint = Champagne400,
                 isActive = currentMode == RaidMode.PADRAO,
                 activeBadgeText = "ATIVO",
-                activeBadgeBg = Amber400,
-                activeBadgeTextColor = Stone950,
-                activeBorderColor = Amber400,
+                activeBadgeBg = Champagne500.copy(alpha = 0.2f),
+                activeBadgeTextColor = Champagne300,
+                activeBadgeBorderColor = Champagne500.copy(alpha = 0.4f),
+                activeBorderColor = Champagne400,
                 baseBorderColor = Amber500.copy(alpha = 0.20f),
                 baseBgColor = Amber950.copy(alpha = 0.15f),
-                titleColor = Amber300,
+                titleColor = Champagne300,
+                descriptionColor = Color(0xB3D6D3D1),
                 enabled = true,
                 onClick = {
                     onSelectMode(RaidMode.PADRAO)
@@ -100,20 +103,21 @@ fun IncursionModeModal(
 
             // Card 2: Masmorra
             IncursionModeCard(
-                title = "MASMORRA",
+                title = "⚔️ MASMORRA",
                 description = "4 sessões seguidas sem abandonar. +2.500 GP e Quad Loot ao concluir.",
-                icon = Icons.Default.Shield,
+                iconRes = LucideR.drawable.lucide_ic_swords,
                 iconTint = Purple400,
                 isActive = currentMode == RaidMode.MASMORRA && !isDungeonOnCooldown,
                 activeBadgeText = if (isDungeonOnCooldown) "⏳ ${formatDungeonCooldown(dungeonCooldownRemainingMs)}" else "ATIVO",
-                activeBadgeBg = if (isDungeonOnCooldown) Purple950 else Purple500,
-                activeBadgeTextColor = if (isDungeonOnCooldown) Purple200 else Color.White,
+                activeBadgeBg = if (isDungeonOnCooldown) Purple950 else Purple500.copy(alpha = 0.2f),
+                activeBadgeTextColor = if (isDungeonOnCooldown) Purple200 else Purple300,
                 activeBadgeBorderColor = if (isDungeonOnCooldown) Purple500.copy(alpha = 0.40f) else null,
                 alwaysShowBadge = isDungeonOnCooldown,
                 activeBorderColor = Purple400,
                 baseBorderColor = Purple500.copy(alpha = 0.20f),
                 baseBgColor = Purple950.copy(alpha = 0.25f),
-                titleColor = Purple300,
+                titleColor = Purple200,
+                descriptionColor = Color(0xB3E9D5FF),
                 enabled = !isDungeonOnCooldown,
                 onClick = {
                     onSelectMode(RaidMode.MASMORRA)
@@ -123,18 +127,20 @@ fun IncursionModeModal(
 
             // Card 3: Selvagem
             IncursionModeCard(
-                title = "TERRA SELVAGEM",
+                title = "💀 SELVAGEM",
                 description = "+25% XP & GP. Minimizar a aba cancela o bônus.",
-                icon = Icons.Default.Warning,
+                iconRes = LucideR.drawable.lucide_ic_skull,
                 iconTint = Red400,
                 isActive = currentMode == RaidMode.SELVAGEM,
                 activeBadgeText = "ATIVO",
-                activeBadgeBg = Red500,
-                activeBadgeTextColor = Color.White,
+                activeBadgeBg = Red500.copy(alpha = 0.2f),
+                activeBadgeTextColor = Red300,
                 activeBorderColor = Red500,
+                activeBadgeBorderColor = Red500.copy(alpha = 0.4f),
                 baseBorderColor = Red500.copy(alpha = 0.25f),
                 baseBgColor = Red950.copy(alpha = 0.25f),
-                titleColor = Red400,
+                titleColor = Color(0xFFFECACA),
+                descriptionColor = Color(0xB3FCA5A5),
                 enabled = true,
                 onClick = {
                     onSelectMode(RaidMode.SELVAGEM)
@@ -149,7 +155,7 @@ fun IncursionModeModal(
 private fun IncursionModeCard(
     title: String,
     description: String,
-    icon: ImageVector,
+    @androidx.annotation.DrawableRes iconRes: Int,
     iconTint: Color,
     isActive: Boolean,
     activeBadgeText: String,
@@ -159,6 +165,7 @@ private fun IncursionModeCard(
     baseBorderColor: Color,
     baseBgColor: Color,
     titleColor: Color,
+    descriptionColor: Color,
     enabled: Boolean,
     activeBadgeBorderColor: Color? = null,
     alwaysShowBadge: Boolean = false,
@@ -178,37 +185,35 @@ private fun IncursionModeCard(
             .clickable(enabled = enabled, onClick = onClick)
             .padding(14.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Stone900)
-                    .border(1.dp, baseBorderColor, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Stone900)
+                            .border(1.dp, baseBorderColor, RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
                     Text(
                         text = title,
                         style = TextStyle(
@@ -219,43 +224,43 @@ private fun IncursionModeCard(
                             letterSpacing = 0.8.sp
                         )
                     )
-
-                    if (showBadge) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(activeBadgeBg)
-                                .then(
-                                    if (activeBadgeBorderColor != null) {
-                                        Modifier.border(1.dp, activeBadgeBorderColor, RoundedCornerShape(4.dp))
-                                    } else Modifier
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = activeBadgeText,
-                                style = TextStyle(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 9.sp,
-                                    color = activeBadgeTextColor,
-                                    letterSpacing = 0.5.sp
-                                )
-                            )
-                        }
-                    }
                 }
 
-                Text(
-                    text = description,
-                    style = TextStyle(
-                        fontFamily = FontFamily.SansSerif,
-                        fontSize = 11.sp,
-                        lineHeight = 15.sp,
-                        color = Stone300
-                    )
-                )
+                if (showBadge) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(activeBadgeBg)
+                            .then(
+                                if (activeBadgeBorderColor != null) {
+                                    Modifier.border(1.dp, activeBadgeBorderColor, RoundedCornerShape(4.dp))
+                                } else Modifier
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = activeBadgeText,
+                            style = TextStyle(
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp,
+                                color = activeBadgeTextColor,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                    }
+                }
             }
+
+            Text(
+                text = description,
+                style = TextStyle(
+                    fontFamily = FontFamily.SansSerif,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                    color = descriptionColor
+                )
+            )
         }
     }
 }
