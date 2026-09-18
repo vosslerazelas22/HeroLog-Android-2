@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Icon
@@ -31,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -153,7 +153,9 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     letterSpacing = 0.025.em,
-                    color = Amber100.copy(alpha = 0.90f)
+                    color = Amber100.copy(alpha = 0.90f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (isUnlocked) {
                     Row(
@@ -162,21 +164,16 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                             .background(Champagne500.copy(alpha = 0.10f))
                             .border(1.dp, Champagne500.copy(alpha = 0.20f), CircleShape)
                             .padding(horizontal = 8.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.AutoAwesome,
-                            contentDescription = null,
-                            tint = Champagne400,
-                            modifier = Modifier.height(10.dp).width(10.dp)
-                        )
                         Text(
                             text = "DESBLOQUEADO",
                             fontFamily = Cinzel,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp,
-                            color = Champagne400
+                            color = Champagne400,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
