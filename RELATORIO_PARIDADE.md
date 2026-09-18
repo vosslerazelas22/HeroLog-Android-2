@@ -16,7 +16,7 @@
 
 | Severidade | Qtd | Descrição |
 |---|---|---|
-| **Crítica** | 5 | Funcionalidade quebrada ou ausente (AmbientSound deselect, TitleEquipModal scroll, TitleSelector grid crash, GeneralSettings campos críticos) |
+| **Crítica** | 4 | Funcionalidade quebrada ou ausente (TitleEquipModal scroll, TitleSelector grid crash, GeneralSettings campos críticos; AmbientSound deselect ✅ resolvido spec-007) |
 | **Média** | ~131 | Diferenças perceptíveis com workaround (paleta, font weights, layout, copy, ausência de SFX) |
 | **Baixa** | ~645+ | Cosmético systematic: font families, casing, hover states, animações ausentes |
 
@@ -40,7 +40,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 ### Achados-chave (divergências individuais de maior impacto)
 
 **Críticas (quebram funcionalidade):**
-1. **AmbientSoundModal — track deselect bug** — Usuário não pode desligar som; só pode trocar de track (React desmarca com `selectTrack(null)`).
+1. **AmbientSoundModal — track deselect bug** — ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)`; usuário pode desligar o som.
 2. **TitleEquipModal — scroll container ausente** — Lista longa de títulos pode transbordar sem scroll (React tem `max-h-[65vh]`).
 3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — Pode causar crash/medição incorreta em Compose (deveria usar `chunked` pattern).
 4. **GeneralSettingsModal — 3 campos críticos ausentes** — "Nome do dispositivo" (sync multi-device), "Duração do descanso longo", seção "Conta e dados" (reset/logout).
@@ -54,9 +54,9 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 9. **FocusCompletionFlow** — decoration mais elaborada no React (corner brackets, grid 2-col, gradients).
 10. **CognitiveDeathOverlays** — não tem animações no Android (React usa Framer Motion + CSS animate-pulse/ping).
 11. **CharacterScreen** — não tem o botão "+ Gerenciar Habilidades" do header nem prop `isRunning`.
-12. **TimerSettingsModal** — labels de toggle com copy diferente ("Auto-Iniciar" vs "Iniciar automaticamente").
-13. **IncursionModeModal** — cards layout vertical (stack) vs horizontal (row).
-14. **QuestFab** — emojis ausentes nos headers de seção, dot indicator ausente.
+12. **TimerSettingsModal** — labels de toggle com copy diferente ("Auto-Iniciar" vs "Iniciar automaticamente"). ✅ **Resolvido (spec-007)**
+13. **IncursionModeModal** — cards layout vertical (stack) vs horizontal (row). ✅ **Resolvido (spec-007)**
+14. **QuestFab** — emojis ausentes nos headers de seção, dot indicator ausente. ✅ **Resolvido (spec-007)** — header "🎯 Contratos Diários" + dots coloridos por estado
 
 ---
 
@@ -350,7 +350,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D137 | **Label nível: "Nv." vs "Nível"** | `"Nv. {sk.level}"` | `"Nível ${sk.level}"` | **Baixa** | Diferença de copy |
+| D137 | **Label nível: "Nv." vs "Nível"** | `"Nv. {sk.level}"` | ~~`"Nível ${sk.level}"`~~ `"Nv. ${sk.level}"` | ~~**Baixa**~~ **RESOLVIDO (spec-007, PR #14)** | Copy alinhada em `SkillSelectorModal.kt:186` |
 | D138 | **Badge "Ativa" posicionamento** | `absolute top-3.5 right-3.5` | `Box(Alignment.TopEnd)` | **Baixa** | Pode diferir em telas pequenas |
 | D139 | **Ícone de tag** | Lucide `Tag` (2x2) | Material `Icons.Outlined.Sell` | **Baixa** | Shape diferente |
 
@@ -358,18 +358,18 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D140 | **Emoji no título** | `"⚙️ Ajustes do Timer"` | `"Ajustes do Timer"` (sem emoji) | **Baixa** | — |
+| D140 | **Emoji no título** | `"⚙️ Ajustes do Timer"` | ~~`"Ajustes do Timer"` (sem emoji)~~ `"⚙️ Ajustes do Timer"` | ~~**Baixa**~~ **RESOLVIDO (spec-007, PR #14)** | Emoji alinhado em `TimerSettingsModal.kt:101` |
 | D141 | **Toggle appearance** | `ToggleRight`/`ToggleLeft` (lucide, 8x8) | `HeroLogToggleSwitch` (custom, 44x24dp) | **Média** | Aparência do toggle completamente diferente |
 | D142 | **Custom inputs visibility** | Campos sempre renderizados com `opacity-40` quando inactive | Campos wrapped em `AnimatedVisibility`, completely hidden | **Média** | Comportamento de exibição diferente |
-| D143 | **Labels de toggle: copy diferente** | "Auto-Iniciar Descanso" / "Auto-Iniciar Foco" | "Iniciar descanso automaticamente" / "Iniciar foco automaticamente" | **Média** | Copy diferente |
-| D144 | **Botão "Salvar Personalizado"** | Bordered transparent (`bg-champagne-500/10 border`) | Solid amber (`containerColor = Amber500`) | **Média** | Padrão S10 aplicado aqui |
+| D143 | **Labels de toggle: copy diferente** | "Auto-Iniciar Descanso" / "Auto-Iniciar Foco" | ~~"Iniciar descanso automaticamente" / "Iniciar foco automaticamente"~~ "Auto-Iniciar Descanso" / "Auto-Iniciar Foco" (exibidos em UPPERCASE por decisão do revisor — desvio consciente spec-007, React real não tem classe `uppercase`) | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Copy alinhada ao React; case diverge intencionalmente (ver DEV_LOG spec-007 desvio #1) |
+| D144 | **Botão "Salvar Personalizado"** | Bordered transparent (`bg-champagne-500/10 border`) | ~~Solid amber (`containerColor = Amber500`)~~ Bordered transparent (`containerColor = Champagne500/10` + `border Champagne500/30`, texto `SALVAR PERSONALIZADO`) | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Padrão S10 corrigido neste modal; S10 sistêmico permanece noutras telas |
 
 #### IncursionModeModal
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D145 | **Título: emoji e formulação** | `"⚔️ Modo de Incursão"` | `"Modos de Incursão"` (plural, sem emoji) | **Baixa** | — |
-| D146 | **Card layout: vertical vs horizontal** | Cards são vertical stacks (icon+title+badge, description abaixo) | Cards são Row (icon à esquerda, conteúdo à direita) | **Média** | Layout estrutural diferente |
+| D145 | **Título: emoji e formulação** | `"⚔️ Modo de Incursão"` | ~~`"Modos de Incursão"` (plural, sem emoji)~~ `"⚔️ Modo de Incursão"` | ~~**Baixa**~~ **RESOLVIDO (spec-007, PR #14)** | Emoji + singular alinhados |
+| D146 | **Card layout: vertical vs horizontal** | Cards são vertical stacks (icon+title+badge, description abaixo) | ~~Cards são Row (icon à esquerda, conteúdo à direita)~~ Cards são Column (icon/title Row + description abaixo) | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Layout estrutural alinhado ao React |
 
 #### ModeDescriptionModal
 
@@ -382,11 +382,11 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D149 | **Título do modal** | `"Sons Ambiente"` | `"Sons do Santuário"` | **Média** | Copy alterado |
-| D150 | **Volume label** | `"Volume do Eco"` | `"Volume"` (sem "do Eco") | **Baixa** | Subtítulo diferente |
-| D151 | **Volume % display** | Badge mono com bg/border (`champagne-500/10`) | Texto simples `Amber400`, sem container | **Média** | Badge visual perdido |
-| D152 | **Conditional VolumeX/Volume2 icon** | VolumeX quando `volume === 0`, Volume2 quando `> 0` | Sempre Volume2 (sem checar mudo) | **Baixa** | Estado visual de mudo ausente |
-| D153 | **Track deselect toggle** | Clicar track ativo → `selectTrack(null)` (desmarca) | Clicar track → `onSelectTrack(track.id)` sempre (nunca desmarca) | **Crítica** | **Bug funcional**: usuário não pode desligar som |
+| D149 | **Título do modal** | `"Sons Ambiente"` | ~~`"Sons do Santuário"`~~ `"Sons Ambiente"` | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Copy alinhada |
+| D150 | **Volume label** | `"Volume do Eco"` | ~~`"Volume"` (sem "do Eco")~~ `"Volume do Eco"` | ~~**Baixa**~~ **RESOLVIDO (spec-007, PR #14)** | Copy alinhada |
+| D151 | **Volume % display** | Badge mono com bg/border (`champagne-500/10`) | ~~Texto simples `Amber400`, sem container~~ Badge Box (`Champagne500/10` bg + `Champagne500/20` border, texto `Champagne400/90`) | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Badge visual restaurada |
+| D152 | **Conditional VolumeX/Volume2 icon** | VolumeX quando `volume === 0`, Volume2 quando `> 0` | ~~Sempre Volume2 (sem checar mudo)~~ VolumeX quando `volume == 0`, Volume2 quando `> 0` (tint `Stone500`/`Champagne400`) | ~~**Baixa**~~ **RESOLVIDO (spec-007, PR #14)** | Estado visual de mudo presente |
+| D153 | **Track deselect toggle** | Clicar track ativo → `selectTrack(null)` (desmarca) | ~~Clicar track → `onSelectTrack(track.id)` sempre (nunca desmarca)~~ `onSelectTrack(if (isSelected) null else track.id)` | ~~**Crítica**~~ **RESOLVIDO (spec-007, PR #14)** | Bug funcional corrigido — usuário pode desligar o som |
 | D154 | **Active track indicator color** | `text-emerald-400` (verde) | `Amber500` (âmbar) | **Média** | Cor do status ativo diferente |
 
 #### LevelUpOverlay
@@ -469,8 +469,8 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
 | D194 | **Título do modal** | `"📜 CONTRATOS ATIVOS"` (com scroll emoji) | `"📜 Contratos Ativos"` — S5 corrigiu (emoji + sentence case) | **Resolvido (S5)** | Sprint S5 alinhou emoji e copy ao React |
-| D195 | **Section header emojis** | `"🎯 Contratos Diários"` + `"🛡️ Marcos da Jornada"` | `"CONTRATOS DIÁRIOS"` + `"MARCOS DA JORNADA"` (sem emojis, sentence case parcial) — S5 corrigiu sentence case e fontes | **Parcial (S5)** | S5 migrou fontes para Cinzel e corrigiu copy para sentence case, mas emojis de seção continuam ausentes |
-| D196 | **Daily quest dot indicator** | Dot colorida `w-1.5 h-1.5` com cores dinâmicas | Sem dot indicator — só texto name | **Média** | Indicador visual de status ausente |
+| D195 | **Section header emojis** | `"🎯 Contratos Diários"` + `"🛡️ Marcos da Jornada"` | ~~`"CONTRATOS DIÁRIOS"` + `"MARCOS DA JORNADA"` (sem emojis, sentence case parcial) — S5 corrigiu sentence case e fontes~~ `"🎯 Contratos Diários"` (emoji restaurado spec-007); `"Marcos da Jornada"` N/A — seção removida na spec-001 (decisão Android-first) | ~~**Parcial (S5)**~~ **RESOLVIDO (spec-007, PR #14)** | Único header existente agora tem emoji; header guild moot pós-spec-001 |
+| D196 | **Daily quest dot indicator** | Dot colorida `w-1.5 h-1.5` com cores dinâmicas | ~~Sem dot indicator — só texto name~~ Dot 6.dp `CircleShape` (cinza se claimed, champagne se completed, âmbar se pendente) | ~~**Média**~~ **RESOLVIDO (spec-007, PR #14)** | Indicador visual de status presente |
 | D197 | **Empty state guild** | `"🏆 Todas as teses conquistadas!"` + subtexto `"Glória eterna..."` | `"Todas as teses conquistadas!"` em Cinzel — S5 corrigiu fonte e copy | **Resolvido (S5)** | Sprint S5 alinhou copy e tipografia ao React |
 
 ---
@@ -513,7 +513,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 ### Prioridade 0 — Bugs Críticos (quebram funcionalidade)
 
-1. **AmbientSoundModal — track deselect bug** — Usuário não pode desligar som (D153). Fix: `onSelectTrack` deve checar se track já está ativa e chamar `selectTrack(null)`.
+1. **AmbientSoundModal — track deselect bug** — ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)`.
 2. **TitleEquipModal — scroll container ausente** — Lista pode transbordar (D166). Fix: adicionar `Modifier.heightIn(max = screenHeight * 0.65f).verticalScroll(rememberScrollState())`.
 3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — Risco de crash (D121). Fix: migrar para `LazyColumn` com `items(chunked(2))` como `TitleShopScreen` faz.
 4. **TitleSelectorScreen — nome do título sentence case** — Bug visual (D120). Fix: adicionar `.uppercase()` no `Text` do nome.
@@ -533,9 +533,9 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 12. **D25: Break prep full-screen vs inline**
 13. **D7+D8: FocusCompletionFlow loot grid + decoration**
 14. **D12+D13: CharacterScreen header button + isRunning**
-15. **D146: IncursionModeModal card layout vertical vs horizontal**
-16. **D143: TimerSettingsModal labels de toggle copy diferente**
-17. **D149+D154: AmbientSoundModal título + track color**
+15. **D146: IncursionModeModal card layout vertical vs horizontal** — ✅ **Resolvido (spec-007)**
+16. **D143: TimerSettingsModal labels de toggle copy diferente** — ✅ **Resolvido (spec-007)**
+17. **D149+D154: AmbientSoundModal título + track color** — D149 ✅ **Resolvido (spec-007)**; D154 (indicador verde `emerald-400`) pendente
 18. **D175-D178: StreakCelebration/LootDrop/SessionSummary visual differences**
 19. **D199: Sistema de SFX ausente** — 6 sons, 39 call sites. Criar `SfxManager` com `SoundPool` + 6 áudios sintetizados ou gravados.
 
@@ -549,7 +549,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 ## 7. Conclusão
 
-O port Android apresenta **fidelidade funcional alta** — todas as 17 telas e 15 modais/overlays existem e funcionam com a mesma informação que o React. **6 divergências críticas** foram identificadas (bugs funcionais), mas nenhuma causa crash imediato.
+O port Android apresenta **fidelidade funcional alta** — todas as 17 telas e 15 modais/overlays existem e funcionam com a mesma informação que o React. **5 divergências críticas** restantes (D153 resolvida na spec-007, PR #14), nenhuma causa crash imediato.
 
 A varredura profunda (linha a linha, **todas as 17 telas e 15 modais analisados**) revelou **~780+ divergências**, mas **~70% são sistemáticas** — os mesmos 10 padrões se repetem em todas as telas:
 
@@ -568,7 +568,7 @@ A varredura profunda (linha a linha, **todas as 17 telas e 15 modais analisados*
 
 | # | Divergência | Impacto |
 |---|---|---|
-| D153 | AmbientSoundModal track deselect | Usuário não pode desligar som |
+| D153 | AmbientSoundModal track deselect | ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)` |
 | D166 | TitleEquipModal scroll container | Lista pode transbordar |
 | D121 | TitleSelectorScreen LazyVerticalGrid em scroll | Risco de crash |
 | D173-D174 | SessionSummary título/rank | Estrutura 40% menor e diferente |
@@ -702,7 +702,7 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 
 | # | Divergência | Status | Evidência |
 |---|---|---|---|
-| D153 | AmbientSoundModal track deselect | ❌ **Não resolvido** | `onSelectTrack` sempre passa track.id, nunca null |
+| D153 | AmbientSoundModal track deselect | ✅ **Resolvido (spec-007, PR #14)** | `onSelectTrack(if (isSelected) null else track.id)` — usuário pode desligar o som |
 | D166 | TitleEquipModal scroll container | ❌ **Não resolvido** | Sem `verticalScroll` nem `heightIn` |
 | D121 | TitleSelectorScreen LazyVerticalGrid em scroll | ❌ **Não resolvido** | `LazyVerticalGrid` dentro de `verticalScroll` |
 | D120 | TitleSelectorScreen nome sentence case | ❌ **Não resolvido** | `Text(text = title.name)` sem `.uppercase()` |
@@ -741,12 +741,13 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 
 | Status | Qtd | Divergências |
 |---|---|---|
-| ❌ Não resolvido | 20 | D1, D4-D8, D12-D14, D17, D18, D20-D23 + D120, D121, D131-D134, D153, D166, D173-D174, D198 |
+| ❌ Não resolvido | 19 | D1, D4-D8, D12-D14, D17, D18, D20-D23 + D120, D121, D131-D134, D166, D173-D174, D198 |
 | ✅ Resolvido por Sprint S5 | 1 | D15 (HabitsScreen header casing) |
 | ✅ Resolvido por S5 (labels) | 2 | D57 (Habits labels), D70 (Dailies labels) |
 | ✅ Resolvido por S5 (submit) | 3 | D59 (Habits submit), D80 (Todos submit), S10 parcial |
 | ✅ Resolvido por S5 (fontes) | 5 | D86 (Quests progress), D90 (Quests claimed), D95 parcial (History), D194 (QuestFab title), D197 (QuestFab empty) |
 | ✅ Resolvido por Bloco E (D24/D25) | 2 | D24 (header CÂMARA DE FOCO), D25 (break prep inline) |
+| ✅ Resolvido por spec-007 (PR #14) | 13 | D137 (Nv.), D140 (⚙️ título), D143 (toggle copy), D144 (Salvar bordered), D145 (⚔️ título), D146 (card layout), D149 (Sons Ambiente), D150 (Volume do Eco), D151 (volume badge), D152 (VolumeX condicional), D153 (track deselect), D195 (QuestFab header emoji), D196 (QuestFab dot) |
 | N/A (decisão consciente / equivalente funcional) | 9 | D2, D3, D9-D11, D16, D19 |
 
 **Total resolvido pelo Sprint S5: 11 divergências** (D15, D57, D59, D63, D70, D80, D86, D90, D95 parcial, D194, D197).

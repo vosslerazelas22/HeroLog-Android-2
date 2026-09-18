@@ -5416,3 +5416,45 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
   390×844
 
 **Decisão consciente / desvio:** Nenhum. Fecha o item D4 já catalogado em PARIDADE.md.
+
+---
+
+## Bloco Spec-007 — Paridade visual de modais + fullscreen do Foco (branch `spec-007-implementation-2`, PR #14)
+
+**Commits:**
+- `f81ea4b` fix(spec-007): visual parity for 5 modals + fullscreen focus guard fix
+- `69e6a9c` fix(spec-007): Visual parity fixes for 5 modals - champagne colors, Lucide icons, copy, fullscreen focus
+- `f2fa503` fix(spec-007): round-2 visual parity - uppercase, timer copy/colors, fullscreen top-level
+
+**Arquivos alterados (6, diff `f81ea4b..f2fa503`):**
+- `ui/theme/Color.kt` (+Purple300/400/500/950, Red300/950, Amber950)
+- `ui/focus/IncursionModeModal.kt` (helper text, ícones Lucide, cores champagne, badge com alpha+borda)
+- `ui/focus/AmbientSoundModal.kt` (slider champagne, vol bg `Stone950/40` + `border-white/10`)
+- `ui/focus/TimerSettingsModal.kt` (cores champagne, uppercase, copies, toggle verde)
+- `ui/skills/SkillSelectorModal.kt` (badge sólida, nomes uppercase)
+- `MainActivity.kt` (fullscreen hoisted acima do Scaffold + wiring `onEnterFullscreen`)
+
+**Resumo round-1 (`f81ea4b` + `69e6a9c`):**
+- `Color.kt`: centralização; removido `Zinc400` (valor incorreto — era o hex de `Stone400`); corrigidos `Zinc300`, ícone mudo (`Stone500`), toggle inativo (`Stone600`), ícone volume/`%` (`Champagne400`, React `text-champagne-400/90`)
+- `IncursionModeModal`: helper `"Selecione o estilo de jornada..."`; ícones Material → Lucide (`sparkles`/`swords`/`skull` via `com.composables.icons.lucide.R`); título/ícone Padrão `Amber` → `Champagne`; badges ativas com bg em alpha (0.2) + borda + texto claro (`Champagne300`/`Purple300`/`Red300`)
+- `AmbientSoundModal`: slider `Amber` → `Champagne500` (React `accent-champagne-500`)
+- `TimerSettingsModal`: presets ativo `Champagne500/10` + borda `Champagne400` + texto `Champagne300`; inativo `Zinc300/60`
+- `SkillSelectorModal`: nome ativo `Champagne300`/inativo `Zinc300/90`; progresso `Champagne500→Champagne300` (React `from-champagne-500 to-champagne-300`)
+- `MainActivity`: guard de fullscreen `isFocusMode && (isRunning || isBreakActive)` → só `isFocusMode` (React `App.tsx:2055`)
+
+**Resumo round-2 / revisão visual (`f2fa503`):**
+- `SkillSelectorModal`: helper em UPPERCASE hardcoded; `sk.name.uppercase()`; badge ATIVA com bg sólido `Champagne400` + texto `Stone950` (React `bg-champagne-400 text-stone-950`)
+- `IncursionModeModal`: helper + nomes dos modos em UPPERCASE hardcoded (`🎯 PADRÃO`, `⚔️ MASMORRA`, `💀 SELVAGEM`)
+- `TimerSettingsModal`: labels `FOCO`/`PAUSA CURTA`/`PAUSA LONGA` uppercase, cor `Zinc300/50`; limit hints movidos para **abaixo** do input (`Stone500` mono); copy `SALVAR PERSONALIZADO` + borda `Champagne500/30`; títulos `AUTO-INICIAR DESCANSO/FOCO` uppercase cor `Stone100/90`; toggle track `Emerald400` (React `text-emerald-400`); presets inativos `Zinc300/60`
+- `MainActivity` fullscreen: `FocusModeScreen` movido para **acima do `Scaffold`** (early-return, espelha React `App.tsx:2055`) — elimina botões atrás da bottom nav; `isFocusMode` hoisted para o escopo do `setContent`; `onEnterFullscreen` como parâmetro de `FocusOrbPreviewScreen`, wireado nos 3 estados (idle, running-inline, break); branch morto `else if (isFocusMode)` removido de dentro de `FocusOrbPreviewScreen`; guard nullable (`csForFullscreen != null`)
+
+**Validação:**
+- Build: `./gradlew assembleDebug` → BUILD SUCCESSFUL
+- Testes: `./gradlew testDebugUnitTest` → **605/605, 0 falhas/erros** (XML bruto em `app/build/test-results/testDebugUnitTest/`)
+  - `IncursionModeModalScreenshotTest` 5/5, `TimerSettingsModalScreenshotTest` 5/5, `SkillSelectorModalScreenshotTest` 1/1
+- Visual em device/emulador: **PENDENTE** — screenshots Roborazzi não substituem inspeção humana
+
+**Desvios conscientes (divergências intencionais vs fonte React real):**
+1. UPPERCASE hardcoded no Android (helper + nomes de modos/skill/labels) onde o React real **não** tem classe `uppercase` (`SkillSelectorModal.tsx:29-30`, `IncursionModeModal.tsx:34-35,54,90,126`, `App.tsx:2551-2552`). Aplicado por pedido explícito do revisor (o que ele vê renderizado no AI Studio diverge do repo real). Se um dia o React real ganhar `uppercase`, o Android já está pronto; se não, manter como está.
+2. `TextTransform.Uppercase` não usado — `androidx.compose.ui.text.style.TextTransform` não resolveu nesta toolchain (Compose BOM 2024.09.00); strings já em maiúsculas, sem dependência de estilo.
+3. Cursor do input customizado em `Emerald400` (React não define cursor explícito) — segue o pedido "sliders verdes".
