@@ -4,12 +4,14 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog
 import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.focus.CompletionShell
+import com.iurispraecepta.herolog.ui.focus.AchievementUnlockScreen
 import com.iurispraecepta.herolog.ui.focus.LootDropScreen
 import com.iurispraecepta.herolog.ui.focus.SessionNotesScreen
 import com.iurispraecepta.herolog.ui.focus.SessionSummaryScreen
@@ -178,6 +180,41 @@ class FocusCompletionFlowScreenshotTest {
         }
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_flow_notes_with_skill_tags.png")
     }
+
+    @Test
+    fun focusCompletionFlow_achievementUnlock_single() {
+        val achievement = AchievementCatalog.ACHIEVEMENTS_LIST.first { it.id == "first_quest" }
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    AchievementUnlockScreen(
+                        achievement = achievement,
+                        currentIndex = 0,
+                        totalCount = 1
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_flow_achievement_single.png")
+    }
+
+    @Test
+    fun focusCompletionFlow_achievementUnlock_multiple() {
+        val a1 = AchievementCatalog.ACHIEVEMENTS_LIST.first { it.id == "first_quest" }
+        val a2 = AchievementCatalog.ACHIEVEMENTS_LIST.first { it.id == "streak_3" }
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    AchievementUnlockScreen(
+                        achievement = a1,
+                        currentIndex = 0,
+                        totalCount = 2
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_flow_achievement_multi_1.png")
+    }
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -268,6 +305,23 @@ class FocusCompletionFlowSmallScreenTest {
         }
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_375x667_notes.png")
     }
+
+    @Test
+    fun completionShell_buttonVisible_375x667_achievement() {
+        val achievement = AchievementCatalog.ACHIEVEMENTS_LIST.first { it.id == "first_quest" }
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    AchievementUnlockScreen(
+                        achievement = achievement,
+                        currentIndex = 0,
+                        totalCount = 1
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_375x667_achievement.png")
+    }
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -338,5 +392,22 @@ class FocusCompletionFlowMediumScreenTest {
             }
         }
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_390x844_loot_drop.png")
+    }
+
+    @Test
+    fun completionShell_buttonVisible_390x844_achievement() {
+        val achievement = AchievementCatalog.ACHIEVEMENTS_LIST.first { it.id == "streak_7" }
+        composeTestRule.setContent {
+            HeroLogTheme {
+                CompletionShell(onNext = {}, isLastStep = false) {
+                    AchievementUnlockScreen(
+                        achievement = achievement,
+                        currentIndex = 0,
+                        totalCount = 1
+                    )
+                }
+            }
+        }
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/focus_completion_390x844_achievement.png")
     }
 }

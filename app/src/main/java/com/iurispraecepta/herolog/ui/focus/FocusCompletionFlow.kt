@@ -1,5 +1,12 @@
 package com.iurispraecepta.herolog.ui.focus
 
+import android.os.Build
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,8 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -37,12 +43,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.logic.achievements.Achievement
@@ -51,9 +62,11 @@ import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Amber100
+import com.iurispraecepta.herolog.ui.theme.Champagne300
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
@@ -86,7 +99,7 @@ fun CompletionShell(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Stone950)
+            .background(QuestPanel)
             .imePadding()
             .padding(
                 start = 24.dp,
@@ -108,7 +121,8 @@ fun CompletionShell(
             onClick = onNext,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(56.dp)
+                .shadow(12.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFC29544).copy(alpha = 0.25f)),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFC29544),
@@ -117,10 +131,11 @@ fun CompletionShell(
             border = BorderStroke(1.dp, Color(0xFFE9C37A))
         ) {
             Text(
-                text = if (isLastStep) "RECEBER RECOMPENSAS" else "CONTINUAR",
-                fontWeight = FontWeight.Bold,
+                text = if (isLastStep) "RECEBER RECOMPENSAS" else "Continuar",
+                fontWeight = FontWeight.Black,
                 fontSize = 14.sp,
                 letterSpacing = 2.sp,
+                fontFamily = Cinzel,
                 color = Stone950
             )
         }
@@ -132,24 +147,62 @@ fun StreakCelebrationScreen(
     streakPreview: Int,
     modifier: Modifier = Modifier
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "streak_bounce")
+    val bounceOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Filled.LocalFireDepartment,
-            contentDescription = null,
-            tint = Color(0xFFF97316),
-            modifier = Modifier.size(80.dp)
-        )
+        Box(
+            modifier = Modifier.size(96.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .blur(24.dp)
+                        .background(Color(0xFFF97316).copy(alpha = pulseAlpha), CircleShape)
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.LocalFireDepartment,
+                contentDescription = null,
+                tint = Color(0xFFF97316),
+                modifier = Modifier
+                    .size(80.dp)
+                    .offset { IntOffset(0, bounceOffset.dp.roundToPx()) }
+                    .shadow(25.dp, CircleShape, ambientColor = Color(0xFFF97316).copy(alpha = 0.6f))
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Você manteve a chama acesa por mais um dia",
-            color = Color(0xFFA8A29E),
+            color = Color(0xFFD4C5A0).copy(alpha = 0.8f),
             fontSize = 14.sp,
+            fontFamily = Cinzel,
+            letterSpacing = 0.5.sp,
             textAlign = TextAlign.Center
         )
 
@@ -157,10 +210,18 @@ fun StreakCelebrationScreen(
 
         Text(
             text = "$streakPreview ${if (streakPreview == 1) "dia" else "dias"}",
-            color = Color(0xFFFCD34D),
+            color = Champagne300,
             fontSize = 48.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            fontWeight = FontWeight.Black,
+            fontFamily = Cinzel,
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = Color(0xFFE2B054).copy(alpha = 0.4f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 12f
+                )
+            )
         )
     }
 }
@@ -187,7 +248,7 @@ fun SessionSummaryScreen(
             text = "SESSÃO CONCLUÍDA",
             color = Champagne400,
             fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             fontFamily = Cinzel,
             letterSpacing = 3.sp
         )
@@ -196,7 +257,7 @@ fun SessionSummaryScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(
-                    elevation = 4.dp,
+                    elevation = 8.dp,
                     spotColor = Champagne400.copy(alpha = 0.35f),
                     ambientColor = Champagne400.copy(alpha = 0.35f)
                 ),
@@ -209,7 +270,14 @@ fun SessionSummaryScreen(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.ExtraBold,
                 fontFamily = Cinzel,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.5.sp,
+                style = TextStyle(
+                    shadow = Shadow(
+                        color = Color(0xFFE2B054).copy(alpha = 0.35f),
+                        offset = Offset(0f, 2f),
+                        blurRadius = 8f
+                    )
+                )
             )
             Text(
                 text = rankDesc.uppercase(),
@@ -221,79 +289,111 @@ fun SessionSummaryScreen(
             )
         }
 
-        Row(
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(0.85f)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Amber500.copy(alpha = 0.15f))
-            )
-        }
+                .fillMaxWidth(0.85f)
+                .height(1.dp)
+                .background(Amber500.copy(alpha = 0.15f))
+        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.85f)
                 .background(Color(0xFF1C1917), RoundedCornerShape(12.dp))
                 .border(1.dp, Color(0xFF292524), RoundedCornerShape(12.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("DURAÇÃO DA SESSÃO", color = Color(0xFFA8A29E), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("${rewardsCalculation.durationMins} MIN", color = Color(0xFFF5F5F4), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("DURAÇÃO DA SESSÃO", color = Color(0xFF9F9F9F), fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = Cinzel, letterSpacing = 1.sp)
+                Text("${rewardsCalculation.durationMins} MIN", color = Champagne400, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Cinzel)
             }
+            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF292524)))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("SEQUÊNCIA DE CHAMA", color = Color(0xFFA8A29E), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("🔥 $effectiveStreak ${if (effectiveStreak == 1) "DIA" else "DIAS"}", color = Color(0xFFF5F5F4), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("SEQUÊNCIA", color = Color(0xFF9F9F9F), fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = Cinzel, letterSpacing = 1.sp)
+                Text(
+                    "🔥 $effectiveStreak ${if (effectiveStreak == 1) "DIA" else "DIAS"}",
+                    color = Color(0xFFF14D2A),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = Cinzel
+                )
             }
 
             if (rewardsCalculation.comboBonusPercent > 0) {
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF292524)))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("BÔNUS DE MULTIPLICADOR COMBO", color = Color(0xFFF14D2A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    Text("+${rewardsCalculation.comboBonusPercent}%", color = Color(0xFFF14D2A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("BÔNUS DE MULTIPLICADOR COMBO", color = Color(0xFFF14D2A), fontSize = 10.sp, fontWeight = FontWeight.Black, fontFamily = Cinzel, letterSpacing = 1.sp)
+                    Text("+${rewardsCalculation.comboBonusPercent}%", color = Color(0xFFF14D2A), fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Cinzel)
                 }
             }
         }
 
+        Spacer(modifier = Modifier.height(4.dp))
+
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.85f)
                 .background(Color(0xFF1C1917), RoundedCornerShape(12.dp))
-                .border(1.dp, Color(0xFFE2B054).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                .border(1.dp, Amber500.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
                 .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround,
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "⚡ +${rewardsCalculation.xpEarned} XP",
                     color = Color(0xFF34D399),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = JetBrainsMono,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color(0xFF34D399).copy(alpha = 0.25f),
+                            offset = Offset(0f, 2f),
+                            blurRadius = 6f
+                        )
+                    )
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(32.dp)
+                        .background(Amber500.copy(alpha = 0.1f))
                 )
                 Text(
                     text = "💎 +${rewardsCalculation.goldEarned + rewardsCalculation.dungeonClearGoldBonus} GP",
-                    color = Color(0xFFE2B054),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    color = Champagne400,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = JetBrainsMono,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = Color(0xFFE2B054).copy(alpha = 0.25f),
+                            offset = Offset(0f, 2f),
+                            blurRadius = 6f
+                        )
+                    )
                 )
             }
         }
@@ -306,6 +406,17 @@ fun LootDropScreen(
     droppedTitle: DroppedTitle?,
     modifier: Modifier = Modifier
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "loot_bounce")
+    val bounceOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -314,75 +425,173 @@ fun LootDropScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "TESOURO CONQUISTADO",
-            color = Color(0xFFC084FC),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 1.5.sp
+            text = "🎁",
+            fontSize = 36.sp,
+            modifier = Modifier
+                .offset { IntOffset(0, bounceOffset.dp.roundToPx()) }
+                .shadow(15.dp, CircleShape, ambientColor = Color(0xFFA855F7).copy(alpha = 0.5f))
         )
 
-        lootedItems.forEach { item ->
-            val isEspecial = item.rarity == Rarity.Especial
-            val borderColor = if (isEspecial) Color(0xFFA855F7) else Color(0xFF44403C)
-            val badgeColor = if (isEspecial) Color(0xFFC084FC) else Color(0xFFA8A29E)
-            val badgeText = if (isEspecial) "★ ESPECIAL ★" else "COMUM"
+        Text(
+            text = "TESOURO CONQUISTADO",
+            color = Color(0xFFC084FC),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            fontFamily = Cinzel,
+            letterSpacing = 2.sp
+        )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1917)),
-                border = BorderStroke(1.dp, borderColor)
-            ) {
-                Row(
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(1.dp)
+                .background(Color(0xFFA855F7).copy(alpha = 0.2f))
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            lootedItems.forEach { item ->
+                val isEspecial = item.rarity == Rarity.Especial
+                val borderColor = if (isEspecial) Color(0xFFA855F7).copy(alpha = 0.3f) else Color(0xFF44403C)
+                val badgeColor = if (isEspecial) Color(0xFFC084FC) else Color(0xFFA8A29E)
+                val badgeText = if (isEspecial) "★ ESPECIAL ★" else "COMUM"
+                val bgBrush = if (isEspecial) {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF2E1065).copy(alpha = 0.3f),
+                            Stone950,
+                            Stone950
+                        )
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF292524).copy(alpha = 0.4f),
+                            Stone950,
+                            Stone950
+                        )
+                    )
+                }
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .shadow(if (isEspecial) 15.dp else 0.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFA855F7).copy(alpha = 0.1f))
+                        .background(bgBrush, RoundedCornerShape(12.dp))
+                        .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+                        .padding(12.dp)
                 ) {
-                    Text(text = item.emoji, fontSize = 32.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = item.name, color = Color(0xFFF5F5F4), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                            Text(text = badgeText, color = badgeColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    val cornerColor = if (isEspecial) Color(0xFFA855F7).copy(alpha = 0.4f) else Color(0xFF57534E).copy(alpha = 0.4f)
+                    // Corner accents (React :281-284)
+                    Box(modifier = Modifier.align(Alignment.TopStart).size(6.dp).border(1.dp, cornerColor, RoundedCornerShape(topStart = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.TopEnd).size(6.dp).border(1.dp, cornerColor, RoundedCornerShape(topEnd = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.BottomStart).size(6.dp).border(1.dp, cornerColor, RoundedCornerShape(bottomStart = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.BottomEnd).size(6.dp).border(1.dp, cornerColor, RoundedCornerShape(bottomEnd = 2.dp)))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = item.emoji,
+                            fontSize = 32.sp,
+                            modifier = Modifier.then(
+                                if (isEspecial) Modifier.shadow(10.dp, CircleShape, ambientColor = Color(0xFFA855F7).copy(alpha = 0.4f))
+                                else Modifier
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = item.name,
+                                    color = if (isEspecial) Color(0xFFC4B5FD) else Color(0xFFD6D3D1),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = Cinzel,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Text(text = badgeText, color = badgeColor, fontSize = 7.sp, fontWeight = FontWeight.Bold, fontFamily = JetBrainsMono, letterSpacing = 1.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = item.desc,
+                                color = Color(0xFFA8A29E).copy(alpha = 0.5f),
+                                fontSize = 10.sp,
+                                fontFamily = Cinzel
+                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = item.desc, color = Color(0xFFA8A29E), fontSize = 12.sp)
                     }
                 }
             }
-        }
 
-        droppedTitle?.let { title ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1C1917)),
-                border = BorderStroke(1.dp, Color(0xFFF59E0B))
-            ) {
-                Row(
+            droppedTitle?.let { title ->
+                val titleCornerColor = Color(0xFFE5C158).copy(alpha = 0.4f)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .shadow(15.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFE5C158).copy(alpha = 0.15f))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFF854D0E).copy(alpha = 0.4f),
+                                    Stone950,
+                                    Stone950
+                                )
+                            ),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .border(1.dp, Color(0xFFE5C158).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
                 ) {
-                    Text(text = title.emoji, fontSize = 32.sp)
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(text = title.name, color = Color(0xFFFCD34D), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                            Text(text = "★ TÍTULO RARO ★", color = Color(0xFFFCD34D), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    // Corner accents (React :315-318)
+                    Box(modifier = Modifier.align(Alignment.TopStart).size(6.dp).border(1.dp, titleCornerColor, RoundedCornerShape(topStart = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.TopEnd).size(6.dp).border(1.dp, titleCornerColor, RoundedCornerShape(topEnd = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.BottomStart).size(6.dp).border(1.dp, titleCornerColor, RoundedCornerShape(bottomStart = 2.dp)))
+                    Box(modifier = Modifier.align(Alignment.BottomEnd).size(6.dp).border(1.dp, titleCornerColor, RoundedCornerShape(bottomEnd = 2.dp)))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = title.emoji,
+                            fontSize = 32.sp,
+                            modifier = Modifier.shadow(10.dp, CircleShape, ambientColor = Color(0xFFE5C158).copy(alpha = 0.4f))
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = title.name,
+                                    color = Color(0xFFFCD34D),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = Cinzel,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Text("★ TÍTULO RARO ★", color = Color(0xFFE5C158), fontSize = 7.sp, fontWeight = FontWeight.Bold, fontFamily = JetBrainsMono, letterSpacing = 1.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Pode ser equipado na tela de Títulos.",
+                                color = Color(0xFFA8A29E).copy(alpha = 0.5f),
+                                fontSize = 10.sp,
+                                fontFamily = Cinzel
+                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "Pode ser equipado na tela de Títulos.", color = Color(0xFFA8A29E), fontSize = 12.sp)
                     }
                 }
             }
@@ -408,72 +617,113 @@ fun SessionNotesScreen(
     ) {
         Text(
             text = "📜 CRÔNICA DA MISSÃO",
-            color = Color(0xFFE2B054),
-            fontSize = 12.sp,
+            color = Champagne400,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Black,
-            letterSpacing = 1.5.sp
+            fontFamily = Cinzel,
+            letterSpacing = 2.sp,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = Color(0xFFE2B054).copy(alpha = 0.35f),
+                    offset = Offset(0f, 1f),
+                    blurRadius = 8f
+                )
+            )
         )
 
-        OutlinedTextField(
-            value = completionNotes,
-            onValueChange = onNotesChange,
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(112.dp),
-            placeholder = {
-                Text("O que você aprendeu ou fez nesta sessão?", color = Color(0xFF78716C), fontSize = 14.sp)
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF1C1917),
-                unfocusedContainerColor = Color(0xFF1C1917),
-                focusedBorderColor = Color(0xFFE2B054),
-                unfocusedBorderColor = Color(0xFF292524),
-                focusedTextColor = Color(0xFFF5F5F4),
-                unfocusedTextColor = Color(0xFFF5F5F4)
-            ),
-            shape = RoundedCornerShape(12.dp)
+                .fillMaxWidth(0.85f)
+                .height(1.dp)
+                .background(Amber500.copy(alpha = 0.15f))
         )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Column(
+            modifier = Modifier.fillMaxWidth(0.85f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "ANOTAÇÕES",
+                color = Color(0xFFD4D4D8),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                fontFamily = Cinzel,
+                letterSpacing = 1.sp
+            )
+
+            OutlinedTextField(
+                value = completionNotes,
+                onValueChange = onNotesChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(112.dp),
+                placeholder = {
+                    Text("O que você aprendeu ou fez nesta sessão?", color = Color(0xFF78716C), fontSize = 14.sp, fontFamily = Cinzel)
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF1C1917).copy(alpha = 0.85f),
+                    unfocusedContainerColor = Color(0xFF1C1917).copy(alpha = 0.85f),
+                    focusedBorderColor = Champagne400.copy(alpha = 0.25f),
+                    unfocusedBorderColor = Color(0xFF292524),
+                    focusedTextColor = Color(0xFFD4C5A0),
+                    unfocusedTextColor = Color(0xFFD4C5A0)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+        }
 
         if (skillTags.isNotEmpty()) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(0.85f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "VINCULAR SUBSKILL",
-                    color = Color(0xFFA8A29E),
+                    color = Color(0xFFD4D4D8),
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = Cinzel,
                     letterSpacing = 1.sp
                 )
 
-                FlowRowStable(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1C1917).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .border(1.dp, Amber500.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                        .padding(8.dp)
                 ) {
-                    skillTags.forEach { tag ->
-                        val isSelected = completionTag == tag
-                        val chipBg = if (isSelected) Color(0xFFD97706).copy(alpha = 0.2f) else Color(0xFF1C1917)
-                        val chipBorder = if (isSelected) Color(0xFFF59E0B) else Color(0xFF292524)
-                        val chipTextColor = if (isSelected) Color(0xFFFCD34D) else Color(0xFFA8A29E)
-                        val chipText = if (isSelected) "$tag ✓" else tag
+                    FlowRowStable(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        skillTags.forEach { tag ->
+                            val isSelected = completionTag == tag
+                            val chipBg = if (isSelected) Color(0xFFD97706).copy(alpha = 0.25f) else Color(0xFF1C1917)
+                            val chipBorder = if (isSelected) Color(0xFFF59E0B) else Amber500.copy(alpha = 0.05f)
+                            val chipTextColor = if (isSelected) Color(0xFFFCD34D) else Color(0xFFA8A29E).copy(alpha = 0.4f)
+                            val chipText = if (isSelected) "$tag ✓" else tag
 
-                        Box(
-                            modifier = Modifier
-                                .background(chipBg, RoundedCornerShape(8.dp))
-                                .border(1.dp, chipBorder, RoundedCornerShape(8.dp))
-                                .clickable {
-                                    if (isSelected) onTagChange("") else onTagChange(tag)
-                                }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = chipText,
-                                color = chipTextColor,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .background(chipBg, RoundedCornerShape(6.dp))
+                                    .border(1.dp, chipBorder, RoundedCornerShape(6.dp))
+                                    .clickable {
+                                        if (isSelected) onTagChange("") else onTagChange(tag)
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = chipText,
+                                    color = chipTextColor,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = Cinzel
+                                )
+                            }
                         }
                     }
                 }
