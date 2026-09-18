@@ -5506,3 +5506,15 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 **Token `Zinc300`:** corrigido para `#D4D4D8` em trabalho paralelo (TimerSettingsModal, mesmo branch, ainda não commitado) — fecha meu achado #1 do bloco D1–D16. O literal `Zinc300React` foi mantido neste bloco de propósito (mesmo valor; commit independente de arquivo alheio não commitado); só o comentário foi atualizado. Cleanup futuro pode migrar os 2 usos para o token sem mudar 1 pixel.
 
 **Isolamento do trabalho paralelo:** `TimerSettingsModal.kt`, `Color.kt` e `opencode.json` (modificados pelo outro agente, não commitados) **não foram tocados nem stageados** — diff e commit deste bloco contêm exclusivamente: `IncursionModeModal.kt`, 4 PNGs `incursion_mode_modal_*`, `DEV_LOG_ANDROID.md`, `PARIDADE.md` (verificado via `git diff --stat` antes do commit; diffs de DEV_LOG/PARIDADE conferidos hunk a hunk como só meus).
+
+## [2026-09-18] IncursionModeModal — R1 (`transition-all` 150ms) implementado
+
+**O que:** `IncursionModeCard` agora anima bg, borda e opacity na troca de estado via `animateColorAsState`/`animateFloatAsState` com `tween(150, FastOutSlowInEasing)` — porta fiel do `transition-all` do React (`.tsx:45,79,117`; default Tailwind 150ms, cubic-bezier(0.4,0,0.2,1) = `FastOutSlowInEasing`). Sombra do estado ativo não animada (micro-gap aceito, registrado em comentário). Nomenclatura `R1` mantida de propósito — `D1…D16` colidiria com a série Dx própria do `RELATORIO_PARIDADE.md`.
+
+**Tropeços de toolchain (2 erros de compilação, ambos corrigidos):** (1) `tween(150, …)` sem type-arg no `animateFloatAsState` — "Cannot infer type", corrigido com `tween<Float>` explícito; (2) `animateFloatAsState` importado de `androidx.compose.animation` — pacote correto é `androidx.compose.animation.core` (mesmo de `FocusOrb.kt:11`).
+
+**Validação:**
+- `./gradlew :app:compileDebugKotlin --rerun-tasks` → BUILD SUCCESSFUL.
+- `./gradlew testDebugUnitTest` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
+- Baselines Roborazzi **inalterados** (primeira composição já rende no target — animação só dispara em trocas de estado subsequentes; `git status` limpo em `screenshots/`), logo sem re-record.
+- Visual em device/emulador: **PENDENTE**.

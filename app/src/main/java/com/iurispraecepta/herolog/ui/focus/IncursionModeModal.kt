@@ -1,6 +1,10 @@
 package com.iurispraecepta.herolog.ui.focus
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -231,6 +236,19 @@ private fun IncursionModeCard(
     val showBadge = isActive || alwaysShowBadge
     val cardShape = RoundedCornerShape(8.dp)
 
+    // R1 — `transition-all` do React (.tsx:45,79,117; default Tailwind 150ms,
+    // cubic-bezier(0.4,0,0.2,1) = FastOutSlowInEasing): bg, borda e opacity
+    // do botão animam na troca de estado em vez de trocar instantâneo.
+    // (Sombra do estado ativo não animada — micro-gap aceito.)
+    val transitionSpec = tween<Color>(150, easing = FastOutSlowInEasing)
+    val animatedBgColor by animateColorAsState(bgColor, transitionSpec, label = "incursionCardBg")
+    val animatedBorderColor by animateColorAsState(borderColor, transitionSpec, label = "incursionCardBorder")
+    val animatedAlpha by animateFloatAsState(
+        if (!enabled) 0.5f else 1f,
+        tween<Float>(150, easing = FastOutSlowInEasing),
+        label = "incursionCardAlpha"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -239,9 +257,9 @@ private fun IncursionModeCard(
             // 80% de alpha + esta sombra são a aproximação consciente.
             .then(if (isActive) Modifier.shadow(6.dp, cardShape) else Modifier)
             .clip(cardShape)
-            .background(bgColor)
-            .border(1.dp, borderColor, cardShape)
-            .then(if (!enabled) Modifier.alpha(0.5f) else Modifier)
+            .background(animatedBgColor)
+            .border(1.dp, animatedBorderColor, cardShape)
+            .alpha(animatedAlpha)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(14.dp)
     ) {

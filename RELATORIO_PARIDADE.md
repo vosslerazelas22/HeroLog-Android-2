@@ -678,7 +678,7 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 | 8 | `LevelUpOverlay.kt` | 7 | Título, botão |
 | 9 | `RestoreSaveDialog.kt` | 6 | Título, placeholder |
 | 10 | `ModeDescriptionModal.kt` | 3 | Título, blocks |
-| 11 | `IncursionModeModal.kt` | 3 | Cards, labels |
+| 11 | `IncursionModeModal.kt` | 0 | Cards, labels resolvidos em bloco próprio 18/09 (D1–D16 da auditoria `specs/auditoria-incursion-mode-modal.md` + badge ATIVO + R1 `transition-all`; sem Dx novo — série Dx deste relatório intocada) |
 | 12 | `CognitiveDeathOverlays.kt` | 1 | Título |
 | 13 | `HeroLogModal.kt` | 1 | Título |
 | 14 | `DifficultyBadge.kt` | 1 | Badge text |
@@ -687,10 +687,10 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 
 | Métrica | Valor |
 |---|---|
-| Total de ocorrências restantes | ~109 em 14 arquivos |
-| Arquivos totalmente migrados | 16 (8 Kingdom + Inventory + 5 Missões + QuestFab) |
-| Arquivos parcialmente/não migrados | 14 |
-| Progresso estimado | ~53% migrado (16/30 arquivos UI) |
+| Total de ocorrências restantes | ~106 em 13 arquivos |
+| Arquivos totalmente migrados | 17 (8 Kingdom + Inventory + 5 Missões + QuestFab + IncursionModeModal) |
+| Arquivos parcialmente/não migrados | 13 |
+| Progresso estimado | ~57% migrado (17/30 arquivos UI) |
 
 ---
 
@@ -753,3 +753,4 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 **Total resolvido pelo Sprint S5: 11 divergências** (D15, D57, D59, D63, D70, D80, D86, D90, D95 parcial, D194, D197).
 
 | ✅ Resolvido por S6 (tooltip+botões) | 2 | D30 parcial (FocusModeScreen button font/letterSpacing/casing — background colors ainda pendentes), D29 parcial (Sair casing — mode label "SESSÃO LIVRE" ainda pendente) |
+| ✅ Resolvido por bloco incursion-modal 18/09 (sem PR; device pendente) | 3 | ocorrências de `IncursionModeModal.kt` (Cards, labels) — re-auditoria elemento a elemento + 4 baselines regerados/inspecionados; R1 (`transition-all` 150ms) implementado via `animateColorAsState`/`animateFloatAsState` |
