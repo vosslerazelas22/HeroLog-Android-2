@@ -5680,3 +5680,63 @@ prestígio 2s (fiel ao `animate-pulse`). **Divergência consciente (não documen
 ESQUECER abre modal de confirmação (`HeroLogModal` variant red) — a fonte deleta imediato
 (`onClick={() => onDeleteSkill(idx)}`, `SkillsScreen.tsx:166`). Proteção contra toque
 acidental; React vence se Bruno preferir fidelidade estrita.
+
+## [2026-09-19] Skills — issue #18: grid 2 colunas + fluxo ESQUECER (causa raiz: modal de confirmação aninhado)
+
+**Fonte React:** `src/modules/skills/SkillsScreen.tsx:166` (botão chama `onDeleteSkill`),
+`:323` (`grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-[160px] overflow-y-auto`);
+`src/modules/skills/useSkills.ts:116-158` (`deleteSkill` abre `CustomDialog` com
+`isConfirm: true`, título `'Esquecer Habilidade?'`, e só deleta no `onConfirm`).
+**Arquivos alterados (este bloco):** `SkillsScreen.kt` (+testTags, +param
+`initialDeleteConfirmIdx`, pesos do grid, bloco de confirmação movido);
+`SkillsScreenDeleteConfirmTest.kt` (novo, 3 testes de UI);
+`SkillsScreenScreenshotTest.kt` (+1 teste `skillsScreen_deleteConfirm_screenshot`);
+3 baselines regenerados (`skills_screen`, `skills_screen_create_modal`,
+`skills_screen_editing`) + `skills_screen_delete_confirm.png` (novo).
+
+**Causa raiz (botão ESQUECER morto):** o `HeroLogModal` de confirmação estava aninhado
+dentro do lambda de conteúdo do modal de criação. Como `HeroLogModal.kt:155` retorna sem
+compor `content()` quando fechado, a confirmação só existia com o modal de criação
+aberto — ESQUECER só setava `deleteConfirmIdx` sem efeito visível, e clicar em NOVA
+"ressuscitava" a confirmação. Não havia estado compartilhado entre os fluxos; era
+puramente estrutural. Fix: fechar o lambda do modal de criação antes do bloco
+`if (deleteConfirmIdx != null)`, que passa a ser irmão (estrutura verificada por
+checagem programática de chaves: A e B fechados antes do `if`, bloco dentro da
+`rootCol`, rootCol+fun fechados no fim). Handlers e wiring (`MainActivity` →
+`HeroLogViewModel.deleteSkill`, com checagem de elegibilidade) inalterados — a ação
+final é a mesma de antes do guard.
+**Grid:** `weight(1f, fill = false)` → `weight(1f)` nos itens e no espaçador da última
+linha (opção mínima, sem `LazyVerticalGrid`); scroll interno `max 160dp` mantido (fiel
+ao `overflow-y-auto` da fonte). `maxLines/ellipsis` avaliado e dispensado — baseline
+mostra nomes longos ("Jogos & Estratégia" fora da viewport inicial) sem estouro nas
+células visíveis.
+**Correção de registro (sem mudança de comportamento):** o guard com confirmação **é
+fiel ao React** (`useSkills.ts:136-155`, `CustomDialog` confirm) — a alegação do bloco
+anterior ("fonte deleta imediato", `SkillsScreen.tsx:166` lido isolado, divergência
+consciente) estava errada; `SkillsScreen.tsx:166` só é o primeiro elo, a confirmação
+vive em `useSkills.deleteSkill`. Registro corrigido, código de confirmação mantido.
+**Testabilidade:** `testTag("forgetSkill_$idx"/"forgetCancelButton"/"forgetConfirmButton")`
++ param `initialDeleteConfirmIdx` (mesmo padrão do `initialEditingIdx` pré-existente).
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL in 1m 50s (39 tasks).
+- `./gradlew testDebugUnitTest` (suíte completa) → **609/609, 0 falhas/erros/skips**
+  (XML bruto, 76 classes; 605 pré-existentes + 4 novos). Nominais novos:
+  `forgetButton_opensConfirmImmediately_withoutCreateModal`,
+  `forgetConfirm_cancel_doesNotDeleteSkill`, `forgetConfirm_confirm_deletesSkill`
+  (3/3 `SkillsScreenDeleteConfirmTest`); `skillsScreen_deleteConfirm_screenshot`
+  (4/4 `SkillsScreenScreenshotTest`).
+- `./gradlew verifyRoborazziDebug --tests SkillsScreenScreenshotTest` → BUILD
+  SUCCESSFUL. Baseline `create_modal` inspecionado nesta sessão: 2 colunas iguais,
+  "Estudos" dimmed (`alreadyHas`) correto; `delete_confirm` mostra só o modal vermelho
+  com a criação fechada — prova composicional do fix.
+- Notas de ambiente: (1) `testDebugUnitTest` puro **não** verifica screenshots (captura
+  sem golden passa em silêncio e não escreve arquivo) — é preciso
+  `record/verifyRoborazziDebug`; (2) `debug.keystore` (gitignored) copiado da main para
+  este worktree — sem ele `assembleDebug` falha (`validateSigningDebug`) em qualquer
+  worktree novo.
+- Visual em device/emulador (375×667, 390×844): **PENDENTE**.
+
+**Residuais (fora deste bloco):** cantos do botão ESQUECER do modal parecem sem
+arredondamento à direita (`clip` após `background`, pré-existente do `e0313c0`) —
+cosmético, follow-up futuro, sem regressão (existia antes e depois).
