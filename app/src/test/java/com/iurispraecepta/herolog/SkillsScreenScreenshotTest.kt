@@ -123,4 +123,36 @@ class SkillsScreenScreenshotTest {
 
         composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/skills_screen_create_modal.png")
     }
+
+    @Test
+    fun skillsScreen_deleteConfirm_screenshot() {
+        val sampleSkills = listOf(
+            Skill(
+                name = "Estudos",
+                level = 10,
+                xp = 320,
+                emoji = "📚",
+                tags = listOf("Direito", "Matemática")
+            )
+        )
+
+        composeTestRule.setContent {
+            HeroLogTheme {
+                SkillsScreen(
+                    skills = sampleSkills,
+                    onAddTagToSkill = { _, _ -> },
+                    onRemoveTagFromSkill = { _, _ -> },
+                    onAddCustomSkill = { _, _ -> },
+                    onDeleteSkill = {},
+                    onPrestigeSkill = {},
+                    onRenameSkill = { _, _ -> },
+                    isCreateModalOpen = false,
+                    onCreateModalOpenChange = {},
+                    initialDeleteConfirmIdx = 0
+                )
+            }
+        }
+
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/skills_screen_delete_confirm.png")
+    }
 }

@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -215,6 +216,7 @@ fun SkillsScreen(
     isCreateModalOpen: Boolean,
     onCreateModalOpenChange: (Boolean) -> Unit,
     initialEditingIdx: Int? = null,
+    initialDeleteConfirmIdx: Int? = null,
     modifier: Modifier = Modifier,
 ) {
     var editingIdx by remember(initialEditingIdx) { mutableStateOf<Int?>(initialEditingIdx) }
@@ -224,7 +226,7 @@ fun SkillsScreen(
 
     var newSkillNameInput by remember { mutableStateOf("") }
     var selectedNewSkillEmoji by remember { mutableStateOf("📚") }
-    var deleteConfirmIdx by remember { mutableStateOf<Int?>(null) }
+    var deleteConfirmIdx by remember(initialDeleteConfirmIdx) { mutableStateOf<Int?>(initialDeleteConfirmIdx) }
 
     val handleSaveRename: (Int) -> Unit = { idx ->
         val trimmed = editNameValue.trim()
@@ -447,6 +449,7 @@ Box(
                                             .clip(RoundedCornerShape(4.dp))
                                             .background(Red500.copy(alpha = 0.04f))
                                             .border(1.dp, Red500.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                                            .testTag("forgetSkill_$idx")
                                             .pressedOverlay(onClick = { deleteConfirmIdx = idx }, pressedColor = Red500.copy(alpha = 0.1f))
                                             .padding(horizontal = 6.dp, vertical = 4.dp),
                                 ) {
@@ -888,12 +891,12 @@ Text(
                                             sug = sug,
                                             alreadyHas = alreadyHas,
                                             onClick = { handleAddSuggestion(sug.name, sug.emoji) },
-                                            modifier = Modifier.weight(1f, fill = false),
+                                            modifier = Modifier.weight(1f),
                                         )
                                     }
                                     // If odd number, add spacer for last item
                                     if (pair.size == 1) {
-                                        Box(modifier = Modifier.weight(1f, fill = false))
+                                        Box(modifier = Modifier.weight(1f))
                                     }
                                 }
                             }
@@ -901,8 +904,10 @@ Text(
                     }
             }
         }
+        }
 
-        // Modal Confirmação Esquecer Habilidade
+        // Modal Confirmação Esquecer Habilidade (irmão do modal de criação,
+        // não aninhado: aninhado, ele só compunha com o modal de criação aberto)
         if (deleteConfirmIdx != null) {
             val skillToDelete = skills.getOrNull(deleteConfirmIdx!!)
             HeroLogModal(
@@ -931,6 +936,7 @@ Text(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(vertical = 12.dp)
+                                .testTag("forgetCancelButton")
                                 .clickable { deleteConfirmIdx = null }
                                 .background(Color.Transparent)
                                 .border(1.dp, Zinc700, RoundedCornerShape(4.dp))
@@ -958,6 +964,7 @@ Text(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(vertical = 12.dp)
+                                .testTag("forgetConfirmButton")
                                 .clickable {
                                     deleteConfirmIdx?.let { idx ->
                                         onDeleteSkill(idx)
@@ -972,6 +979,5 @@ Text(
                 }
             }
         }
-    }
 }
 }
