@@ -5536,3 +5536,35 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 - `./gradlew testDebugUnitTest --rerun-tasks` → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
 - Baselines Roborazzi regerados pelo run (26 PNGs): 5 `timer_settings_modal_*` (nova UI, inspecionados em pixel — presets, toggles Lucide, divisores, 2 cards, input cards, bloco dimmed) + 21 de dailies/habits/todos/focus/skill_selector (efeito colateral legítimo do token `Zinc300` corrigido; `habits_screen_confirm_cancel.png` inspecionado — modal íntegro).
 - Visual em device/emulador: **PENDENTE**.
+
+## [2026-09-18] BreakPrepScreen — D-A (header) + D-F (skip) da auditoria de paridade visual
+
+**Fonte React:** `App.tsx:2419` (header `text-emerald-500 text-[10px] tracking-[0.25em] uppercase font-serif font-black`) e `App.tsx:2470` (skip `text-amber-500/80 text-[11px] font-serif uppercase tracking-widest`). Serif = Cinzel (`index.css:4`). **Arquivo alterado:** só `ui/focus/BreakPrepScreen.kt` (+1 import `Cinzel`).
+
+**O que:** header "MISSÃO CONCLUÍDA." — Inter 12sp Bold `#34D399` ls 1.2sp → Cinzel ExtraBold 10sp `#10B981` (emerald-500) ls 2.5sp (= 0.25em × 10px). Skip "⏩ CONTINUAR SEM PAUSA" — Inter SemiBold 14sp `Amber500` sólido → Cinzel Normal 11sp `Amber500@80%` ls 1.1sp (= 0.1em × 11px, `tracking-widest`).
+
+**Divergência mínima documentada (no código):** React usa `font-black` (900) no header; Cinzel vai só até ExtraBold (800) — `Type.kt:35-40` não tem Black. Sem síntese de peso; 800 é o mais próximo.
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL (1 falha intermediária de compilação em `SkillsScreen.kt`/`Amber100`, pré-existente do working tree sujo — outro trabalho em andamento nos arquivos `MainActivity.kt`/`SkillsScreen.kt`/`Color.kt`; resolveu sozinha no rerun, sem relação com este bloco; nenhum erro em `BreakPrepScreen.kt`).
+- `./gradlew testDebugUnitTest --rerun-tasks` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes), incluindo `HeroLogViewModelTest` 63/63 e `BreakPrepScreenScreenshotTest` 3/3.
+- Baselines Roborazzi **inalterados** (`git status` limpo em `screenshots/`).
+- Visual em device/emulador: **PENDENTE**. Restante da auditoria (D-B/D-C/D-D/D-E/D-G/D-H/D-I) fora de escopo deste bloco.
+
+## [2026-09-18] BreakPrepScreen — D-B + D-C + D-D + D-E + D-H da auditoria de paridade visual (+ D-A/D-F do bloco anterior)
+
+**Fonte React:** `App.tsx:2414-2473` (lido na íntegra) + `index.css:4` (serif = Cinzel). **Arquivo alterado:** só `ui/focus/BreakPrepScreen.kt` (+ imports `Stone100`/`Stone500`/`Stone800`/`shadow`/`widthIn`; removido import `MaterialTheme` morto). `MainActivity.kt` **não** precisou ser tocado (shell já correto desde o Bloco E).
+
+**D-B — subtítulo:** `titleLarge` branco 22sp Bold → Cinzel Normal 12sp `Stone100@50%` lineHeight 19.5sp (= `leading-relaxed` 1.625, `App.tsx:2420`).
+**D-C — container:** radius 20dp→8dp (`rounded-lg`), bg `#0C0A09` @80%→@70% (`0xB3`), borda sólida→`emerald-500@35%`, padding 24dp→32v/20h (`py-8 px-5`), overlay portal `emerald-500/5→transparent` (via `Brush.verticalGradient` atrás do conteúdo, `App.tsx:2416`), margem externa 16dp→12dp (`my-3`). `shadow-inner` sem equivalente no Compose — gap consciente registrado em comentário.
+**D-D — botões de duração:** `BreakDurationOption` reestruturado — label `(curto)`/`(longo)` saiu de dentro da caixa clicável para span abaixo (`space-y-1` = 4dp), fiel a `App.tsx:2428-2456`. Radius 12dp→4dp, padding 14/12dp→10dp vertical (`py-2.5`), valor 16sp→12sp Cinzel + `tracking-widest` 1.2sp, label 12sp Inter→10sp Cinzel `Stone500`. Cores literais: selected bg `emerald-500/10` texto `#6EE7B7` borda `emerald-500/30` (antes: 20%/`#34D399`/sólida); unselected bg transparente (antes `#1C1917`), borda `Stone800` (antes `#444444`), texto `stone-100/50` (antes sólido). `scale-[1.02]` sem equivalente — gap consciente em comentário.
+**D-E — CTA:** gradiente 2→3 stops (`#059669→#10B981→#0D9488`, `App.tsx:2463`), borda 1dp `#34D399`, sombra aproximada via `spotColor emerald@30%` 6dp, altura fixa 52dp→`padding vertical 14.dp` (`py-3.5`), radius 12dp→4dp, texto 16sp Bold→14sp ExtraBold + `tracking-widest` 1.4sp.
+**D-H — largura:** `widthIn(max=320.dp)` na Row de durações e no CTA (`max-w-xs mx-auto`, `App.tsx:2426,2460`).
+**Teto Cinzel (D-A + D-E):** React usa `font-black` (900); Cinzel vai só até ExtraBold (800) — registrado em comentário nos dois pontos.
+**Decisões de Bruno (sem código):** D-G (hover/scale/underline) = N/A mobile, só documentado; D-I (`animate-fade-in` sem keyframes no repo React) desconsiderado — Android é mobile-only.
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL.
+- `./gradlew testDebugUnitTest --rerun-tasks` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
+- Baselines Roborazzi **inalterados** (`git status` limpo em `screenshots/`).
+- Visual em device/emulador: **PENDENTE**.
