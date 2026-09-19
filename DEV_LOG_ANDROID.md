@@ -5740,3 +5740,22 @@ vive em `useSkills.deleteSkill`. Registro corrigido, código de confirmação ma
 **Residuais (fora deste bloco):** cantos do botão ESQUECER do modal parecem sem
 arredondamento à direita (`clip` após `background`, pré-existente do `e0313c0`) —
 cosmético, follow-up futuro, sem regressão (existia antes e depois).
+
+## [2026-09-19] Bloco: FocusCompletionFlow — correção glow/shadow do rank label (paridade visual D173/D174)
+
+**Fonte React:** `FocusCompletionFlow.tsx` linhas 185–186 (rank label com `drop-shadow-[0_2px_8px_rgba(226,176,84,0.35)]` no `<span>`, sem sombra no container pai).
+
+**Arquivos alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt (-5 linhas: removido `Modifier.shadow(elevation=8.dp...)` do `Column` container do rank label em `SessionSummaryScreen`, linhas 256–263)
+
+**Resumo:**
+- O React aplica apenas `drop-shadow` CSS filter no próprio elemento de texto do rank label (linha 185-186). O Android tinha incorretamente um `Modifier.shadow()` no `Column` pai, criando um glow de "card" (elevation 8dp) que visualmente parecia desalinhado com o texto.
+- Correção: removido o `Modifier.shadow()` do container `Column` (linhas 258-263), mantendo apenas o `TextStyle.shadow` no `Text` do rank label (linhas 274-280), que já correspondia ao `drop-shadow` do React.
+- O `PARIDADE.md` linha 67 já previa: "TextStyle shadow (não Modifier.shadow) em streak/rank/XP/GP/título".
+
+**Validação:**
+- `./gradlew testDebugUnitTest` → BUILD SUCCESSFUL in 3m 50s.
+- Testes nominais (XML bruto): `FocusCompletionFlowScreenshotTest` 8/8 PASSED, `FocusCompletionFlowSmallScreenTest` 4/4 PASSED, `FocusCompletionFlowMediumScreenTest` 3/3 PASSED (0 failures, 0 errors em todos).
+- Visual em device/emulador (2 viewports): **PENDENTE** — aguardando inspeção lado a lado com o React.
+
+**Desvios de escopo aprovados:** Nenhum.
