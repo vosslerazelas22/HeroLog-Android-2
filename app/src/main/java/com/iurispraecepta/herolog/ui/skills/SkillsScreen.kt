@@ -3,12 +3,15 @@ package com.iurispraecepta.herolog.ui.skills
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,21 +21,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.components.FlowRowStable
@@ -68,21 +69,33 @@ import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-
-private val Stone950 = Color(0xFF0C0A09)
-private val Stone900 = Color(0xFF1C1917)
-
-private val Amber500 = Color(0xFFF59E0B)
-private val Amber400 = Color(0xFFFBBF24)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber200 = Color(0xFFFDE68A)
-private val Amber100 = Color(0xFFFEF3C7)
-
-private val Yellow500 = Color(0xFFEAB308)
-private val Yellow400 = Color(0xFFFACC15)
-
-private val Red400 = Color(0xFFF87171)
-private val Emerald400 = Color(0xFF34D399)
+import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.Stone900
+import com.iurispraecepta.herolog.ui.theme.Stone800
+import com.iurispraecepta.herolog.ui.theme.Stone400
+import com.iurispraecepta.herolog.ui.theme.Champagne600
+import com.iurispraecepta.herolog.ui.theme.Champagne500
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne200
+import com.iurispraecepta.herolog.ui.theme.Zinc100
+import com.iurispraecepta.herolog.ui.theme.Zinc200
+import com.iurispraecepta.herolog.ui.theme.Zinc300
+import com.iurispraecepta.herolog.ui.theme.Zinc400
+import com.iurispraecepta.herolog.ui.theme.Zinc500
+import com.iurispraecepta.herolog.ui.theme.Zinc600
+import com.iurispraecepta.herolog.ui.theme.Zinc700
+import com.iurispraecepta.herolog.ui.theme.Zinc50
+import com.iurispraecepta.herolog.ui.theme.Zinc800
+import com.iurispraecepta.herolog.ui.theme.Yellow500
+import com.iurispraecepta.herolog.ui.theme.Yellow400
+import com.iurispraecepta.herolog.ui.theme.Red500
+import com.iurispraecepta.herolog.ui.theme.Red400
+import com.iurispraecepta.herolog.ui.theme.Emerald400
+import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Amber200
+import com.iurispraecepta.herolog.ui.theme.Amber100
 
 private data class SkillSuggestion(
     val name: String,
@@ -130,6 +143,67 @@ private val SKILL_EMOJIS =
     )
 
 @Composable
+private fun Modifier.pressedOverlay(
+    onClick: () -> Unit,
+    pressedColor: Color = Champagne500.copy(alpha = 0.1f),
+    enabled: Boolean = true
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    return this
+        .clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            enabled = enabled,
+            onClick = onClick
+        )
+        .drawBehind {
+            if (isPressed && enabled) {
+                drawRect(color = pressedColor, size = size)
+            }
+        }
+}
+
+@Composable
+private fun SkillSuggestionItem(
+    sug: SkillSuggestion,
+    alreadyHas: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (alreadyHas) Color(0x401C1917) else Color(0x800C0A09))
+                .border(
+                    width = 1.dp,
+                    color = if (alreadyHas) Color(0x66292524) else Champagne500.copy(alpha = 0.05f),
+                    shape = RoundedCornerShape(4.dp),
+                )
+                .pressedOverlay(
+                    onClick = onClick,
+                    pressedColor = Champagne500.copy(alpha = 0.1f),
+                    enabled = !alreadyHas
+                )
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+    ) {
+        Text(
+            text = sug.emoji,
+            fontSize = 14.sp,
+        )
+        Text(
+            text = sug.name,
+            fontSize = 10.sp,
+            fontFamily = Cinzel,
+            color = if (alreadyHas) Amber100.copy(alpha = 0.25f) else Champagne200,
+        )
+    }
+}
+
+@Composable
 fun SkillsScreen(
     skills: List<Skill>,
     onAddTagToSkill: (skillIdx: Int, newTag: String) -> Unit,
@@ -150,6 +224,7 @@ fun SkillsScreen(
 
     var newSkillNameInput by remember { mutableStateOf("") }
     var selectedNewSkillEmoji by remember { mutableStateOf("📚") }
+    var deleteConfirmIdx by remember { mutableStateOf<Int?>(null) }
 
     val handleSaveRename: (Int) -> Unit = { idx ->
         val trimmed = editNameValue.trim()
@@ -179,106 +254,29 @@ fun SkillsScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        // Header "HABILIDADES"
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Article,
-                    contentDescription = null,
-                    tint = Amber400,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(
-                    text = "HABILIDADES",
-                    fontFamily = Cinzel,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Amber200,
-                    letterSpacing = 0.5.sp,
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Tooltip Prestígio (simplificado como texto informativo, popup em device)
-                Text(
-                    text = "?",
-                    fontFamily = Cinzel,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = Amber400,
-                    modifier =
-                        Modifier
-                            .size(20.dp)
-                            .clickable {
-                                // Em produção, popup-tooltip aqui
-                            }.padding(4.dp),
-                )
-
-                Box(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0x26F59E0B))
-                            .border(1.dp, Amber400, RoundedCornerShape(4.dp))
-                            .clickable { onCreateModalOpenChange(true) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AddCircle,
-                            contentDescription = "NOVA",
-                            tint = Amber300,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Text(
-                            text = "NOVA",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp,
-                            color = Amber300,
-                            letterSpacing = 0.5.sp,
-                        )
-                    }
-                }
-            }
-        }
-
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = LocalBottomBarInset.current),
         ) {
-            items(skills, key = { it.name }) { sk ->
+            items(skills) { sk ->
                 val idx = skills.indexOf(sk)
                 val reqXP = SkillLogic.requiredXpForLevel(sk.level)
-                val percent = (sk.xp.toFloat() / reqXP.toFloat() * 100f).coerceIn(0f, 100f)
+                val targetPercent = (sk.xp.toFloat() / reqXP.toFloat() * 100f).coerceIn(0f, 100f)
+                val percent by animateFloatAsState(
+                    targetValue = targetPercent,
+                    animationSpec = tween(300, easing = androidx.compose.animation.core.LinearEasing)
+                )
                 val isEditing = editingIdx == idx
 
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(4.dp))
                             .background(Color(0x660C0A09)) // bg-stone-950/40
-                            .border(1.dp, Color(0x1AF59E0B), RoundedCornerShape(8.dp)) // border-amber-500/10
+                            .border(1.dp, Zinc800, RoundedCornerShape(4.dp)) // border-zinc-800
                             .padding(12.dp),
                 ) {
                     Column(
@@ -298,21 +296,25 @@ fun SkillsScreen(
 
                                 BasicTextField(
                                     value = editNameValue,
-                                    onValueChange = { editNameValue = it },
+                                    onValueChange = { text ->
+                                        if (text.length <= 30) {
+                                            editNameValue = text
+                                        }
+                                    },
                                     modifier =
                                         Modifier
                                             .weight(1f)
                                             .background(Stone950, RoundedCornerShape(4.dp))
-                                            .border(1.dp, Color(0x4DF59E0B), RoundedCornerShape(4.dp))
+                                            .border(1.dp, Zinc700, RoundedCornerShape(4.dp))
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                     textStyle =
                                         TextStyle(
-                                            color = Amber100,
+                                            color = Zinc100,
                                             fontSize = 12.sp,
                                             fontFamily = Inter,
                                         ),
                                     singleLine = true,
-                                    cursorBrush = SolidColor(Amber400),
+                                    cursorBrush = SolidColor(Champagne400),
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                     keyboardActions =
                                         KeyboardActions(onDone = {
@@ -327,14 +329,14 @@ fun SkillsScreen(
                                             .size(28.dp)
                                             .clip(RoundedCornerShape(4.dp))
                                             .background(Color(0x3310B981))
-                                            .clickable { handleSaveRename(idx) },
+                                            .pressedOverlay(onClick = { handleSaveRename(idx) }),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Check,
+                                        painter = painterResource(R.drawable.lucide_ic_check),
                                         contentDescription = "Salvar Nome",
                                         tint = Emerald400,
-                                        modifier = Modifier.size(16.dp),
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
 
@@ -344,14 +346,14 @@ fun SkillsScreen(
                                             .size(28.dp)
                                             .clip(RoundedCornerShape(4.dp))
                                             .background(Color(0x33EF4444))
-                                            .clickable { editingIdx = null },
+                                            .pressedOverlay(onClick = { editingIdx = null }),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Close,
+                                        painter = painterResource(R.drawable.lucide_ic_x),
                                         contentDescription = "Cancelar",
                                         tint = Red400,
-                                        modifier = Modifier.size(16.dp),
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
                             }
@@ -382,15 +384,15 @@ fun SkillsScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         ) {
-                                            Text(
-                                                text = sk.name,
-                                                fontFamily = Cinzel,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = Amber200,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
+Text(
+                                            text = sk.name,
+                                            fontFamily = Cinzel,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Zinc100,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
 
                                             if (sk.prestige != null && sk.prestige > 0) {
                                                 Text(
@@ -401,35 +403,36 @@ fun SkillsScreen(
                                                 )
                                             }
 
-                                            Box(
-                                                modifier =
-                                                    Modifier
-                                                        .clip(RoundedCornerShape(4.dp))
-                                                        .clickable {
-                                                            editingIdx = idx
-                                                            editNameValue = sk.name
-                                                        }.padding(2.dp),
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Edit,
-                                                    contentDescription = "Renomear Habilidade",
-                                                    tint = Color(0x4DFEF3C7),
-                                                    modifier = Modifier.size(12.dp),
-                                                )
-                                            }
+Box(
+                                                    modifier =
+                                                        Modifier
+                                                            .clip(RoundedCornerShape(4.dp))
+                                                            .pressedOverlay(
+                                                                onClick = {
+                                                                    editingIdx = idx
+                                                                    editNameValue = sk.name
+                                                                }).padding(2.dp),
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.lucide_ic_pen),
+                                                        contentDescription = "Renomear Habilidade",
+                                                        tint = Color(0x4DFEF3C7),
+                                                        modifier = Modifier.size(12.dp),
+                                                    )
+                                                }
                                         }
 
                                         Box(
                                             modifier =
                                                 Modifier
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(0x1AF59E0B))
-                                                    .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(4.dp))
+                                                    .background(Champagne500.copy(alpha = 0.1f))
+                                                    .border(1.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                                                     .padding(horizontal = 6.dp, vertical = 2.dp),
                                         ) {
                                             Text(
                                                 text = "Nível ${sk.level}",
-                                                color = Amber400,
+                                                color = Champagne400,
                                                 fontWeight = FontWeight.Bold,
                                                 fontFamily = JetBrainsMono,
                                                 fontSize = 9.sp,
@@ -442,14 +445,14 @@ fun SkillsScreen(
                                     modifier =
                                         Modifier
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(Color(0x0AEF4444))
-                                            .border(1.dp, Color(0x1AEF4444), RoundedCornerShape(4.dp))
-                                            .clickable { onDeleteSkill(idx) }
+                                            .background(Red500.copy(alpha = 0.04f))
+                                            .border(1.dp, Red500.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                                            .pressedOverlay(onClick = { deleteConfirmIdx = idx }, pressedColor = Red500.copy(alpha = 0.1f))
                                             .padding(horizontal = 6.dp, vertical = 4.dp),
                                 ) {
                                     Text(
                                         text = "ESQUECER",
-                                        color = Color(0xB3F87171),
+                                        color = Red400.copy(alpha = 0.7f),
                                         fontSize = 9.sp,
                                         fontFamily = Cinzel,
                                         fontWeight = FontWeight.Bold,
@@ -468,7 +471,7 @@ fun SkillsScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .height(6.dp)
-                                        .clip(CircleShape)
+                                        .clip(RoundedCornerShape(4.dp))
                                         .background(Stone950),
                             ) {
                                 Box(
@@ -476,8 +479,8 @@ fun SkillsScreen(
                                         Modifier
                                             .fillMaxWidth(percent / 100f)
                                             .fillMaxHeight()
-                                            .clip(CircleShape)
-                                            .background(Amber500),
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Champagne500),
                                 )
                             }
 
@@ -490,7 +493,7 @@ fun SkillsScreen(
                                     text = "Progresso: ${sk.xp} / $reqXP XP",
                                     fontFamily = JetBrainsMono,
                                     fontSize = 9.sp,
-                                    color = Color(0x4DFEF3C7), // amber-100/30
+                                    color = Zinc500,
                                 )
                                 if (sk.prestige != null && sk.prestige > 0) {
                                     Text(
@@ -504,14 +507,14 @@ fun SkillsScreen(
                             }
                         }
 
-                        // Subskills Section
+// Subskills Section
                         Column(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier =
                                 Modifier
                                     .drawBehind {
                                         drawLine(
-                                            color = Color(0x0DF59E0B),
+                                            color = Zinc800,
                                             start = Offset(0f, 0f),
                                             end = Offset(size.width, 0f),
                                             strokeWidth = 1.dp.toPx(),
@@ -522,7 +525,7 @@ fun SkillsScreen(
                                 text = "SUBSKILLS:",
                                 fontFamily = Cinzel,
                                 fontSize = 9.sp,
-                                color = Color(0x66FEF3C7),
+                                color = Zinc500,
                                 letterSpacing = 0.5.sp,
                             )
 
@@ -531,7 +534,7 @@ fun SkillsScreen(
                                     text = "Nenhuma subskill cadastrada para esta habilidade.",
                                     fontSize = 9.sp,
                                     fontStyle = FontStyle.Italic,
-                                    color = Color(0x40FEF3C7),
+                                    color = Zinc500,
                                 )
                             } else {
                                 FlowRowStable(
@@ -545,29 +548,31 @@ fun SkillsScreen(
                                             modifier =
                                                 Modifier
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(0x1AF59E0B))
-                                                    .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(4.dp))
+                                                    .background(Zinc50.copy(alpha = 0.1f))
+                                                    .border(1.dp, Zinc700, RoundedCornerShape(4.dp))
                                                     .padding(horizontal = 6.dp, vertical = 2.dp),
                                         ) {
                                             Text(
                                                 text = tg,
                                                 fontSize = 9.sp,
-                                                color = Amber200,
+                                                color = Zinc300,
                                                 fontFamily = Inter,
                                             )
-                                            Text(
-                                                text = "×",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.ExtraBold,
-                                                color = Color(0x66FEF3C7),
-                                                modifier = Modifier.clickable { onRemoveTagFromSkill(idx, tIdx) },
-                                            )
+Text(
+                                                    text = "×",
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.ExtraBold,
+                                                    color = Zinc500,
+                                                    modifier = Modifier
+                                                        .padding(start = 4.dp, end = 4.dp)
+                                                        .pressedOverlay(onClick = { onRemoveTagFromSkill(idx, tIdx) }, pressedColor = Red500.copy(alpha = 0.1f)),
+                                                )
                                         }
                                     }
                                 }
                             }
 
-                            // Subskill Input Row
+// Subskill Input Row
                             var subskillInput by remember(idx) { mutableStateOf("") }
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -580,17 +585,17 @@ fun SkillsScreen(
                                     modifier =
                                         Modifier
                                             .weight(1f)
-                                            .background(Color(0x800C0A09), RoundedCornerShape(4.dp))
-                                            .border(1.dp, Color(0x1AF59E0B), RoundedCornerShape(4.dp))
+                                            .background(Stone950.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                            .border(1.dp, Zinc800, RoundedCornerShape(4.dp))
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                     textStyle =
                                         TextStyle(
-                                            color = Amber100,
+                                            color = Zinc100,
                                             fontSize = 10.sp,
                                             fontFamily = Inter,
                                         ),
                                     singleLine = true,
-                                    cursorBrush = SolidColor(Amber400),
+                                    cursorBrush = SolidColor(Champagne400),
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                     keyboardActions =
                                         KeyboardActions(onDone = {
@@ -605,7 +610,7 @@ fun SkillsScreen(
                                             if (subskillInput.isEmpty()) {
                                                 Text(
                                                     text = "Criar subskill (ex: Direito Processual, React, CSS...)",
-                                                    color = Color(0x26FEF3C7),
+                                                    color = Zinc600,
                                                     fontSize = 10.sp,
                                                     fontFamily = Inter,
                                                 )
@@ -619,20 +624,24 @@ fun SkillsScreen(
                                     modifier =
                                         Modifier
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(Color(0x26F59E0B))
-                                            .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(4.dp))
-                                            .clickable {
-                                                val trimmed = subskillInput.trim()
-                                                if (trimmed.isNotEmpty()) {
-                                                    onAddTagToSkill(idx, trimmed)
-                                                    subskillInput = ""
-                                                }
-                                            }.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            .background(Champagne500.copy(alpha = 0.15f))
+                                            .border(1.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+.pressedOverlay(
+                                                onClick = {
+                                                    val trimmed = subskillInput.trim()
+                                                    if (trimmed.isNotEmpty()) {
+                                                        onAddTagToSkill(idx, trimmed)
+                                                        subskillInput = ""
+                                                    }
+                                                },
+                                                pressedColor = Champagne500.copy(alpha = 0.1f)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
                                         text = "+",
-                                        color = Amber300,
+                                        color = Champagne300,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 10.sp,
                                     )
@@ -648,11 +657,14 @@ fun SkillsScreen(
                                 targetValue = 0.5f,
                                 animationSpec =
                                     infiniteRepeatable(
-                                        animation = tween(1000, easing = LinearOutSlowInEasing),
+                                        animation = tween(2000, easing = androidx.compose.animation.core.LinearEasing),
                                         repeatMode = RepeatMode.Reverse,
                                     ),
                                 label = "prestigeAlpha",
                             )
+                            // DECISÃO CONSCIENTE (D-013): Pausar pulso do Prestígio quando qualquer modal estiver aberto.
+                            // O React usa `animate-pulse` contínuo sem pausa. Esta pausa evita distração visual
+                            // quando modais estão abertos (ex: modal de criar skill). Registrado em PARIDADE.md.
                             val effectiveAlpha = if (ModalCountRegistry.isAnyModalOpen) 1f else alphaPulse
 
                             Box(
@@ -665,7 +677,7 @@ fun SkillsScreen(
                                                 listOf(Amber500, Yellow400, Amber400),
                                             ),
                                         ).alpha(effectiveAlpha)
-                                        .clickable { onPrestigeSkill(idx) }
+                                        .pressedOverlay(onClick = { onPrestigeSkill(idx) }, pressedColor = Color.White.copy(alpha = 0.1f))
                                         .padding(vertical = 6.dp, horizontal = 8.dp),
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -703,7 +715,7 @@ fun SkillsScreen(
                         text = "SELECIONE UM ÍCONE/EMOJI PARA A HABILIDADE:",
                         fontFamily = Cinzel,
                         fontSize = 10.sp,
-                        color = Color(0x66FEF3C7),
+                        color = Amber100.copy(alpha = 0.4f),
                         letterSpacing = 1.sp,
                     )
 
@@ -714,8 +726,8 @@ fun SkillsScreen(
                             Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0x4D0C0A09))
-                                .border(1.dp, Color(0x1AF59E0B), RoundedCornerShape(4.dp))
+                                .background(Stone950.copy(alpha = 0.3f))
+                                .border(1.dp, Champagne500.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
                                 .padding(8.dp),
                     ) {
                         SKILL_EMOJIS.forEach { em ->
@@ -736,12 +748,12 @@ fun SkillsScreen(
                                                 Modifier
                                             },
                                         ).clip(RoundedCornerShape(4.dp))
-                                        .background(if (isSelected) Color(0x33F59E0B) else Color(0x731C1917))
+                                        .background(if (isSelected) Amber500.copy(alpha = 0.2f) else Color(0x731C1917))
                                         .border(
                                             width = 1.dp,
                                             color = if (isSelected) Amber400 else Color.Transparent,
                                             shape = RoundedCornerShape(4.dp),
-                                        ).clickable { selectedNewSkillEmoji = em },
+                                        ).pressedOverlay(onClick = { selectedNewSkillEmoji = em }, pressedColor = Amber500.copy(alpha = 0.1f)),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
@@ -761,7 +773,7 @@ fun SkillsScreen(
                         text = "NOME DA HABILIDADE DE FOCO:",
                         fontFamily = Cinzel,
                         fontSize = 10.sp,
-                        color = Color(0x66FEF3C7),
+                        color = Amber100.copy(alpha = 0.4f),
                         letterSpacing = 1.sp,
                     )
 
@@ -777,7 +789,7 @@ fun SkillsScreen(
                                 Modifier
                                     .weight(1f)
                                     .background(Color(0xCC0C0A09), RoundedCornerShape(4.dp))
-                                    .border(1.dp, Color(0x33F59E0B), RoundedCornerShape(4.dp))
+                                    .border(1.dp, Champagne500.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                                     .padding(horizontal = 12.dp, vertical = 8.dp),
                             textStyle =
                                 TextStyle(
@@ -786,7 +798,7 @@ fun SkillsScreen(
                                     fontFamily = Inter,
                                 ),
                             singleLine = true,
-                            cursorBrush = SolidColor(Amber400),
+                            cursorBrush = SolidColor(Champagne400),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions =
                                 KeyboardActions(onDone = {
@@ -797,7 +809,7 @@ fun SkillsScreen(
                                     if (newSkillNameInput.isEmpty()) {
                                         Text(
                                             text = "Ex: Alquimia de Dados, Exercícios Físicos...",
-                                            color = Color(0x26FEF3C7),
+                                            color = Amber100.copy(alpha = 0.15f),
                                             fontSize = 12.sp,
                                             fontFamily = Inter,
                                         )
@@ -811,15 +823,15 @@ fun SkillsScreen(
                             modifier =
                                 Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0x26F59E0B))
-                                    .border(1.dp, Amber400, RoundedCornerShape(4.dp))
-                                    .clickable { handleAddCustom() }
+                                    .background(Champagne500.copy(alpha = 0.15f))
+                                    .border(1.dp, Champagne400, RoundedCornerShape(4.dp))
+                                    .pressedOverlay(onClick = { handleAddCustom() }, pressedColor = Champagne500.copy(alpha = 0.1f))
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = "GRAVAR",
-                                color = Amber300,
+                                color = Champagne300,
                                 fontFamily = Cinzel,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -836,7 +848,7 @@ fun SkillsScreen(
                         Modifier
                             .drawBehind {
                                 drawLine(
-                                    color = Color(0x1AF59E0B),
+                                    color = Champagne500.copy(alpha = 0.1f),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, 0f),
                                     strokeWidth = 1.dp.toPx(),
@@ -847,48 +859,119 @@ fun SkillsScreen(
                         text = "SUGESTÕES RÁPIDAS:",
                         fontFamily = Cinzel,
                         fontSize = 10.sp,
-                        color = Color(0x66FEF3C7),
+                        color = Amber100.copy(alpha = 0.4f),
                         letterSpacing = 1.sp,
                     )
 
-                    FlowRowStable(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth(),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 160.dp)
+                            .verticalScroll(rememberScrollState()),
                     ) {
-                        SKILL_SUGGESTIONS.forEach { sug ->
-                            val alreadyHas = skills.any { it.name.equals(sug.name, ignoreCase = true) }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(if (alreadyHas) Color(0x401C1917) else Color(0x800C0A09))
-                                        .border(
-                                            width = 1.dp,
-                                            color = if (alreadyHas) Color(0x66292524) else Color(0x0DF59E0B),
-                                            shape = RoundedCornerShape(4.dp),
-                                        ).clickable(enabled = !alreadyHas) {
-                                            handleAddSuggestion(sug.name, sug.emoji)
-                                        }.padding(horizontal = 8.dp, vertical = 6.dp),
-                            ) {
-                                Text(
-                                    text = sug.emoji,
-                                    fontSize = 14.sp,
-                                )
-                                Text(
-                                    text = sug.name,
-                                    fontSize = 10.sp,
-                                    fontFamily = Cinzel,
-                                    color = if (alreadyHas) Color(0x40FEF3C7) else Amber200,
-                                )
+                        // Render suggestions in 2-column grid (React: grid grid-cols-2)
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            val pairs = SKILL_SUGGESTIONS.chunked(2)
+                            pairs.forEach { pair ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.Top,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    pair.forEach { sug ->
+                                        val alreadyHas = skills.any { it.name.equals(sug.name, ignoreCase = true) }
+                                        SkillSuggestionItem(
+                                            sug = sug,
+                                            alreadyHas = alreadyHas,
+                                            onClick = { handleAddSuggestion(sug.name, sug.emoji) },
+                                            modifier = Modifier.weight(1f, fill = false),
+                                        )
+                                    }
+                                    // If odd number, add spacer for last item
+                                    if (pair.size == 1) {
+                                        Box(modifier = Modifier.weight(1f, fill = false))
+                                    }
+                                }
                             }
                         }
+                    }
+            }
+        }
+
+        // Modal Confirmação Esquecer Habilidade
+        if (deleteConfirmIdx != null) {
+            val skillToDelete = skills.getOrNull(deleteConfirmIdx!!)
+            HeroLogModal(
+                isOpen = true,
+                onClose = { deleteConfirmIdx = null },
+                title = "Esquecer Habilidade?",
+                variant = ModalVariant.Red,
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                ) {
+                    Text(
+                        text = skillToDelete?.let { "Tem certeza que deseja esquecer a habilidade \"${it.emoji} ${it.name}\"? Todo o seu aprendizado e XP acumulados nela se perderão permanentemente." } ?: "Tem certeza que deseja esquecer esta habilidade? Todo o seu aprendizado e XP acumulados nela se perderão permanentemente.",
+                        fontSize = 14.sp,
+                        color = Amber200,
+                        fontFamily = Inter,
+                        lineHeight = 22.sp,
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(vertical = 12.dp)
+                                .clickable { deleteConfirmIdx = null }
+                                .background(Color.Transparent)
+                                .border(1.dp, Zinc700, RoundedCornerShape(4.dp))
+                                .padding(horizontal = 24.dp)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "CANCELAR",
+                                fontFamily = Cinzel,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp,
+                                color = Zinc400,
+                            )
+                        }
+
+                        Text(
+                            text = "ESQUECER",
+                            fontFamily = Cinzel,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp,
+                            color = Stone950,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(vertical = 12.dp)
+                                .clickable {
+                                    deleteConfirmIdx?.let { idx ->
+                                        onDeleteSkill(idx)
+                                        deleteConfirmIdx = null
+                                    }
+                                }
+                                .background(Red500)
+                                .clip(RoundedCornerShape(4.dp))
+                                .padding(horizontal = 24.dp),
+                        )
                     }
                 }
             }
         }
     }
+}
 }

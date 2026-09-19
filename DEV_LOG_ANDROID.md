@@ -5670,3 +5670,13 @@ desbloqueia a validação completa pendente do bloco Dx (LevelUpOverlay, 19/09).
   `SkillSelectorModalScreenshotTest` 1/1.
 - Visual em device/emulador (2 viewports): **PENDENTE** — inclui checar header + popup
   Prestígio + NOVA lado a lado com o React.
+
+**Adendo (commit do trabalho prévio da outra sessão):** `SkillsScreen.kt` + `Color.kt` +
+15 baselines revisados linha a linha e commitados neste bloco. `Color.kt` é aditivo puro
+(completa escalas Amber/Champagne/Zinc/Yellow/Emerald, nenhum valor existente alterado).
+`SkillsScreen.kt`: migração hardcoded→tokens, Material→Lucide, `clickable`→`pressedOverlay`,
+grid 2 colunas fiel (`grid-cols-2` + `max-h-[160px]`, `SkillsScreen.tsx:323`), pulso do
+prestígio 2s (fiel ao `animate-pulse`). **Divergência consciente (não documentada antes):**
+ESQUECER abre modal de confirmação (`HeroLogModal` variant red) — a fonte deleta imediato
+(`onClick={() => onDeleteSkill(idx)}`, `SkillsScreen.tsx:166`). Proteção contra toque
+acidental; React vence se Bruno preferir fidelidade estrita.
