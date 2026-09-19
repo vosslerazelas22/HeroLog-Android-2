@@ -150,9 +150,11 @@ import com.iurispraecepta.herolog.data.export.SaveClipboard
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
 import com.iurispraecepta.herolog.ui.ProcessedQuest
 import com.iurispraecepta.herolog.ui.theme.Amber400
+import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
@@ -193,6 +195,9 @@ class MainActivity : ComponentActivity() {
                 var activeTab by remember { mutableStateOf("focus") }
                 var isFocusMode by remember { mutableStateOf(false) }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
+                // Prestige info popup da aba Skills (fonte: App.tsx isPrestigeInfoOpen).
+                // Hoisted no escopo raiz como no React (persiste ao trocar de aba).
+                var isPrestigeInfoOpen by remember { mutableStateOf(false) }
                 var isRestoreSaveOpen by remember { mutableStateOf(false) }
                 var isGeneralSettingsOpen by remember { mutableStateOf(false) }
                 var saveImportOutcome by remember { mutableStateOf<SaveImportOutcome?>(null) }
@@ -363,46 +368,202 @@ class MainActivity : ComponentActivity() {
                                         Text("Carregando habilidades...", color = Amber400)
                                     }
                                 } else {
-                                    SkillsScreen(
-                                        skills = state.skills,
-                                        onAddTagToSkill = { skillIdx, newTag ->
-                                            heroLogViewModel.addTagToSkill(skillIdx, newTag)
-                                        },
-                                        onRemoveTagFromSkill = { skillIdx, tagIdx ->
-                                            heroLogViewModel.removeTagFromSkill(skillIdx, tagIdx)
-                                        },
-                                        onAddCustomSkill = { name, emoji ->
-                                            when (val result = heroLogViewModel.addCustomSkill(name, emoji)) {
-                                                is SkillOperationResult.Success -> {
-                                                    isCreateModalOpen = false
+                                    // Header "HABILIDADES" + tooltip Prestígio + botão "NOVA".
+                                    // Fonte: React App.tsx:3260-3322 (container + header row vivem
+                                    // no App, não dentro do SkillsScreen).
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(vertical = 20.dp),
+                                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 16.dp)
+                                                    .padding(bottom = 10.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.lucide_ic_book_open),
+                                                        contentDescription = null,
+                                                        tint = Champagne400,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Text(
+                                                        text = "HABILIDADES",
+                                                        fontFamily = Cinzel,
+                                                        fontWeight = FontWeight.Black,
+                                                        fontSize = 14.sp,
+                                                        color = Champagne400,
+                                                        letterSpacing = 1.sp
+                                                    )
+                                                    // Botão "?" — mesmo padrão do tooltip do
+                                                    // FocusHeaderBanner (Popup overlay, sem afetar layout).
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(18.dp)
+                                                            .clip(CircleShape)
+                                                            .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                                                            .clickable { isPrestigeInfoOpen = !isPrestigeInfoOpen },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = "?",
+                                                            fontSize = 10.sp,
+                                                            lineHeight = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Champagne400.copy(alpha = 0.8f)
+                                                        )
+                                                    }
                                                 }
-                                                is SkillOperationResult.Error -> {
-                                                    Log.d("HeroLog", "Falha ao adicionar skill: ${result.reason}")
+
+                                                // Botão "NOVA" — fonte usa PlusCircle + texto champagne.
+                                                Row(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(4.dp))
+                                                        .background(Champagne500.copy(alpha = 0.05f))
+                                                        .border(1.dp, Champagne500.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                                                        .clickable { isCreateModalOpen = true }
+                                                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.lucide_ic_circle_plus),
+                                                        contentDescription = "Nova Habilidade",
+                                                        tint = Champagne400,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                    Text(
+                                                        text = "NOVA",
+                                                        fontFamily = Inter,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 12.sp,
+                                                        color = Champagne400
+                                                    )
                                                 }
                                             }
-                                        },
-                                        onDeleteSkill = { idx ->
-                                            val eligibility = heroLogViewModel.deleteSkill(idx)
-                                            if (eligibility != DeleteSkillEligibility.Eligible) {
-                                                Log.d("HeroLog", "Falha ao deletar skill: $eligibility")
-                                            }
-                                        },
-                                        onPrestigeSkill = { idx ->
-                                            heroLogViewModel.prestigeSkill(idx)
-                                        },
-                                        onRenameSkill = { idx, newName ->
-                                            when (val result = heroLogViewModel.renameSkill(idx, newName)) {
-                                                is SkillOperationResult.Success -> {
-                                                    // Success state automatically flow via characterState
+                                            // border-b border-amber-500/10 da fonte.
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(1.dp)
+                                                    .background(Amber500.copy(alpha = 0.1f))
+                                            )
+                                        }
+
+                                        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                                            SkillsScreen(
+                                                skills = state.skills,
+                                                onAddTagToSkill = { skillIdx, newTag ->
+                                                    heroLogViewModel.addTagToSkill(skillIdx, newTag)
+                                                },
+                                                onRemoveTagFromSkill = { skillIdx, tagIdx ->
+                                                    heroLogViewModel.removeTagFromSkill(skillIdx, tagIdx)
+                                                },
+                                                onAddCustomSkill = { name, emoji ->
+                                                    when (val result = heroLogViewModel.addCustomSkill(name, emoji)) {
+                                                        is SkillOperationResult.Success -> {
+                                                            isCreateModalOpen = false
+                                                        }
+                                                        is SkillOperationResult.Error -> {
+                                                            Log.d("HeroLog", "Falha ao adicionar skill: ${result.reason}")
+                                                        }
+                                                    }
+                                                },
+                                                onDeleteSkill = { idx ->
+                                                    val eligibility = heroLogViewModel.deleteSkill(idx)
+                                                    if (eligibility != DeleteSkillEligibility.Eligible) {
+                                                        Log.d("HeroLog", "Falha ao deletar skill: $eligibility")
+                                                    }
+                                                },
+                                                onPrestigeSkill = { idx ->
+                                                    heroLogViewModel.prestigeSkill(idx)
+                                                },
+                                                onRenameSkill = { idx, newName ->
+                                                    when (val result = heroLogViewModel.renameSkill(idx, newName)) {
+                                                        is SkillOperationResult.Success -> {
+                                                            // Success state automatically flow via characterState
+                                                        }
+                                                        is SkillOperationResult.Error -> {
+                                                            Log.d("HeroLog", "Falha ao renomear skill: ${result.reason}")
+                                                        }
+                                                    }
+                                                },
+                                                isCreateModalOpen = isCreateModalOpen,
+                                                onCreateModalOpenChange = { isCreateModalOpen = it }
+                                            )
+                                        }
+                                    }
+
+                                    // Popup "MECÂNICA DE PRESTÍGIO" — copia literal da fonte
+                                    // (App.tsx:3287-3307, div absolute right-4 top-12).
+                                    if (isPrestigeInfoOpen) {
+                                        Popup(
+                                            alignment = Alignment.TopEnd,
+                                            properties = PopupProperties(focusable = false),
+                                            onDismissRequest = { isPrestigeInfoOpen = false }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(top = 48.dp, end = 16.dp)
+                                                    .widthIn(max = 280.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(Color(0xF20C0A09))
+                                                    .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                                    .padding(14.dp)
+                                            ) {
+                                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = "\uD83D\uDC51 MECÂNICA DE PRESTÍGIO",
+                                                            fontFamily = Cinzel,
+                                                            fontWeight = FontWeight.Bold,
+                                                            fontSize = 11.sp,
+                                                            color = Champagne400,
+                                                            letterSpacing = 1.sp
+                                                        )
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .clip(RoundedCornerShape(4.dp))
+                                                                .clickable { isPrestigeInfoOpen = false }
+                                                                .padding(2.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = "×",
+                                                                fontSize = 12.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = Color(0x66A8A29E)
+                                                            )
+                                                        }
+                                                    }
+                                                    Text(
+                                                        text = "Habilidades evoluem à medida que você ganha XP. Cada foco concluído com sucesso alimenta a habilidade selecionada no cronômetro.",
+                                                        fontSize = 11.sp,
+                                                        color = Color(0xCCD6D3D1),
+                                                        lineHeight = 16.sp
+                                                    )
+                                                    Text(
+                                                        text = "Ao alcançar o Nível 99, você poderá ativar o Prestígio. Isso reiniciará o progresso de nível dessa habilidade de volta para 1, mas em troca você ganhará um multiplicador permanente e heróico de +25% de XP extra permanente acumulável para acelerar toda a sua evolução futura nessa habilidade!",
+                                                        fontSize = 11.sp,
+                                                        color = Color(0xCCD6D3D1),
+                                                        lineHeight = 16.sp
+                                                    )
                                                 }
-                                                is SkillOperationResult.Error -> {
-                                                    Log.d("HeroLog", "Falha ao renomear skill: ${result.reason}")
-                                                }
                                             }
-                                        },
-                                        isCreateModalOpen = isCreateModalOpen,
-                                        onCreateModalOpenChange = { isCreateModalOpen = it }
-                                    )
+                                        }
+                                    }
                                 }
                             }
                             "character" -> {

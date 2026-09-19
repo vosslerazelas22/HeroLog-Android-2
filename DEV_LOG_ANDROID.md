@@ -5625,3 +5625,48 @@ Quem portar animação de `Dp` infinita neste projeto deve usar esse padrão at�
 **Residuais (fora do escopo Dx, blocos futuros):** R-1 — card edge-to-edge no Android
 (Dialog sem padding) vs `p-4` no backdrop da fonte (`App.tsx:4469`) + `max-w-sm`; não estava
 na lista Dx, não mexido por disciplina de escopo.
+
+## [2026-09-19] Skills — header HABILIDADES + tooltip Prestígio + botão NOVA (fecha paridade da aba)
+
+**Fonte React:** `App.tsx:3260-3322` (container + header row da aba `skills`, lidos na íntegra).
+**Arquivos alterados (este bloco):** só `MainActivity.kt` (+159/-45: imports `Amber500`/`Inter`,
+estado `isPrestigeInfoOpen`, header + popup no branch `"skills"`). `SkillsScreen.kt`/`Color.kt`
+e baselines `skills_screen*.png` no working tree são trabalho prévio de outra sessão (migração
+Lucide + tokens + grid 2 colunas + confirmação ESQUECER), fora do escopo deste bloco.
+
+**Diagnóstico do "bloqueio" herdado:** o `MainActivity.kt` do git estava íntegro — as edições
+quebradas da outra sessão nunca foram persistidas (`git status` limpo para o arquivo). A causa
+raiz real dos builds falhando em sequência era ambiental: um script runaway da outra sessão
+(`/tmp/modify_main.py`) gerou `/tmp/MainActivity.kt.new` de **3.9 GB** (cabeçalho `package`
+duplicado em loop), enchendo o `/tmp` (tmpfs 3.9G, 100%) — com isso o Room/KSP falhava ao
+extrair o SQLite nativo (`No native library found for os.name=Linux, os.arch=x86_64`), erro
+que parecia "sintaxe Kotlin" nas tentativas seguintes. Removidos os 3 artefatos de `/tmp`
+(`MainActivity.kt.new`, `modify_main.py`, `fulltest.log`); `/tmp` voltou a 1%. Isso também
+desbloqueia a validação completa pendente do bloco Dx (LevelUpOverlay, 19/09).
+
+**Implementação (fiel a `App.tsx:3260-3322`):**
+- Header row: `BookOpen` 16dp (`lucide_ic_book_open`) + "HABILIDADES" (Cinzel Black 14sp =
+  `text-sm`, Champagne400, tracking 1sp) + botão "?" 18dp (`w-4.5`) círculo borda
+  champagne-500/30 + botão "NOVA" (borda champagne-500/30, bg champagne-500/5, padding
+  12/4dp = `px-3 py-1`, gap 6dp = `gap-1.5`, Inter Bold 12sp = `text-xs`).
+- Ícone do NOVA: `lucide_ic_circle_plus` (existe no AAR 2.2.1, confirmado via zip listing) —
+  equivalente literal do `PlusCircle` da fonte. O resumo herdado sugeria `lucide_ic_plus`,
+  que divergiria do React; React venceu.
+- Tooltip Prestígio: `Popup` overlay (`TopEnd`, `right-4 top-12` = padding end 16dp/top 48dp,
+  max 280dp, sem afetar layout — mesmo padrão do `FocusHeaderBanner`, S6) com cópia literal
+  dos 2 parágrafos + título "👑 MECÂNICA DE PRESTÍGIO" + "×". `isPrestigeInfoOpen` hoisted no
+  escopo raiz como na fonte (persiste ao trocar de aba). Hover states = N/A mobile.
+- `border-b amber-500/10` via Box 1dp; `py-5`/`space-y-6` = padding 20dp/spacing 24dp;
+  `SkillsScreen` (inalterado) aninhado em `Box(weight=1f)`. `min-h-[500px]` sem equivalente
+  (mobile preenche).
+- Divergência consciente: título em 14sp fixo (fonte: `text-sm md:text-base` — breakpoint
+  `md` não existe em phone).
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL in 1m 9s (39 tasks).
+- `./gradlew testDebugUnitTest` (suíte completa, sem `--rerun-tasks`) → **605/605, 0
+  falhas/erros/skips** (XML bruto, 75 classes). Classes Skills nominais: `SkillLogicTest`
+  12/12, `SkillCarouselLogicTest` 14/14, `SkillsScreenScreenshotTest` 3/3,
+  `SkillSelectorModalScreenshotTest` 1/1.
+- Visual em device/emulador (2 viewports): **PENDENTE** — inclui checar header + popup
+  Prestígio + NOVA lado a lado com o React.

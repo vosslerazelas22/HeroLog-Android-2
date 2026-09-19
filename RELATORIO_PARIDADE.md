@@ -174,11 +174,11 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D41 | **SkillsScreen — header icon** | Icon `Sparkles` (lucide) no header | Icon `Stars` (Material) no header | **Baixa** | Ícone diferente mas semântica similar |
+| D41 | **SkillsScreen — header icon** | Icon `Sparkles` (lucide) no header | Icon `Stars` (Material) no header | **Resolvido (19/09)** | Premissa incorreta nos dois lados: a fonte usa `BookOpen` no header do `App.tsx:3264` (nunca `Sparkles`); o header saiu do `SkillsScreen` e vive no `MainActivity` com `lucide_ic_book_open` fiel |
 | D42 | **SkillsScreen — skill card hover** | Skill cards com `hover:border-amber-500/30 hover:bg-stone-800/30` + `transition-all` | Skill cards sem hover, sem transition | **Baixa** | Limitação plataforma |
-| D43 | **SkillsScreen — active skill glow** | Active skill com `shadow-[0_0_12px_rgba(212,175,55,0.2)]` | Active skill com `Champagne400` border sem glow | **Baixa** | Glow ausente |
-| D44 | **SkillsScreen — level up badge** | Level up badge com `animate-bounce` | Level up badge estático | **Baixa** | Animação ausente |
-| D45 | **SkillsScreen — XP bar gradient** | XP bar com `bg-gradient-to-r from-champagne-600 to-champagne-400` | XP bar com `Champagne400` sólido | **Baixa** | Sem gradiente |
+| D43 | **SkillsScreen — active skill glow** | Active skill com `shadow-[0_0_12px_rgba(212,175,55,0.2)]` | Active skill com `Champagne400` border sem glow | **Resolvido (19/09)** | Premissa incorreta: não há glow em skill cards na fonte; o único glow (`SkillsScreen.tsx:281`, emoji selecionado) já é portado via `shadow(4.dp)` |
+| D44 | **SkillsScreen — level up badge** | Level up badge com `animate-bounce` | Level up badge estático | **Resolvido (19/09)** | Premissa incorreta: a fonte usa `animate-pulse` (`SkillsScreen.tsx:248`, nunca bounce); Android tem pulse alpha 2s Reverse (pausável, D-013) |
+| D45 | **SkillsScreen — XP bar gradient** | XP bar com `bg-gradient-to-r from-champagne-600 to-champagne-400` | XP bar com `Champagne400` sólido | **Resolvido (19/09)** | Premissa incorreta: a barra da fonte é `bg-champagne-500` sólido (`SkillsScreen.tsx:178`, nunca gradiente); Android sólido `Champagne500` — já equivalente |
 | D46 | **SkillsScreen — skill selector modal trigger** | Skill selector abre como modal com `AnimatePresence` + fade | Skill selector abre como `HeroLogModal` — equivalente funcional | **Baixa** | Animação de entrada diferente |
 | D47 | **SkillsScreen — empty state** | Empty state com `text-amber-100/40 italic` | Empty state com `Amber100.copy(alpha=0.4f) FontStyle.Italic` | **Baixa** | Equivalente |
 | D48 | **SkillsScreen — carousel items count** | Mostra até 5 skills no carousel | Mostra até 5 skills no carousel | **Baixa** | equivalente |
