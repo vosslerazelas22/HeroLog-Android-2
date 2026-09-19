@@ -255,12 +255,7 @@ fun SessionSummaryScreen(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 8.dp,
-                    spotColor = Champagne400.copy(alpha = 0.35f),
-                    ambientColor = Champagne400.copy(alpha = 0.35f)
-                ),
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
