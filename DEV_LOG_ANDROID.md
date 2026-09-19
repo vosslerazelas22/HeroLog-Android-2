@@ -5568,3 +5568,60 @@ Sprint de paridade visual系统ática nos 6 sub-módulos de Missões, alinhando 
 - `./gradlew testDebugUnitTest --rerun-tasks` (suíte completa) → **605/605, 0 falhas/erros/skips** (XML bruto, 75 classes).
 - Baselines Roborazzi **inalterados** (`git status` limpo em `screenshots/`).
 - Visual em device/emulador: **PENDENTE**.
+
+## [2026-09-19] LevelUpOverlay — correções Dx-1–Dx-19 da auditoria de paridade visual (combat + skill)
+
+**Fonte React:** `App.tsx:4467-4541` (combat modal JSX, lido na íntegra) + `index.css:46-111`
+(`riseFast`, `goldenRadiance`, `emeraldRadiance`, `pulsingAura`) + `index.css:4` (serif = Cinzel).
+**Arquivo alterado:** só `ui/character/LevelUpOverlay.kt` (+161/-33) + 2 baselines Roborazzi
+regenerados (`level_up_overlay_combat.png`, `level_up_overlay_skill.png`). `Type.kt`/`Color.kt`
+não precisaram de toque (Cinzel e palette já existiam — era só wiring).
+
+**Texto/tipografia — Dx-1/Dx-2/Dx-3/Dx-4/Dx-10:** subtítulo agora literal `"VOCÊ EVOLUIU!"`
+(fonte aplica `uppercase` via CSS sobre "Você evoluiu!", `App.tsx:4518`); "NÍVEL {n}" saiu da
+string única para `Text` separado gold 18sp Bold (span `block` no mobile, `App.tsx:4525`),
+primeira linha em 14sp (text-sm); **todos** os `FontFamily.Serif` (serif do sistema) trocados por
+`Cinzel` de `Type.kt`; ícone 32.sp→36.sp (text-4xl); `MAESTRIA APRIMORADA` 18.sp→20.sp (text-xl).
+**Teto Cinzel:** React usa `font-black` (900); Cinzel vai só até ExtraBold (800) — mesmo gap já
+documentado em blocos anteriores, sem síntese de peso.
+
+**Backdrop/card — Dx-5/Dx-6/Dx-7/Dx-9/Dx-16:** backdrop `Stone950@90%`→`Black@90%` (`bg-black/90`,
+`App.tsx:4469`); gradiente sutil amber/emerald 5% base→topo (`App.tsx:4470`); glow de borda
+pulsante 2.5s ease-in-out Reverse (borda 0.3↔0.95, glow acompanha — `goldenRadiance`/
+`emeraldRadiance`); aura radial pulsante 3s (scale 1↔1.12, opacity 0.08↔0.25 — `pulsingAura`);
+sombra omnidirecional via `spotColor`/`ambientColor` 24dp pulsando 0.3↔0.65 (aproximação do
+`shadow 0 0 50px`, que não tem equivalente 1:1 no Compose).
+
+**Animações/interação — Dx-8/Dx-11/Dx-12/Dx-13/Dx-14/Dx-15/Dx-17/Dx-18/Dx-19:** enter/exit em
+`spring(dampingRatio=0.9, stiffness=120)` (framer `damping:20, stiffness:120` com massa 1 →
+dampingRatio ≈ 0.91); ping ring 1→2 / 1s / `CubicBezierEasing(0,0,0.2,1)` sobre base 10%
+(tailwind `animate-ping` + `bg-*-500/10`); bounce do ícone via `keyframes` 1s (-8.dp↔0,
+easings do tailwind); partículas com scale 0.3→1.1 (rotação da fonte deliberadamente não
+portada — glifo "✦" simétrico, nota pré-existente no KDoc); badge com `shadow(10.dp)`
+(`shadow-lg`); botão com press scale 0.97 sem ripple (`active:scale-[0.97]`; hover N/A mobile).
+
+**Achado de API (armadilha nova):** `InfiniteTransition.animateDp` **não existe** no
+animation-core 1.7.0 (BOM 2024.09.00) — confirmado via `javap` no AAR do cache (só
+`animateFloat`/`animateValue`); o compilador resolveu `animateDp` para o overload de
+`Transition` (`targetValueByState`) com erro confuso. Solução: `animateFloat` + `.dp`.
+Quem portar animação de `Dp` infinita neste projeto deve usar esse padrão até o bump do BOM.
+
+**Validação (parcial — ver bloqueio abaixo):**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL (após todos os edits).
+- Direcionados `--rerun-tasks` → **16/16, 0 falhas/erros/skips** (XML bruto):
+  `LevelUpLogicTest` 14/14 (nomes conferidos 1:1) + `LevelUpOverlayScreenshotTest` 2/2.
+- Baselines regenerados via `recordRoborazziDebug` (filtrado à classe) e **PNGs vistos**
+  (lidos como imagem): "VOCÊ EVOLUIU!"/"LEVEL UP!"/"THALRIC ALCANÇOU O"/"NÍVEL 5" gold em
+  Cinzel no combat; "MAESTRIA APRIMORADA"/"Kotlin"/"NÍVEL 7" no skill. Nota: Cinzel só tem
+  glifos maiúsculos — "alcançou o Nível 7" renderiza em caixa alta, igual à fonte React
+  (mesma fonte, mesmo comportamento).
+- Suíte completa **BLOQUEADA (ambiental, sem relação com este bloco):** outra sessão edita
+  `MainActivity.kt` concorrentemente no mesmo worktree — 2 tentativas `--rerun-tasks`
+  falharam em `compileDebugKotlin` com erros de sintaxe transitórios em linhas que mudaram
+  entre as tentativas (415/429 → 416/432; bloco `ModeDescriptionModal` inserido no meio do
+  `when`). Arquivo que este bloco não toca. Registrar como **validação parcial** explícita.
+- Visual em device/emulador: **PENDENTE**.
+
+**Residuais (fora do escopo Dx, blocos futuros):** R-1 — card edge-to-edge no Android
+(Dialog sem padding) vs `p-4` no backdrop da fonte (`App.tsx:4469`) + `max-w-sm`; não estava
+na lista Dx, não mexido por disciplina de escopo.

@@ -115,7 +115,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 |---|---|---|---|---|
 | S1 | Paleta champagne `#D4AF37` (React) vs amber `#F59E0B` (Android) | **Média** | Todas | Tom geral mais "alaranjado" no Android |
 | S2 | Labels `zinc-500`/`zinc-300` (React) vs `amber-100` alpha (Android) | **Média** | Todas (parcialmente resolvido S5: Habits/Dailies/Todos) | Hierarquia visual diferente — S5 corrigiu labels Zinc300 nos 3 modais de Missões |
-| S3 | `FontFamily.Serif` → Noto Serif vs React `font-serif` → Cinzel | **Média** | 19 arquivos (~190 ocorrências, parcialmente resolvido S5: Habits/Dailies/Todos/Quests/History) | Ver §9 para lista completa — S5 migrou 5 arquivos de Missões |
+| S3 | `FontFamily.Serif` → Noto Serif vs React `font-serif` → Cinzel | **Média** | 19 arquivos (~190 ocorrências, parcialmente resolvido S5: Habits/Dailies/Todos/Quests/History + LevelUpOverlay no bloco 19/09) | Ver §9 para lista completa — S5 migrou 5 arquivos de Missões |
 | S4 | `FontWeight.Bold` (w700) vs React `font-black` (w900) | **Baixa** | Todas | Visual mais "leve" no Android |
 | S5 | Texto em maiúsculas manual vs CSS `uppercase` | **Baixa** | Todas | Equivalente funcional |
 | S6 | Hover/active states ausentes | **Baixa** | Todas | Limitação plataforma touch |
@@ -160,7 +160,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 |---|---|---|---|---|---|
 | D12 | **CharacterScreen — header button** | "+ Gerenciar Habilidades" button no header | Ausente | **Média** | Pendência já registrada no `PARIDADE.md` |
 | D13 | **CharacterScreen — isRunning prop** | Passa `isRunning` pra desabilitar edição durante sessão | Não passa prop equivalente | **Média** | Pode permitir edição durante sessão ativa |
-| D14 | **LevelUpOverlay — button text** | "Continuar" (title-case) | "CONTINUAR" (uppercase) | **Baixa** | Padrão Android |
+| D14 | **LevelUpOverlay — button text** | "Continuar" (title-case) + `uppercase` CSS → renderiza "CONTINUAR" | "CONTINUAR" (uppercase) | **N/A** | Match visual comprovado na auditoria 19/09 (App.tsx:4533 tem `uppercase`; S5 sistemático) |
 | D33 | **CharacterScreen — stat tiles background** | Stat tiles com `bg-gradient-to-br from-stone-800/50 to-stone-900/50` + `border-stone-700/50` | Stat tiles com `Stone900` sólido + `Stone700` border | **Média** | Tiles sem gradiente sutil |
 | D34 | **CharacterScreen — level badge glow** | Level badge com `shadow-[0_0_15px_rgba(212,175,55,0.3)]` | Level badge sem glow/shadow | **Baixa** | Badge menos "premium" |
 | D35 | **CharacterScreen — XP bar gradient** | XP bar com `bg-gradient-to-r from-amber-600 to-amber-400` | XP bar com `Amber500` sólido | **Baixa** | Barra sem gradiente |
@@ -393,14 +393,14 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D155 | **Backdrop blur** | `backdrop-blur-md` (~12px) + `bg-black/90` | `Stone950.copy(alpha=0.9f)` sem blur | **Média** | Backdrop mais "plano" |
-| D156 | **Card shadow/glow** | `shadow-[0_0_50px_rgba(…,0.3)]` (amber glow) | `border(2.dp)` sem shadow/glow | **Média** | Glow ausente |
+| D155 | **Backdrop blur** | `backdrop-blur-md` (~12px) + `bg-black/90` | `Color.Black.copy(alpha=0.9f)` sem blur | **Baixa** | Cor alinhada no bloco 19/09 (era `Stone950`); blur segue ausente (limitação de plataforma, cf. D21/D183) |
+| D156 | **Card shadow/glow** | `shadow-[0_0_50px_rgba(…,0.3)]` (amber glow) | Glow via `shadow` `spotColor` 24dp pulsante + gradiente de topo + borda pulsante 2.5s | ~~**Média**~~ **RESOLVIDO (bloco levelup 19/09, device pendente)** | Glow ausente → implementado |
 | D157 | **Sparkle regeneration** | `Math.random()` a cada render (re-amostra) | `remember(event)` — sorteado uma vez | **Baixa** | Partículas menos dinâmicas |
-| D158 | **Combat icon animation** | `animate-bounce` no ⚔️ + `animate-ping` no anel | `infiniteRepeatable` ping, sem bounce | **Baixa** | Só anel pulsa |
+| D158 | **Combat icon animation** | `animate-bounce` no ⚔️ + `animate-ping` no anel | Bounce via `keyframes` 1s + ping 1→2/1s/`cubic-bezier(0,0,0.2,1)` | ~~**Baixa**~~ **RESOLVIDO (bloco levelup 19/09, device pendente)** | Bounce implementado; ping com parâmetros do tailwind |
 | D159 | **Combat "Você evoluiu!" size** | `text-[10px] sm:text-xs` (10-12sp responsivo) | `fontSize = 11.sp` fixo | **Baixa** | — |
-| D160 | **Combat "NÍVEL" highlight** | `<span>` com `text-[#E2B054] text-lg font-bold` (destaque dourado) | Texto todo no mesmo nível (`13.sp`, cor `#FEF3C7`) | **Média** | React destaca "NÍVEL X" com cor e tamanho maior |
-| D161 | **Skill "MAESTRIA APRIMORADA" size** | `text-xl sm:text-2xl` (20-24sp responsivo) | `fontSize = 18.sp` fixo | **Baixa** | — |
-| D162 | **Skill "alcançou o Nível X" highlight** | `text-emerald-400 text-lg font-black` (destaque verde) | `color = AmberText200` (amarelo pálido, sem destaque separado) | **Média** | Nível em verde/maior vs tudo em amarelo |
+| D160 | **Combat "NÍVEL" highlight** | `<span>` com `text-[#E2B054] text-lg font-bold` (destaque dourado) | `Text` separado `"NÍVEL {n}"` gold 18sp Bold (span `block` do mobile) | ~~**Média**~~ **RESOLVIDO (bloco levelup 19/09, device pendente)** | Destaque implementado |
+| D161 | **Skill "MAESTRIA APRIMORADA" size** | `text-xl sm:text-2xl` (20-24sp responsivo) | `fontSize = 20.sp` (igual ao mobile `text-xl`) | ~~**Baixa**~~ **RESOLVIDO (bloco levelup 19/09, device pendente)** | Tamanho mobile alinhado |
+| D162 | **Skill "alcançou o Nível X" highlight** | `text-emerald-400 text-lg font-black` (destaque verde) | `color = AmberText200` (amarelo pálido, sem destaque separado) | **Média** | Nível em verde/maior vs tudo em amarelo. Equivalente combat (D160) resolvido no bloco 19/09; skill segue pendente |
 
 #### RestoreSaveDialog
 
@@ -675,7 +675,7 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 | 5 | `TimerSettingsModal.kt` | 9 | Presets, labels |
 | 6 | `SkillSelectorModal.kt` | 8 | Cards, labels |
 | 7 | `TitleEquipModal.kt` | 8 | Headers, perks |
-| 8 | `LevelUpOverlay.kt` | 7 | Título, botão |
+| 8 | `LevelUpOverlay.kt` | 0 | Título, botão resolvidos em bloco próprio 19/09 (Dx-1–Dx-19; Cinzel em todos os textos) |
 | 9 | `RestoreSaveDialog.kt` | 6 | Título, placeholder |
 | 10 | `ModeDescriptionModal.kt` | 3 | Título, blocks |
 | 11 | `IncursionModeModal.kt` | 0 | Cards, labels resolvidos em bloco próprio 18/09 (D1–D16 da auditoria `specs/auditoria-incursion-mode-modal.md` + badge ATIVO + R1 `transition-all`; sem Dx novo — série Dx deste relatório intocada) |
@@ -687,10 +687,10 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 
 | Métrica | Valor |
 |---|---|
-| Total de ocorrências restantes | ~106 em 13 arquivos |
-| Arquivos totalmente migrados | 17 (8 Kingdom + Inventory + 5 Missões + QuestFab + IncursionModeModal) |
-| Arquivos parcialmente/não migrados | 13 |
-| Progresso estimado | ~57% migrado (17/30 arquivos UI) |
+| Total de ocorrências restantes | ~99 em 12 arquivos |
+| Arquivos totalmente migrados | 18 (8 Kingdom + Inventory + 5 Missões + QuestFab + IncursionModeModal + LevelUpOverlay) |
+| Arquivos parcialmente/não migrados | 12 |
+| Progresso estimado | ~60% migrado (18/30 arquivos UI) |
 
 ---
 
@@ -726,7 +726,7 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 | D11 | FocusOrb glow rendering | N/A | Decisão consciente (API 31+) |
 | D12 | CharacterScreen header button | ❌ **Não resolvido** | "+ Gerenciar Habilidades" não existe no código |
 | D13 | CharacterScreen isRunning prop | ❌ **Não resolvido** | Prop `isRunning` não é passada |
-| D14 | LevelUpOverlay button text | ❌ **Não resolvido** | "CONTINUAR" vs React "Continuar" |
+| D14 | LevelUpOverlay button text | N/A | Match comprovado 19/09 — React aplica `uppercase` CSS (App.tsx:4533), ambos renderizam "CONTINUAR" |
 | D15 | HabitsScreen header casing | ✅ **Resolvido (S5)** | Sprint S5 alinhou copy — "Capela de Hábitos" sentence case |
 | D16 | HeatmapScreen hover→tap | N/A | Adaptação consciente (touch) |
 | D17 | HeatmapScreen "ATUAL" label | ❌ **Não resolvido** | Label inline vs React pulsing positioned label |
@@ -741,16 +741,17 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 
 | Status | Qtd | Divergências |
 |---|---|---|
-| ❌ Não resolvido | 19 | D1, D4-D8, D12-D14, D17, D18, D20-D23 + D120, D121, D131-D134, D166, D173-D174, D198 |
+| ❌ Não resolvido | 18 | D1, D4-D8, D12, D13, D17, D18, D20-D23 + D120, D121, D131-D134, D166, D173-D174, D198 |
 | ✅ Resolvido por Sprint S5 | 1 | D15 (HabitsScreen header casing) |
 | ✅ Resolvido por S5 (labels) | 2 | D57 (Habits labels), D70 (Dailies labels) |
 | ✅ Resolvido por S5 (submit) | 3 | D59 (Habits submit), D80 (Todos submit), S10 parcial |
 | ✅ Resolvido por S5 (fontes) | 5 | D86 (Quests progress), D90 (Quests claimed), D95 parcial (History), D194 (QuestFab title), D197 (QuestFab empty) |
 | ✅ Resolvido por Bloco E (D24/D25) | 2 | D24 (header CÂMARA DE FOCO), D25 (break prep inline) |
 | ✅ Resolvido por spec-007 (PR #14) | 13 | D137 (Nv.), D140 (⚙️ título), D143 (toggle copy), D144 (Salvar bordered), D145 (⚔️ título), D146 (card layout), D149 (Sons Ambiente), D150 (Volume do Eco), D151 (volume badge), D152 (VolumeX condicional), D153 (track deselect), D195 (QuestFab header emoji), D196 (QuestFab dot) |
-| N/A (decisão consciente / equivalente funcional) | 9 | D2, D3, D9-D11, D16, D19 |
+| N/A (decisão consciente / equivalente funcional) | 10 | D2, D3, D9-D11, D14, D16, D19 |
 
 **Total resolvido pelo Sprint S5: 11 divergências** (D15, D57, D59, D63, D70, D80, D86, D90, D95 parcial, D194, D197).
 
 | ✅ Resolvido por S6 (tooltip+botões) | 2 | D30 parcial (FocusModeScreen button font/letterSpacing/casing — background colors ainda pendentes), D29 parcial (Sair casing — mode label "SESSÃO LIVRE" ainda pendente) |
 | ✅ Resolvido por bloco incursion-modal 18/09 (sem PR; device pendente) | 3 | ocorrências de `IncursionModeModal.kt` (Cards, labels) — re-auditoria elemento a elemento + 4 baselines regerados/inspecionados; R1 (`transition-all` 150ms) implementado via `animateColorAsState`/`animateFloatAsState` |
+| ✅ Resolvido por bloco levelup-overlay 19/09 (sem PR; device pendente) | 4 | D156 (card glow/sombra), D158 (bounce + ping tailwind), D160 (highlight "NÍVEL"), D161 (MAESTRIA 20sp) — auditoria Dx-1–Dx-19 + Cinzel global no arquivo + 2 baselines regerados/inspecionados; D155 parcial (cor do backdrop alinhada, blur segue ausente); D162 segue aberto (span verde do skill) |
