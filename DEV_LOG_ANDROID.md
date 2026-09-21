@@ -5881,7 +5881,7 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - Visual em device/emulador: **PENDENTE**
 - **FECHADO** (código + build + testes); visual pendente
 
-**Desvios de escopo:** nenhum. Bugs adjacentes registrados e NÃO corrigidos: botão `py-3` 12px vs `14.dp` Android; spans `NÍVEL` com line box 29.25px herdado (unitless) vs default Compose. (`max-w-sm` 384px vs 380dp foi corrigido no bloco do AMBÍGUO acima.)
+**Desvios de escopo:** nenhum. Bugs adjacentes registrados e NÃO corrigidos: botão `py-3` 12px vs `14.dp` Android; spans `NÍVEL` com line box 29.25px herdado (unitless) vs default Compose. (`max-w-sm` corrigido para 384dp no bloco do AMBÍGUO acima.)
 
 ## [2026-09-21] DailyReportModal → Dialog + BackHandler (ae70198, entrada curta)
 
