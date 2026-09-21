@@ -672,7 +672,7 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 | 1 | `CharacterScreen.kt` | 23 | Headers, stats, tiles |
 | 2 | `SkillsScreen.kt` | 18 | Headers, cards, labels |
 | 3 | `GeneralSettingsModal.kt` | 11 | Headers, botões, labels |
-| 4 | `ItemInspectModal.kt` | 10 | Headers, badges, descrição |
+| 4 | `ItemInspectModal.kt` | 0 | **Resolvido (PR #25, 21/09)** — Cinzel/JetBrainsMono em todos os textos |
 | 5 | `TimerSettingsModal.kt` | 9 | Presets, labels |
 | 6 | `SkillSelectorModal.kt` | 8 | Cards, labels |
 | 7 | `TitleEquipModal.kt` | 8 | Headers, perks |
@@ -688,10 +688,10 @@ Referência: `AGENTS.md` seção 4.7 — "muitos componentes ainda usam `FontFam
 
 | Métrica | Valor |
 |---|---|
-| Total de ocorrências restantes | ~99 em 12 arquivos |
-| Arquivos totalmente migrados | 18 (8 Kingdom + Inventory + 5 Missões + QuestFab + IncursionModeModal + LevelUpOverlay) |
-| Arquivos parcialmente/não migrados | 12 |
-| Progresso estimado | ~60% migrado (18/30 arquivos UI) |
+| Total de ocorrências restantes | ~89 em 11 arquivos |
+| Arquivos totalmente migrados | 19 (8 Kingdom + Inventory + 5 Missões + QuestFab + IncursionModeModal + LevelUpOverlay + ItemInspectModal) |
+| Arquivos parcialmente/não migrados | 11 |
+| Progresso estimado | ~63% migrado (19/30 arquivos UI) |
 
 ---
 
@@ -757,3 +757,4 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 | ✅ Resolvido por bloco incursion-modal 18/09 (sem PR; device pendente) | 3 | ocorrências de `IncursionModeModal.kt` (Cards, labels) — re-auditoria elemento a elemento + 4 baselines regerados/inspecionados; R1 (`transition-all` 150ms) implementado via `animateColorAsState`/`animateFloatAsState` |
 | ✅ Resolvido por bloco levelup-overlay 19/09 (sem PR; device pendente) | 4 | D156 (card glow/sombra), D158 (bounce + ping tailwind), D160 (highlight "NÍVEL"), D161 (MAESTRIA 20sp) — auditoria Dx-1–Dx-19 + Cinzel global no arquivo + 2 baselines regerados/inspecionados; D155 parcial (cor do backdrop alinhada, blur segue ausente); D162 segue aberto (span verde do skill) |
 | ✅ Resolvido por PR #20 (19/09) | 1 | D200 (RaidModeInfoBox cores do texto inline — tokens Info* com valores literais do React, 609/609 testes, visual device pendente) |
+| ✅ Resolvido por PR #25 (21/09) | 1 | ItemInspectModal FontFamily (10 ocorrências → 0 — Cinzel/JetBrainsMono em todos os textos; 615/615 testes, visual device pendente) |
