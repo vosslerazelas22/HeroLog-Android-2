@@ -5759,3 +5759,34 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - Visual em device/emulador (2 viewports): **PENDENTE** — aguardando inspeção lado a lado com o React.
 
 **Desvios de escopo aprovados:** Nenhum.
+
+---
+
+## [2026-09-19] Bloco: Issue #21 — cores do texto inline do RaidModeInfoBox (paridade React)
+
+**Arquivos criados/alterados (via `git diff --stat` real):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/RaidModeSection.kt` (+33/−11)
+- 5 baselines Roborazzi regravados: `raid_mode_section_{padrao,masmorra,selvagem}_active`, `masmorra_cooldown`, `disabled_running.png`
+
+**Resumo:**
+- O InfoBox usava tokens amber aproximados compartilhados com os botões (`AmberTextActive` `#FCD34D`, `AmberText` `#FBBF24`) e roxo/vermelho com alpha indevido (`@80%`). Criei tokens `Info*` dedicados com os valores literais do React (`App.tsx:2791–2862` + `index.css:14–18`):
+  - Principal Padrão → `champagne-400` `#E5C158`
+  - Principal Masmorra → `purple-300` `#D8B4FE`
+  - Principal Selvagem → `red-400` `#F87171` sólido
+  - 3 bônus → `zinc-400` `#A1A1AA`
+  - Cooldown → `purple-400` `#C084FC` sólido
+  - `?` com borda `*-500/20` + texto sólido da mesma família
+- `InfoRow` ganhou `helpTextColor` separado (antes borda e texto usavam a mesma cor)
+- Fundo do `?` padrão: transparente — mesmo precedente do `?` do tooltip pomodoro (`MainActivity.kt:1672–1688`, só borda `Champagne500@30%` + texto, sem bg), conforme decisão, já que `bg-champagne-950/10` não existe no `@theme`
+- Tokens dos botões do segmented control intocados (screenshots confirmam: botões idênticos ao antes)
+- Textos, fontes, paddings, loot/cooldown: inalterados
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL (1m23s)
+- `./gradlew testDebugUnitTest` → BUILD SUCCESSFUL, XML bruto: 609/609, 0 failures/errors/skips (76 arquivos; `RaidModeSectionTest` 4/4, `RaidModeSectionScreenshotTest` 5/5)
+- Baselines regravados via `:app:recordRoborazziDebug` (`testDebugUnitTest` não grava/compara neste ambiente — anomalia já documentada no DEV_LOG; PNGs fora de escopo revertidos)
+- PNGs regerados inspecionados: bônus cinza nos 3 estados, principais em champagne/roxo/vermelho sólidos
+
+**Visual:** PENDENTE — aguardando inspeção em device/emulador.
+
+**Desvios de escopo aprovados:** Dois, ambos infraestruturais. (1) `debug.keystore` (gitignored, ausente no worktree) copiado da main — sem ele `assembleDebug` falha; precedente no DEV_LOG 19/09. (2) Nenhum teste unitário novo: cor não é coberta por teste de lógica; a cobertura é o baseline Roborazzi regravado.
