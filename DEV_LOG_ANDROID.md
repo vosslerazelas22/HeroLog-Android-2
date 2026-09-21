@@ -5790,3 +5790,48 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 **Visual:** PENDENTE — aguardando inspeção em device/emulador.
 
 **Desvios de escopo aprovados:** Dois, ambos infraestruturais. (1) `debug.keystore` (gitignored, ausente no worktree) copiado da main — sem ele `assembleDebug` falha; precedente no DEV_LOG 19/09. (2) Nenhum teste unitário novo: cor não é coberta por teste de lógica; a cobertura é o baseline Roborazzi regravado.
+
+---
+
+## [2026-09-21] Bloco: Issue #23 — ItemInspectModal paridade visual (D1-D5, D7, D9-D13) + baselines espelho-produção
+
+**Arquivos criados/alterados:**
+- `ui/components/ItemInspectModal.kt`
+- `ItemInspectModalScreenshotTest.kt`
+- `app/src/test/screenshots/item_inspect_modal_*.png` (10 baselines)
+
+**Resumo:**
+- Fontes Cinzel/JetBrainsMono (ExtraBold/SemiBold — React só carrega Cinzel ≤800, Mono ≤600)
+- Champagne400/Amber100
+- Animação Motion (fade 300ms cubic-bezier(0.25,0.1,0.35,1) + spring 550/0.64, backdrop com fade, delay 300ms)
+- `blur(4.dp)` inócuo removido
+- `weight(1f,fill=false)` + footer fora do scroll (correção de aninhamento: footer estava dentro da coluna rolável)
+- Shadow 24dp
+- Primary/Amber com Amber950@40% + Champagne300
+- Stone fiel a `getButtonClass` (borda white/10, texto zinc-300/70)
+- LineHeight 19.5sp
+- Stretch nas ações
+- 3 divisórias 1dp com layout
+
+**Decisões do mantenedor:**
+- D5 só escurece (blur = melhoria futura)
+- D10 corrige com Amber950 (não replica champagne-950 inexistente)
+- D7 mantém scroll
+- D14 mantém `?: 0`
+- Sem mudança: D6 (getComputedStyle no navegador), D8 (gap 16px não replicado), D15 (ripple default)
+
+**Testes novos/alterados:**
+- `ItemInspectModalScreenshotTest.kt`: +2 espelho-produção (`inventoryFullFlow` = `InventoryScreen.kt:209-237` com `sellPrice` via `InventoryLogic`; `characterUnequipFlow` = `CharacterScreen.kt:81-98`); retag latentes (`equipmentWithCharges` → `latentPrimaryVariant`, `singleAction` → `latentStoneVariant`, D10 sem caller); comentários de correspondência nos demais
+
+**Baselines:**
+- 2 deletados (nomes antigos)
+- 7 novos (4 do bloco anterior + `full_flow` + `unequip_flow` + `latent_*`)
+- 3 regravados
+- Record + verify verdes
+
+**Validação:**
+- Build: `assembleDebug` → BUILD SUCCESSFUL
+- Testes: suíte completa 615/615 XML bruto (76 classes, `ItemInspect` 10/10), 0 falhas
+- **FECHADO** (código + build + testes); visual pendente
+
+**Desvios de escopo aprovados:** Nenhum. Decisões do mantenedor listadas acima são registradas conscientes, não desvios.
