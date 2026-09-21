@@ -1,6 +1,7 @@
 package com.iurispraecepta.herolog.ui.daily
 
 import android.os.Build
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -16,9 +17,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,8 +29,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,13 +52,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.iurispraecepta.herolog.model.DailyReportData
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
@@ -74,53 +81,85 @@ fun DailyReportModal(
     onDismiss: () -> Unit
 ) {
     var visible by remember { mutableStateOf(true) }
+    val handleDismiss: () -> Unit = {
+        visible = false
+        onDismiss()
+    }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(tween(600)) + slideInVertically(
-            initialOffsetY = { it / 4 },
-            animationSpec = tween(600, easing = FastOutSlowInEasing)
-        ),
-        exit = fadeOut(tween(400)) + slideOutVertically(
-            targetOffsetY = { -it / 4 },
-            animationSpec = tween(400, easing = FastOutSlowInEasing)
+    // Dialog (janela própria), igual a HeroLogModal/LevelUpOverlay: no React o relatório é
+    // `fixed inset-0` e cobre header + bottom nav. Composto dentro do content do Scaffold,
+    // o M3 Scaffold desenha topBar/bottomBar POR CIMA do modal e o card era cortado.
+    // decorFitsSystemWindows = false: o backdrop preto cobre também as faixas das system bars.
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false, // BackHandler abaixo é a única fonte de verdade
+            dismissOnClickOutside = false,
+            decorFitsSystemWindows = false
         )
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.95f)),
-            contentAlignment = Alignment.Center
-        ) {
-            // Backdrop blur
-            var backdropModifier = Modifier.fillMaxSize()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                backdropModifier = backdropModifier.blur(12.dp)
-            }
-            Box(modifier = backdropModifier)
+        // BackHandler DENTRO do Dialog: com o modal aberto a janela focada é a do dialog e o
+        // Voltar é despachado no dispatcher dela, não no da activity (mesmo padrão do
+        // HeroLogModal, spec-002). Voltar = mesmo efeito do botão CONTINUAR.
+        BackHandler(enabled = visible, onBack = handleDismiss)
 
-            // Gradient overlay
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(tween(600)) + slideInVertically(
+                initialOffsetY = { it / 4 },
+                animationSpec = tween(600, easing = FastOutSlowInEasing)
+            ),
+            exit = fadeOut(tween(400)) + slideOutVertically(
+                targetOffsetY = { -it / 4 },
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
+            )
+        ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Amber500.copy(alpha = 0.05f),
-                                Color.Transparent,
-                                Color.Transparent
+                    .background(Color.Black.copy(alpha = 0.95f)),
+                contentAlignment = Alignment.Center
+            ) {
+                // Backdrop blur
+                var backdropModifier = Modifier.fillMaxSize()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    backdropModifier = backdropModifier.blur(12.dp)
+                }
+                Box(modifier = backdropModifier)
+
+                // Gradient overlay
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Amber500.copy(alpha = 0.05f),
+                                    Color.Transparent,
+                                    Color.Transparent
+                                )
                             )
                         )
+                )
+
+                // Sparkle particles
+                SparkleParticles()
+
+                // Main card — centralizado na área segura (fora das system bars); o teto de
+                // 80% da altura passa a vir do espaço real (maxHeight), não de screenHeightDp.
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CardContainer(
+                        data = data,
+                        maxCardHeight = maxHeight * 0.8f,
+                        onDismiss = handleDismiss
                     )
-            )
-
-            // Sparkle particles
-            SparkleParticles()
-
-            // Main card
-            CardContainer(data = data) {
-                visible = false
-                onDismiss()
+                }
             }
         }
     }
@@ -199,6 +238,7 @@ private data class ParticleSeed(
 @Composable
 private fun CardContainer(
     data: DailyReportData,
+    maxCardHeight: Dp,
     onDismiss: () -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "icon_bounce")
@@ -212,12 +252,10 @@ private fun CardContainer(
         label = "iconScale"
     )
 
-    // Teto de altura (Opção A): o .verticalScroll() anterior não tinha limite e a
-    // coluna crescia além do viewport. Agora o limite vive AQUI (max 80% da altura
-    // da tela, como o max-h + painel do HeroLogModal), com margem externa de 16dp
-    // (p-4 do React) e largura máxima de 448dp (sm:max-w-md do React) — o backdrop
-    // continua full-bleed de propósito (preto 95% sob as system bars transparentes).
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    // Teto de altura: o .verticalScroll() sem limite deixava a coluna crescer além do
+    // viewport. O limite (80% do espaço útil, recebido em maxCardHeight) vive AQUI, com
+    // margem externa de 16dp (p-4 do React) e largura máxima de 448dp (sm:max-w-md do
+    // React) — o backdrop continua full-bleed de propósito (preto 95% sob as system bars).
     Column(
         modifier = Modifier
             .padding(16.dp)
@@ -231,7 +269,7 @@ private fun CardContainer(
             .clip(RoundedCornerShape(16.dp))
             .background(Stone950)
             .border(2.dp, Amber500, RoundedCornerShape(16.dp))
-            .heightIn(max = screenHeight * 0.8f)
+            .heightIn(max = maxCardHeight)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
