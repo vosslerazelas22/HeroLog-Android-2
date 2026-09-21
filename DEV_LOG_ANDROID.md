@@ -5869,7 +5869,7 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - D7: `shadow = Shadow(...)` no próprio `Text` dos dois títulos (convenção PARIDADE ~L67/issue #20; nunca `Modifier.shadow`); conversão 1:1 igual a `FocusCompletionFlow.kt:219` (`0_2px_12px` → `Offset(0,2)` + `blurRadius 12f`, cf. `FocusCompletionFlow.tsx:138`) e `HeroLogModal.kt:320` (`0_1px_4px` → `Offset(0,1)` + `4f`, cf. `Modal.tsx:58`): combat `GoldAccent@40% Offset(0,2) blur 10f`, skill `Emerald400@35% Offset(0,2) blur 10f`
 - D5: `lineHeight = 22.75.sp` no `<p>` combat (1.625 × 14px), `20.sp` no nome da skill (1.25 × 16px); `lineHeightStyle` inexistente no projeto (grep: 0 ocorrências) — default equivale ao CSS, nenhum padrão novo introduzido
 - Padding do conteúdo 28/32dp → `24.dp` (`p-6` mobile); ícone→texto 4→24dp (`space-y-6`); spacers 8dp entre textos (`space-y-2`) e 4dp antes do span `block` do nível (`mt-1`); `Divider` assimétrico top 12 / bottom 24 — base 24 porque margin-bottom 12 do divider colapsa com margin-top 24 do bloco do botão (max, não soma), + `pt-2` 8 = 32 até o botão
-- **AMBÍGUOS v3/v4 NÃO alterados:** topo do divider (8 em v3 — `space-y` com especificidade — vs 12 em v4 — `:where` especificidade zero, `my-3` vence; mantido 12 = valor v4) e MAESTRIA→skillName (`mt-1` 4 em v4 vs `space-y-2` 8 em v3; mantido 0)
+- **AMBÍGUO resolvido após o bloco:** p→divider = 12 (v4, mantido); MAESTRIA→skillName = 8 — corrigido em bloco posterior com evidência empírica (CSS compilado do Tailwind 4.1.14 e 4.3.1, lock do React em 4.3.1): `space-y-N` = `margin-block-end N` em `:not(:last-child)` com especificidade zero; margens de irmãos em fluxo de bloco colapsam → `App.tsx:4593-4596`: h2 (mb 8) → p.mt-1 (4) = max(8,4) = 8. `Spacer(8.dp)` + `widthIn(max 380→384.dp)` (`max-w-sm`); só `level_up_overlay_skill.png` regravado (combat inalterado — max não vincula no viewport de teste); 16/16 direcionados
 
 **(c) Decisões do Bruno aplicadas:** D6, D8, D9, D13 = DESVIO CONSCIENTE (D6: sob preto 90% o blur é invisível; D8: aproximação Dx-16; D9: sombra preta 10% sobre fundo escuro não aparece; D13: fade 70% vs 85% mínimo). D12 ADIADO. Teto Cinzel = N/A (`index.html:10` carrega só 400–800, navegador também renderiza `font-black` como 800 — sem divergência).
 
@@ -5881,7 +5881,7 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - Visual em device/emulador: **PENDENTE**
 - **FECHADO** (código + build + testes); visual pendente
 
-**Desvios de escopo:** nenhum. Bugs adjacentes registrados e NÃO corrigidos: botão `py-3` 12px vs `14.dp` Android; `max-w-sm` 384px vs `widthIn` 380dp; spans `NÍVEL` com line box 29.25px herdado (unitless) vs default Compose.
+**Desvios de escopo:** nenhum. Bugs adjacentes registrados e NÃO corrigidos: botão `py-3` 12px vs `14.dp` Android; spans `NÍVEL` com line box 29.25px herdado (unitless) vs default Compose. (`max-w-sm` 384px vs 380dp foi corrigido no bloco do AMBÍGUO acima.)
 
 ## [2026-09-21] DailyReportModal → Dialog + BackHandler (ae70198, entrada curta)
 

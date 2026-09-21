@@ -278,7 +278,9 @@ private fun SkillLevelUpCard(event: LevelUpEvent.Skill, onDismiss: () -> Unit) {
                 )
             )
         )
-        // MAESTRIA→skillName: mt-1 (4) vs space-y-2 (8) — AMBÍGUO v3/v4, não alterado.
+        // MAESTRIA→skillName = 8: h2 recebe margin-block-end 8 do space-y-2 e o p
+        // tem mt-1 = 4; margens de irmãos colapsam → max(8,4) = 8 (App.tsx:4593-4596).
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = event.skillName,
             style = TextStyle(
@@ -385,7 +387,8 @@ private fun LevelUpCardShell(
     // até a altura toda. Aura/partículas usam matchParentSize() (não influenciam a altura).
     Box(
         modifier = Modifier
-            .widthIn(max = 380.dp)
+            // max-w-sm = 384px (App.tsx:4476/4551).
+            .widthIn(max = 384.dp)
             .fillMaxWidth()
             // Dx-5: glow omnidirecional (shadow 0 0 50px da fonte) + gradiente de topo.
             .shadow(
