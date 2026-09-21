@@ -564,7 +564,7 @@ private fun Divider(color: Color) {
     Box(
         modifier = Modifier
             // Topo 12 = my-3 sob Tailwind v4 (espaço p→divider: 8 em v3, 12 em v4 —
-            // AMBÍGUO, mantido o valor v4 já existente). Base 24: margin-bottom 12 do
+            // confirmado: Tailwind do React é v4, lock 4.3.1). Base 24: margin-bottom 12 do
             // divider colapsa com margin-top 24 do bloco do botão (max, não soma) +
             // o botão mantém seu pt-2 = 8 → 24 + 8 = 32 até o botão (App.tsx:4527/4530).
             .padding(top = 12.dp, bottom = 24.dp)
