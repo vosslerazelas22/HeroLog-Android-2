@@ -5857,3 +5857,32 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - **FECHADO** (código + build + testes); visual pendente
 
 **Desvios de escopo:** Nenhum — escopo D1/D2/D3/D4/D10 aprovado explicitamente antes da implementação.
+
+## [2026-09-21] LevelUpOverlay — fase 2 (D7 + D5 + padding/espaçamentos)
+
+**Fonte React:** `App.tsx:4509` (wrapper `p-6 space-y-6`), `:4517` (`space-y-2`), `:4521` (`drop-shadow-[0_2px_10px_rgba(226,176,84,0.4)]`), `:4524-4525` (`leading-relaxed` + span `block mt-1`), `:4527` (divider `w-1/3 my-3`), `:4530` (botão `pt-2`), `:4584/:4592-4593/:4596/:4599-4600/:4602/:4605` (equivalentes skill), `index.css:4` (serif = Cinzel); `FocusCompletionFlow.tsx:138` + `Modal.tsx:58` (precedentes de conversão drop-shadow); `index.html:10` (Cinzel 400;600;700;800). Tailwind do React = v4.1.14 (`package.json:17,34`).
+**Commits deste bloco:** `d57e5be` (código) + `21ffd22` (baselines). **Arquivo alterado:** só `ui/character/LevelUpOverlay.kt` (+46/-8).
+
+**(a) Já aplicado antes (c8484e6 + 957e7a2, sem entrada própria até aqui):** card esticado até a altura da tela — causa raiz: aura com `fillMaxSize()` dentro de `BoxWithConstraints` herdava o max da tela; fix = container `Box` + aura/partículas com `matchParentSize()` + `BoxWithConstraints` só para medir as partículas; R-1 fechado (`Modifier.padding(16.dp)` = `p-4`, `App.tsx:4468`); D11 fechado (`BackHandler` dentro do `Dialog` — fora dele o Voltar era engolido por `dismissOnBackPress=false`). **Lição:** a auditoria D1–D13 comparava valores literais e não pegou o layout esticado.
+
+**(b) Neste bloco:**
+- D7: `shadow = Shadow(...)` no próprio `Text` dos dois títulos (convenção PARIDADE ~L67/issue #20; nunca `Modifier.shadow`); conversão 1:1 igual a `FocusCompletionFlow.kt:219` (`0_2px_12px` → `Offset(0,2)` + `blurRadius 12f`, cf. `FocusCompletionFlow.tsx:138`) e `HeroLogModal.kt:320` (`0_1px_4px` → `Offset(0,1)` + `4f`, cf. `Modal.tsx:58`): combat `GoldAccent@40% Offset(0,2) blur 10f`, skill `Emerald400@35% Offset(0,2) blur 10f`
+- D5: `lineHeight = 22.75.sp` no `<p>` combat (1.625 × 14px), `20.sp` no nome da skill (1.25 × 16px); `lineHeightStyle` inexistente no projeto (grep: 0 ocorrências) — default equivale ao CSS, nenhum padrão novo introduzido
+- Padding do conteúdo 28/32dp → `24.dp` (`p-6` mobile); ícone→texto 4→24dp (`space-y-6`); spacers 8dp entre textos (`space-y-2`) e 4dp antes do span `block` do nível (`mt-1`); `Divider` assimétrico top 12 / bottom 24 — base 24 porque margin-bottom 12 do divider colapsa com margin-top 24 do bloco do botão (max, não soma), + `pt-2` 8 = 32 até o botão
+- **AMBÍGUOS v3/v4 NÃO alterados:** topo do divider (8 em v3 — `space-y` com especificidade — vs 12 em v4 — `:where` especificidade zero, `my-3` vence; mantido 12 = valor v4) e MAESTRIA→skillName (`mt-1` 4 em v4 vs `space-y-2` 8 em v3; mantido 0)
+
+**(c) Decisões do Bruno aplicadas:** D6, D8, D9, D13 = DESVIO CONSCIENTE (D6: sob preto 90% o blur é invisível; D8: aproximação Dx-16; D9: sombra preta 10% sobre fundo escuro não aparece; D13: fade 70% vs 85% mínimo). D12 ADIADO. Teto Cinzel = N/A (`index.html:10` carrega só 400–800, navegador também renderiza `font-black` como 800 — sem divergência).
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL
+- `recordRoborazziDebug --tests "*LevelUpOverlayScreenshotTest*"` → BUILD SUCCESSFUL, 2 PNGs regravados e **vistos como imagem**: card compacto, centralizado, com margem, glow do título visível nos dois
+- Direcionados `--rerun-tasks` → 16/16 nominal XML bruto (`LevelUpLogicTest` 14/14 + `LevelUpOverlayScreenshotTest` 2/2, nomes 1:1)
+- Suíte completa → 615/615, 0 falhas/erros/skips (76 suítes, XML agregado)
+- Visual em device/emulador: **PENDENTE**
+- **FECHADO** (código + build + testes); visual pendente
+
+**Desvios de escopo:** nenhum. Bugs adjacentes registrados e NÃO corrigidos: botão `py-3` 12px vs `14.dp` Android; `max-w-sm` 384px vs `widthIn` 380dp; spans `NÍVEL` com line box 29.25px herdado (unitless) vs default Compose.
+
+## [2026-09-21] DailyReportModal → Dialog + BackHandler (ae70198, entrada curta)
+
+Refactor sem bloco próprio até aqui: `DailyReportModal.kt` migrado para `Dialog` + `BackHandler` dentro (paridade de system bars, mesmo padrão `HeroLogModal`/`LevelUpOverlay`) + `BoxWithConstraints`/`WindowInsets.systemBars` com altura real do card (não `screenHeightDp`); 7 baselines `daily_report_*` regravados. Sem mudança de lógica — só container/dispatch de Voltar. Validação original do Bloco DR (08/09) inalterada; visual device segue pendente.
