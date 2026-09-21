@@ -117,16 +117,19 @@ fun LevelUpOverlay(
         sfxManager?.playLevelUp()
     }
 
-    BackHandler(onBack = onDismiss)
-
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
-            dismissOnBackPress = false, // BackHandler manual acima é a única fonte de verdade
+            dismissOnBackPress = false, // BackHandler manual abaixo é a única fonte de verdade
             dismissOnClickOutside = false // fonte não fecha este popup ao clicar fora
         )
     ) {
+        // BackHandler DENTRO do Dialog: com o modal aberto a janela focada é a do dialog e o
+        // Voltar é despachado no dispatcher dela, não no da activity (mesmo padrão do
+        // HeroLogModal/DailyReportModal, spec-002). Fora daqui o Voltar era engolido (D11).
+        BackHandler(onBack = onDismiss)
+
         var animatedVisible by remember(event) { mutableStateOf(false) }
         LaunchedEffect(event) { animatedVisible = true }
 
