@@ -154,6 +154,8 @@ fun LevelUpOverlay(
             // dampingRatio 0.9, stiffness 120 — não tween linear.
             AnimatedVisibility(
                 visible = animatedVisible,
+                // R-1: `p-4` do container fixed da fonte (App.tsx:4468) — margem de 16dp.
+                modifier = Modifier.padding(16.dp),
                 enter = fadeIn(animationSpec = spring(dampingRatio = 0.9f, stiffness = 120f)) +
                         scaleIn(initialScale = 0.85f, animationSpec = spring(dampingRatio = 0.9f, stiffness = 120f)) +
                         slideInVertically(initialOffsetY = { 30 }, animationSpec = spring(dampingRatio = 0.9f, stiffness = 120f)),
@@ -342,7 +344,10 @@ private fun LevelUpCardShell(
         label = "auraP"
     )
 
-    BoxWithConstraints(
+    // Card com altura do CONTEÚDO (fonte: sem h-full). Container `Box` (não BoxWithConstraints):
+    // um filho fillMaxSize dentro de BoxWithConstraints herda o max da tela e esticava o card
+    // até a altura toda. Aura/partículas usam matchParentSize() (não influenciam a altura).
+    Box(
         modifier = Modifier
             .widthIn(max = 380.dp)
             .fillMaxWidth()
@@ -362,12 +367,9 @@ private fun LevelUpCardShell(
             )
             .border(2.dp, borderColor.copy(alpha = 0.3f + 0.65f * glowPulse), RoundedCornerShape(16.dp))
     ) {
-        val cardWidth = maxWidth
-        val cardHeight = maxHeight
-
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
                 .graphicsLayer {
                     val s = 1f + 0.12f * auraP
                     scaleX = s
@@ -377,13 +379,16 @@ private fun LevelUpCardShell(
                 .background(Brush.radialGradient(listOf(auraColor.copy(alpha = 0.1f), Color.Transparent)))
         )
 
-        particles.forEach { particle ->
-            RisingSpark(
-                particle = particle,
-                color = particleColor,
-                cardWidth = cardWidth,
-                cardHeight = cardHeight
-            )
+        // Partículas medem o tamanho REAL do card (matchParentSize = altura do Column).
+        BoxWithConstraints(modifier = Modifier.matchParentSize()) {
+            particles.forEach { particle ->
+                RisingSpark(
+                    particle = particle,
+                    color = particleColor,
+                    cardWidth = maxWidth,
+                    cardHeight = maxHeight
+                )
+            }
         }
 
         Column(
