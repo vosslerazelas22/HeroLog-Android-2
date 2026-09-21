@@ -105,6 +105,24 @@ private object RaidColors {
 
     val InfoBoxBg = Color(0xFF0C0A09).copy(alpha = 0.40f)          // stone-950/40
     val InfoBoxBorder = Color(0xFFF59E0B).copy(alpha = 0.05f)      // amber-500/5
+
+    // InfoBox contextual (RaidModeInfoBox) — paridade literal com App.tsx:2791–2862.
+    // Tokens separados dos botões do segmented control de propósito: os botões usam
+    // amber/purple/red aproximados, o InfoBox usa champagne/zinc + purple/red sólidos.
+    // Fundo do "?" mapeado para transparente (sem bg), mesmo precedente do "?" do
+    // tooltip do timer pomodoro (MainActivity, banner "CÂMARA DE FOCO": só borda +
+    // texto, sem bg) — o `bg-champagne-950/10` do React não existe no @theme.
+    val InfoMainStandard = Color(0xFFE5C158)                          // champagne-400
+    val InfoBonus = Color(0xFFA1A1AA)                                  // zinc-400
+    val InfoMainDungeon = Color(0xFFD8B4FE)                            // purple-300
+    val InfoCooldown = Color(0xFFC084FC)                               // purple-400 sólido
+    val InfoMainWild = Color(0xFFF87171)                               // red-400 sólido
+    val InfoHelpStandardBorder = Color(0xFFD4AF37).copy(alpha = 0.20f) // champagne-500/20
+    val InfoHelpStandardText = Color(0xFFE5C158)                       // champagne-400
+    val InfoHelpDungeonBorder = Color(0xFFA855F7).copy(alpha = 0.20f)  // purple-500/20
+    val InfoHelpDungeonText = Color(0xFFC084FC)                        // purple-400
+    val InfoHelpWildBorder = Color(0xFFEF4444).copy(alpha = 0.20f)     // red-500/20
+    val InfoHelpWildText = Color(0xFFF87171)                           // red-400
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -289,28 +307,31 @@ fun RaidModeInfoBox(
         when (mode) {
             RaidMode.MASMORRA -> InfoRow(
                 mainText = "⚔️ Explorando Masmorra ($dungeonSessions/4)",
-                mainColor = RaidColors.PurpleTextActive,
+                mainColor = RaidColors.InfoMainDungeon,
                 bonusText = if (dungeonOnCooldown) "⏳ Cooldown" else "Bônus +2.500 GP & Quad Loot",
-                bonusColor = if (dungeonOnCooldown) RaidColors.PurpleText else RaidColors.AmberText,
-                helpBorderColor = RaidColors.PurpleText,
+                bonusColor = if (dungeonOnCooldown) RaidColors.InfoCooldown else RaidColors.InfoBonus,
+                helpBorderColor = RaidColors.InfoHelpDungeonBorder,
+                helpTextColor = RaidColors.InfoHelpDungeonText,
                 onHelpClick = onShowDungeonHelp,
             )
 
             RaidMode.SELVAGEM -> InfoRow(
                 mainText = "💀 Terra Selvagem Ativa",
-                mainColor = RaidColors.RedText,
+                mainColor = RaidColors.InfoMainWild,
                 bonusText = "Bônus +25% XP & GP",
-                bonusColor = RaidColors.AmberText,
-                helpBorderColor = RaidColors.RedText,
+                bonusColor = RaidColors.InfoBonus,
+                helpBorderColor = RaidColors.InfoHelpWildBorder,
+                helpTextColor = RaidColors.InfoHelpWildText,
                 onHelpClick = onShowWildernessHelp,
             )
 
             RaidMode.PADRAO -> InfoRow(
                 mainText = "🎯 Modo Padrão",
-                mainColor = RaidColors.AmberTextActive,
+                mainColor = RaidColors.InfoMainStandard,
                 bonusText = "• Chance de Saque: $lootChancePercent%",
-                bonusColor = RaidColors.AmberText,
-                helpBorderColor = RaidColors.AmberText,
+                bonusColor = RaidColors.InfoBonus,
+                helpBorderColor = RaidColors.InfoHelpStandardBorder,
+                helpTextColor = RaidColors.InfoHelpStandardText,
                 onHelpClick = onShowStandardHelp,
             )
         }
@@ -324,6 +345,7 @@ private fun InfoRow(
     bonusText: String,
     bonusColor: Color,
     helpBorderColor: Color,
+    helpTextColor: Color,
     onHelpClick: () -> Unit,
 ) {
     Row(
@@ -343,11 +365,11 @@ private fun InfoRow(
         Column(
             modifier = Modifier
                 .clip(RoundedCornerShape(3.dp))
-                .border(1.dp, helpBorderColor.copy(alpha = 0.20f), RoundedCornerShape(3.dp))
+                .border(1.dp, helpBorderColor, RoundedCornerShape(3.dp))
                 .clickable(onClick = onHelpClick)
                 .padding(horizontal = 6.dp, vertical = 2.dp),
         ) {
-            Text(text = "?", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = helpBorderColor)
+            Text(text = "?", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = helpTextColor)
         }
     }
 }
