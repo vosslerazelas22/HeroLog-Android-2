@@ -5835,3 +5835,25 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 - **FECHADO** (código + build + testes); visual pendente
 
 **Desvios de escopo aprovados:** Nenhum. Decisões do mantenedor listadas acima são registradas conscientes, não desvios.
+
+## [2026-09-20] LevelUpOverlay — auditoria D1–D13 + fixes aprovados (D1/D2/D3/D4/D10)
+
+**Fonte React:** `App.tsx:4518` (eyebrow `text-[10px]`), `:4521` (`text-2xl`), `:4525` (span `NÍVEL` combat), `:4527` (divider `w-1/3`), `:4533` (botão `text-[10px]`), `:4599-4600` (span `Nível` skill `text-lg font-black block`), `index.css:4` (serif = Cinzel). Auditoria de paridade visual completa anterior (tabelas §1–§12) gerou D1–D13; confronto por variante mostrou que o bloco Dx-1–Dx-19 (19/09) cobriu o combat mas deixou o skill com ponto cego (D3 = residual D162 aberto).
+
+**Arquivo alterado:** só `ui/character/LevelUpOverlay.kt` (+5 edits) + 2 baselines Roborazzi regerados (`level_up_overlay_combat.png`, `level_up_overlay_skill.png`).
+- D1: eyebrow `11.sp`→`10.sp` (= `text-[10px]` mobile)
+- D2: "LEVEL UP!" `26.sp`→`24.sp` (= `text-2xl` mobile) + comentário de citação
+- D4: "CONTINUAR" `12.sp`→`10.sp` (= `text-[10px]` mobile, botão compartilhado — vale pros dois modais)
+- D3 (fecha D162): skill "alcançou o Nível X" (linha única 14sp SemiBold) → dois `Text` espelhando o combat: "alcançou o" 14sp SemiBold amber-200 + "Nível {n}" 18sp Black emerald-400, ambos `Center` + `widthIn(max 260.dp)` (span `block` mobile da fonte)
+- D10: `Divider` `.width(90.dp)` → `.fillMaxWidth(1f/3f)` (= `w-1/3`, centralizado via `CenterHorizontally` da Column); import `layout.width` removido (virou unused)
+- Fora de escopo por aprovação: D5 (line-height), D6/D155 (blur), D7 (drop-shadow), D8 (pico glow skill), D9 (sombra botão), D11 (BackHandler — backlog sprint própria), D12 (gradiente de topo Dx-5), D13 (fade sparks)
+
+**Validação:**
+- `./gradlew assembleDebug` → BUILD SUCCESSFUL
+- Direcionados `--rerun-tasks` → 16/16 XML bruto (`LevelUpLogicTest` 14/14 + `LevelUpOverlayScreenshotTest` 2/2, nomes conferidos 1:1)
+- Baselines regravados via `recordRoborazziDebug` (filtrado à classe) + **PNGs vistos como imagem**: combat "VOCÊ EVOLUIU!/LEVEL UP!/THALRIC ALCANÇOU O/NÍVEL 5" + divider + CONTINUAR; skill "MAESTRIA APRIMORADA/KOTLIN/ALCANÇOU O/NÍVEL 7" (NÍVEL 7 agora em destaque esmeralda separado — D3 visível) + divider + CONTINUAR
+- Suíte completa → **615/615, 0 falhas/erros/skips** (76 suítes, XML bruto agregado)
+- Visual em device/emulador: **PENDENTE**
+- **FECHADO** (código + build + testes); visual pendente
+
+**Desvios de escopo:** Nenhum — escopo D1/D2/D3/D4/D10 aprovado explicitamente antes da implementação.

@@ -34,7 +34,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -186,17 +185,18 @@ private fun CombatLevelUpCard(event: LevelUpEvent.Combat, onDismiss: () -> Unit)
             style = TextStyle(
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 color = GoldAccent,
                 letterSpacing = 1.5.sp
             )
         )
         Text(
+            // D2 (auditoria 20/09): text-2xl = 24px no mobile (App.tsx:4521).
             text = "LEVEL UP!",
             style = TextStyle(
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 26.sp,
+                fontSize = 24.sp,
                 color = Amber300,
                 letterSpacing = 1.sp
             )
@@ -257,12 +257,27 @@ private fun SkillLevelUpCard(event: LevelUpEvent.Skill, onDismiss: () -> Unit) {
             )
         )
         Text(
-            text = "alcançou o Nível ${event.newLevel}",
+            // D3 (auditoria 20/09, fecha residual D162): no mobile o span do nível é
+            // `block` abaixo (App.tsx:4600) — primeira linha text-sm = 14sp.
+            text = "alcançou o",
             style = TextStyle(
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
-                color = AmberText200
+                color = AmberText200,
+                textAlign = TextAlign.Center
+            ),
+            modifier = Modifier.widthIn(max = 260.dp)
+        )
+        Text(
+            // D3 (parte 2): span text-lg (18px) font-black text-emerald-400 (App.tsx:4600).
+            text = "Nível ${event.newLevel}",
+            style = TextStyle(
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.Black,
+                fontSize = 18.sp,
+                color = Emerald400,
+                textAlign = TextAlign.Center
             )
         )
         Divider(color = Emerald500)
@@ -504,7 +519,10 @@ private fun Divider(color: Color) {
     Box(
         modifier = Modifier
             .padding(vertical = 12.dp)
-            .width(90.dp)
+            // D10 (auditoria 20/09): fonte usa w-1/3 do conteúdo (App.tsx:4527),
+            // não largura fixa — fração mantém a proporção em qualquer viewport.
+            // Centralizado via horizontalAlignment = CenterHorizontally da Column.
+            .fillMaxWidth(1f / 3f)
             .height(2.dp)
             .background(
                 Brush.horizontalGradient(
@@ -545,11 +563,12 @@ private fun ContinueButton(gradient: List<Color>, onClick: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Text(
+            // D4 (auditoria 20/09): text-[10px] no mobile (App.tsx:4533).
             text = "CONTINUAR",
             style = TextStyle(
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 color = Stone950,
                 letterSpacing = 1.5.sp
             )
