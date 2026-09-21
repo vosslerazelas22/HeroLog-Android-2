@@ -49,8 +49,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -182,7 +184,8 @@ private fun CombatLevelUpCard(event: LevelUpEvent.Combat, onDismiss: () -> Unit)
             // Dx-10: text-4xl = 36px (App.tsx:4512).
             Text(text = "⚔️", fontSize = 36.sp)
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        // Espaçamento ícone→texto: space-y-6 = 24 (App.tsx:4509).
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             // Dx-1: fonte aplica `uppercase` via CSS sobre "Você evoluiu!" (App.tsx:4518).
             // Dx-3: font-serif = Cinzel (antes FontFamily.Serif do sistema).
@@ -195,6 +198,8 @@ private fun CombatLevelUpCard(event: LevelUpEvent.Combat, onDismiss: () -> Unit)
                 letterSpacing = 1.5.sp
             )
         )
+        // Espaçamento entre textos: space-y-2 = 8 (App.tsx:4517).
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             // D2 (auditoria 20/09): text-2xl = 24px no mobile (App.tsx:4521).
             text = "LEVEL UP!",
@@ -203,9 +208,18 @@ private fun CombatLevelUpCard(event: LevelUpEvent.Combat, onDismiss: () -> Unit)
                 fontWeight = FontWeight.Black,
                 fontSize = 24.sp,
                 color = Amber300,
-                letterSpacing = 1.sp
+                letterSpacing = 1.sp,
+                // D7: drop-shadow-[0_2px_10px_rgba(226,176,84,0.4)] (App.tsx:4521).
+                // Conversão 1:1 igual a FocusCompletionFlow.kt:219
+                // (drop-shadow-[0_2px_12px...] → Offset(0,2) + blurRadius 12f).
+                shadow = Shadow(
+                    color = GoldAccent.copy(alpha = 0.4f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 10f
+                )
             )
         )
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             // Dx-2/Dx-4 (parte 1): no mobile o span do nível é `block` abaixo (App.tsx:4525) —
             // primeira linha sem o nível, text-sm = 14sp.
@@ -215,10 +229,14 @@ private fun CombatLevelUpCard(event: LevelUpEvent.Combat, onDismiss: () -> Unit)
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 color = Color(0xFFFEF3C7).copy(alpha = 0.9f),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                // D5: leading-relaxed (1.625) com text-sm (14px) → 22.75 (App.tsx:4524).
+                lineHeight = 22.75.sp
             ),
             modifier = Modifier.widthIn(max = 260.dp)
         )
+        // Span do nível é `block mt-1` no mobile = 4 (App.tsx:4525).
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             // Dx-2/Dx-4 (parte 2): span text-lg (18px) font-bold text-[#E2B054] (App.tsx:4525).
             text = "NÍVEL ${event.newLevel}",
@@ -241,7 +259,8 @@ private fun SkillLevelUpCard(event: LevelUpEvent.Skill, onDismiss: () -> Unit) {
         PulsingIconBadge(borderColor = Emerald500, ringColor = Emerald500) {
             Text(text = event.emoji, fontSize = 36.sp)
         }
-        Spacer(modifier = Modifier.height(4.dp))
+        // Espaçamento ícone→texto: space-y-6 = 24 (App.tsx:4584).
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "MAESTRIA APRIMORADA",
             style = TextStyle(
@@ -249,18 +268,30 @@ private fun SkillLevelUpCard(event: LevelUpEvent.Skill, onDismiss: () -> Unit) {
                 fontWeight = FontWeight.Black,
                 fontSize = 20.sp,
                 color = Emerald400,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.5.sp,
+                // D7: drop-shadow-[0_2px_10px_rgba(52,211,153,0.35)] (App.tsx:4593).
+                // Conversão 1:1 igual a FocusCompletionFlow.kt:219.
+                shadow = Shadow(
+                    color = Emerald400.copy(alpha = 0.35f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 10f
+                )
             )
         )
+        // MAESTRIA→skillName: mt-1 (4) vs space-y-2 (8) — AMBÍGUO v3/v4, não alterado.
         Text(
             text = event.skillName,
             style = TextStyle(
                 fontFamily = Cinzel,
                 fontWeight = FontWeight.Black,
                 fontSize = 16.sp,
-                color = Emerald400
+                color = Emerald400,
+                // D5: leading-tight (1.25) com text-base (16px) → 20 (App.tsx:4596).
+                lineHeight = 20.sp
             )
         )
+        // skillName→"alcançou o": mt-2 = 8 e space-y-2 = 8 (8 nos dois, App.tsx:4599).
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             // D3 (auditoria 20/09, fecha residual D162): no mobile o span do nível é
             // `block` abaixo (App.tsx:4600) — primeira linha text-sm = 14sp.
@@ -274,6 +305,8 @@ private fun SkillLevelUpCard(event: LevelUpEvent.Skill, onDismiss: () -> Unit) {
             ),
             modifier = Modifier.widthIn(max = 260.dp)
         )
+        // Span do nível é `block mt-1` no mobile = 4 (App.tsx:4600).
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             // D3 (parte 2): span text-lg (18px) font-black text-emerald-400 (App.tsx:4600).
             text = "Nível ${event.newLevel}",
@@ -397,7 +430,8 @@ private fun LevelUpCardShell(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 28.dp, vertical = 32.dp),
+                // Wrapper do conteúdo: p-6 = 24 nos 4 lados no mobile (App.tsx:4509/4584).
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             content = content
         )
@@ -526,7 +560,11 @@ private fun PulsingIconBadge(
 private fun Divider(color: Color) {
     Box(
         modifier = Modifier
-            .padding(vertical = 12.dp)
+            // Topo 12 = my-3 sob Tailwind v4 (espaço p→divider: 8 em v3, 12 em v4 —
+            // AMBÍGUO, mantido o valor v4 já existente). Base 24: margin-bottom 12 do
+            // divider colapsa com margin-top 24 do bloco do botão (max, não soma) +
+            // o botão mantém seu pt-2 = 8 → 24 + 8 = 32 até o botão (App.tsx:4527/4530).
+            .padding(top = 12.dp, bottom = 24.dp)
             // D10 (auditoria 20/09): fonte usa w-1/3 do conteúdo (App.tsx:4527),
             // não largura fixa — fração mantém a proporção em qualquer viewport.
             // Centralizado via horizontalAlignment = CenterHorizontally da Column.
