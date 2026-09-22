@@ -5886,3 +5886,30 @@ cosmético, follow-up futuro, sem regressão (existia antes e depois).
 ## [2026-09-21] DailyReportModal → Dialog + BackHandler (ae70198, entrada curta)
 
 Refactor sem bloco próprio até aqui: `DailyReportModal.kt` migrado para `Dialog` + `BackHandler` dentro (paridade de system bars, mesmo padrão `HeroLogModal`/`LevelUpOverlay`) + `BoxWithConstraints`/`WindowInsets.systemBars` com altura real do card (não `screenHeightDp`); 7 baselines `daily_report_*` regravados. Sem mudança de lógica — só container/dispatch de Voltar. Validação original do Bloco DR (08/09) inalterada; visual device segue pendente.
+
+## [2026-09-21] Bloco BOM/FlowRow — BOM 2025.04.01 e remoção do FlowRowStable
+
+**Problema:** `NoSuchMethodError` em `FlowRow` (crash em qualquer tela com `FlowRow`, incluindo chips de buff na Ficha do Herói). **Causa (já registrada no Bloco FS de 08/09, agora corrigida na raiz):** BOM `2024.09.00` declarava Compose 1.7.0, mas `haze`/`haze-materials` puxam `org.jetbrains.compose.*:1.8.0` no runtime; `FlowRow` compilava contra a assinatura 1.7.0 e quebrava contra a 1.8.0. Supersede o workaround `FlowRowStable` (Bloco FS).
+
+**Commits deste bloco (branch `feat/bom-compose-180-remove-flowrowstable`):** `5ab5013` (código) + `516eb5f` e `dd89c23` (baselines) + commit de baseline do emoji picker e docs (este). **Arquivos alterados em `5ab5013`:** `gradle/libs.versions.toml` (BOM → `2025.04.01`), `ui/components/FlowRowStable.kt` (removido, −111), `CharacterScreen.kt`, `FocusCompletionFlow.kt`, `SkillSelectorModal.kt`, `SkillsScreen.kt` (`FlowRowStable` → `FlowRow` + `@OptIn(ExperimentalLayoutApi::class)`); 5 usos de `FlowRow(` em 4 arquivos (`git grep`).
+
+**Baselines regravados (comparados com o React antes de regravar):**
+- `character_screen_equipped.png`, `focus_completion_flow_notes_with_skill_tags.png`, `focus_completion_375x667_notes.png`: chips passam de centralizados (artefato do `FlowRowStable`) para alinhados à esquerda; React usa `flex flex-wrap gap-1.5` sem `justify` (`CharacterScreen.tsx`, `FocusCompletionFlow.tsx`). `_compare.png` do notes 375x667 inspecionado: botão de conclusão inteiro e mesma posição, diferença só nos chips.
+- `skills_screen_create_modal.png`: emoji picker de grupo centralizado para alinhado à esquerda; ver divergência abaixo.
+
+**Validação:**
+- Cópia do React (`HeroLog-React-ref`, `main`) conferida em dia com `origin/main` antes do grep
+- `debugCompileClasspath` e `releaseRuntimeClasspath`: nenhuma linha de `foundation-layout` diferente de 1.8.0
+- APK da branch: 0 ocorrências de `FlowRowStable` nos `.dex` (controle `HeroLogModal`: 157); APK que estava instalado no emulador antes: 40 ocorrências
+- `./gradlew testDebugUnitTest -Proborazzi.test.verify=true --rerun` (suíte completa) → BUILD SUCCESSFUL, 615 testes, 0 falhas
+- Emulador 390×844 (APK da branch, `install -r` → Success): Ficha do Herói com buff ativo sem crash, chip alinhado à esquerda; Skills e modal "Criar nova habilidade" abrem; seletor de skill e Crônica da Missão com tags à esquerda
+- Emulador 375×667: **PENDENTE** (adiado, fora deste Bloco)
+- **FECHADO** (código + build + testes + 390×844); 375×667 pendente
+
+**Divergências registradas, NÃO corrigidas:**
+- Emoji picker (`SkillsScreen.kt`, `FlowRow` `spacedBy(4.dp)`, itens 32dp) vs React `grid grid-cols-8 gap-1 justify-items-center` com `w-7` (`SkillsScreen.tsx:273`). Bloco próprio para o grid de 8 colunas; 32dp vs `w-7` (28px) a confirmar.
+- Gap dos chips de buff: `spacedBy(8.dp)` (`CharacterScreen.kt:608-609`) vs `gap-1.5` (6px). Preexistente.
+
+**Pendências:** teste no AVD 375×667; Bloco do grid do emoji picker; após o merge, trocar no `AGENTS.md` os bullets "causa confirmada / correção pendente" e "Até lá, use `FlowRowStable`" (linhas ~102–111) e a nota de R8; atualizar o `PARIDADE.md` (linhas da Ficha e de Skills já atualizadas).
+
+**Desvios de escopo:** nenhum. Lição de processo: verificar por `pm path`/`pull` + contagem no `.dex` qual build está no emulador antes de validar; as primeiras capturas (centralizadas) eram do APK antigo.
