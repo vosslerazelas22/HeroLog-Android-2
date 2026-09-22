@@ -14,7 +14,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import com.iurispraecepta.herolog.ui.components.FlowRowStable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -594,6 +595,7 @@ fun LootDropScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SessionNotesScreen(
     completionNotes: String,
@@ -690,7 +692,7 @@ fun SessionNotesScreen(
                         .border(1.dp, Amber500.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
-                    FlowRowStable(
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.fillMaxWidth()

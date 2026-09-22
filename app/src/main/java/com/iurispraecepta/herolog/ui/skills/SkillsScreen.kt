@@ -15,6 +15,8 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -62,7 +64,6 @@ import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.model.Skill
-import com.iurispraecepta.herolog.ui.components.FlowRowStable
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalCountRegistry
 import com.iurispraecepta.herolog.ui.components.ModalVariant
@@ -204,6 +205,7 @@ private fun SkillSuggestionItem(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SkillsScreen(
     skills: List<Skill>,
@@ -540,7 +542,7 @@ Box(
                                     color = Zinc500,
                                 )
                             } else {
-                                FlowRowStable(
+                                FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
@@ -722,7 +724,7 @@ Text(
                         letterSpacing = 1.sp,
                     )
 
-                    FlowRowStable(
+                    FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                         modifier =

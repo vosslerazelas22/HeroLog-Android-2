@@ -6,7 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import com.iurispraecepta.herolog.ui.components.FlowRowStable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,6 +56,7 @@ private val Stone850 = Color(0xFF211E1C)
 private val Yellow400 = Color(0xFFFACC15)
 private val Yellow300 = Color(0xFFFDE047)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SkillSelectorModal(
     isOpen: Boolean,
@@ -286,7 +288,7 @@ fun SkillSelectorModal(
                                         }
                                         .padding(top = 6.dp)
                                 ) {
-                                    FlowRowStable(
+                                    FlowRow(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                                         verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {

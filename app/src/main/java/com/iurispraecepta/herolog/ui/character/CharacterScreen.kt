@@ -14,7 +14,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import com.iurispraecepta.herolog.ui.components.FlowRowStable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -65,6 +66,7 @@ private val Red600 = Color(0xFFDC2626)
 private val Emerald500 = Color(0xFF10B981)
 private val Purple950 = Color(0xFF3B0764)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CharacterScreen(
     character: CharacterSummary,
@@ -602,7 +604,7 @@ fun CharacterScreen(
             )
 
             if (activeBuffs.isNotEmpty()) {
-                FlowRowStable(
+                FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
