@@ -98,17 +98,14 @@ MainActivity (Compose, single Activity)
     `backdrop-blur` de 2px do React. Não "corrija" esse valor por analogia.
   - Em API sem suporte a blur de `RenderEffect` (abaixo do Android 12), a expectativa é ficar
     sem blur, só com scrim escuro (comportamento reportado; **não verificado em device**).
-  - **Versão do Compose diverge da BOM (causa confirmada)**: a BOM `2024.09.00` fixa o
-    Compose em 1.7.0, mas `haze` e `haze-materials` puxam `org.jetbrains.compose.*:1.8.0` e o
-    runtime resolve 1.8.0; o compile do `foundation-layout` fica em 1.7.0. APIs experimentais
-    como `FlowRow` compilam contra a assinatura 1.7.0 e quebram em runtime com
-    `NoSuchMethodError`. Confirmado por A/B com `FlowRow` original: o teste falha com a BOM
-    `2024.09.00` e passa com a `2025.04.01` (`foundation-layout` 1.8.0 exato). **Correção
-    definitiva pendente**: subir a BOM para `2025.04.01` e remover o `FlowRowStable` (Bloco
-    próprio).
-  - Até lá, **use `FlowRowStable` no lugar de `FlowRow`** (`ui/components/FlowRowStable.kt`,
-    baseado em `Layout()` + reflection em `Arrangement`). Como usa reflection, **se ativar
-    minify (R8), adicionar keep rule** (hoje `isMinifyEnabled = false`).
+  - **Versão do Compose divergia da BOM (corrigido, Bloco BOM/FlowRow, 21/09)**: a BOM
+    `2024.09.00` fixava o Compose em 1.7.0, mas `haze` e `haze-materials` puxam
+    `org.jetbrains.compose.*:1.8.0` no runtime; o compile do `foundation-layout` ficava em
+    1.7.0, e `FlowRow` compilava contra a assinatura 1.7.0 e quebrava em runtime com
+    `NoSuchMethodError`. **Correção**: BOM subida para `2025.04.01` (`foundation-layout`
+    1.8.0 tanto em `debugCompileClasspath` quanto em `releaseRuntimeClasspath`); `FlowRow`
+    real restaurado nos 5 usos (4 arquivos); `FlowRowStable` removido. Ver `DEV_LOG_ANDROID.md`
+    (Bloco BOM/FlowRow) e `PARIDADE.md` (Ficha de personagem, Tela de skills).
   - **Ao subir Haze ou a BOM**, comparar `debugCompileClasspath` com `releaseRuntimeClasspath`
     (`./gradlew :app:dependencies --configuration <cfg> | grep foundation-layout:`) antes de
     fechar o bloco.
