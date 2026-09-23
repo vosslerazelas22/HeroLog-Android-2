@@ -122,6 +122,9 @@ JDK 17 (`~/jdk-17`, compilação), JDK 21 (`~/jdk-21`, Robolectric), Gradle 9.3.
 Android SDK 36 (`~/Android/Sdk`), Roborazzi. `./gradlew assembleDebug` e
 `./gradlew testDebugUnitTest` rodam direto na sessão. Validação visual e de interação é em
 device/emulador.
+Screenshot: `-Proborazzi.test.verify=true` compara; `-Proborazzi.test.record=true`
+regrava. O filtro `--tests "*Classe.metodo"` usa o nome da classe Kotlin, não o do
+arquivo (uma classe pode viver dentro do arquivo de outra).
 
 ## 5. Fluxo por bloco
 
@@ -161,6 +164,10 @@ Ao fechar:
    insuficiente). Nesse caso, rodar por classe e registrar como **validação parcial**; nunca
    declarar "validado" numa validação parcial.
 9. **Testes de screenshot (Roborazzi) são baseline, não substituem inspeção humana.**
+   Diferença de pixels não diz qual lado está certo: comparar com o React antes de
+   regravar (`_compare.png` em `app/build/outputs/roborazzi/`). Regravar só o teste alvo
+   e conferir com `git status --short app/src/test/screenshots/` que só os PNGs
+   esperados mudaram.
 10. **Dialogs e `BackHandler`**: dentro de `Dialog`, o handler precisa estar na janela do
     próprio `Dialog` e ter guard `enabled = isOpen && ...`. Só considerar "validado" após
     teste em device real. Detalhes estão no `DEV_LOG_ANDROID.md`.
