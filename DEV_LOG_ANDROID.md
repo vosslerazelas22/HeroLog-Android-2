@@ -5913,3 +5913,29 @@ Refactor sem bloco próprio até aqui: `DailyReportModal.kt` migrado para `Dialo
 **Pendências:** teste no AVD 375×667; Bloco do grid do emoji picker; após o merge, trocar no `AGENTS.md` os bullets "causa confirmada / correção pendente" e "Até lá, use `FlowRowStable`" (linhas ~102–111) e a nota de R8; atualizar o `PARIDADE.md` (linhas da Ficha e de Skills já atualizadas).
 
 **Desvios de escopo:** nenhum. Lição de processo: verificar por `pm path`/`pull` + contagem no `.dex` qual build está no emulador antes de validar; as primeiras capturas (centralizadas) eram do APK antigo.
+
+## [2026-09-26] Bloco: Foco — CTA invisível 390×844 (issue #22 follow-up, PR #28)
+
+**Commits:** `045a809` (código) + `1f30db7` (merge PR #28).
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusTimerViewport.kt (novo, 136 linhas: `FocusTimerViewport` + `FocusTabBody`)
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt (3 call sites: idle/running/break)
+- app/src/test/java/com/iurispraecepta/herolog/FocusTabBodyDiagnosticTest.kt (novo)
+- app/src/test/java/com/iurispraecepta/herolog/FocusTimerViewportScreenshotTest.kt (novo)
+- 5 PNGs novos em app/src/test/screenshots/ (`focus_tabbody_diag_390x844[_scrolled]`, `focus_timer_viewport_{375x667,390x844,412x915}` — nenhum baseline pré-existente alterado)
+
+**Resumo:**
+- Causa raiz: slots top/bottom envolvidos em `Box` sobrepunham todos os filhos no mesmo ponto — CTA + RaidModeInfoBox + QuickActionsBar desenhados uns sobre os outros (CTA coberto, sem overflow, scroll morto). Prova: boundsInRoot com mesmo top 748 + screenshot com os 3 textos sobrepostos.
+- Fix: `Column(fillMaxWidth)` nos slots top/bottom; timer segue `Box` (filho único, centralizado no placeRelative). Resgata também o respiro de 22dp do top e a altura somada do bottom.
+- Screenshots refeitos em modo escuro (darkTheme=true + fundo QuestPanel, o containerColor do Scaffold) — o branco vinha da janela, não do tema.
+- Nenhuma lógica de sessão/XP/loot tocada; break-prep fora de escopo como antes.
+
+**Validação (sessão da branch, transcrita — merge foi fast-forward, sem alteração de código):**
+- Build: `assembleDebug` EXIT 0 (JDK 17).
+- Testes: XML bruto `TOTAL 620, failures 0, errors 0, skipped 0` (80 arquivos); nominais `focusTabBody_diag_390x844` (bounds CTA 538–586 vs QA 700–764, separados por 114dp = 10+96+8 exatos) e `focusTabBody_overflow_scrollsToCTA_390x844` (scrolled=true visible=true — contrato overflow+scroll do KDoc cumprido) OK. Nominais reconferidos nesta sessão contra os `fun` reais do arquivo (`FocusTabBodyDiagnosticTest.kt:59,219`).
+- `verifyRoborazziDebug` nos testes alvo: EXIT 0. PNGs todos untracked na branch — nenhum baseline commitado foi alterado.
+- Visual: baselines inspecionados (empilhamento correto); **device/emulador PENDENTE**.
+
+**Desvios de escopo aprovados:**
+- Caso overflow-scroll extra (valida o contrato de scroll do KDoc) + screenshots dos stubs refeitos em dark (pedido do usuário).
