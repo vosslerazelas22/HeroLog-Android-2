@@ -20,6 +20,10 @@ Os dois apps rodam em paralelo; o port é incremental. Qualquer divergência nã
 - Há divergências intencionais (ex.: `lastDungeonClearedTime` persistido só no Android,
   `totalXP` incrementado só no Android). **Consulte o `PARIDADE.md` antes de "corrigir"
   qualquer divergência.**
+- Features **Android-first** (sem equivalente no React, por decisão de produto — não
+  divergência de port) estão catalogadas em `ANDROID_FIRST.md`. Antes de reportar que uma
+  feature "não existe no React" ou tratá-la como divergência a resolver, **consultar esse
+  arquivo primeiro**.
 
 ## 3. Documentos de controle
 
@@ -30,6 +34,7 @@ Os dois apps rodam em paralelo; o port é incremental. Qualquer divergência nã
 | Código React real | Quando a lógica não está clara | Fonte de verdade |
 | `app/schemas/` | Ao alterar entidades Room | Schemas versionados |
 | `specs/` | Quando houver spec para o trabalho | Escopo e auditorias (ex.: `002b-kingdom-visual-audit-addendum.md`) |
+| `ANDROID_FIRST.md` | Antes de reportar "feature X não existe no React" | Catálogo de features exclusivas do Android — sem equivalente React por decisão de produto, não são divergência a corrigir |
 
 Regras do `PARIDADE.md`:
 - Atualizar a linha **no mesmo bloco** em que o módulo foi trabalhado, nunca retroativamente.
@@ -39,8 +44,6 @@ Regras do `PARIDADE.md`:
   375×667 e 390×844.
 - Validação de **interação** (Voltar, gestos, foco de janela) exige **device/emulador real**;
   leitura de código não basta.
-
-Não existe `README.md` no projeto.
 
 ## 4. Arquitetura
 
