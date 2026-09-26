@@ -168,9 +168,15 @@ Ao fechar:
    regravar (`_compare.png` em `app/build/outputs/roborazzi/`). Regravar só o teste alvo
    e conferir com `git status --short app/src/test/screenshots/` que só os PNGs
    esperados mudaram.
-10. **Dialogs e `BackHandler`**: dentro de `Dialog`, o handler precisa estar na janela do
-    próprio `Dialog` e ter guard `enabled = isOpen && ...`. Só considerar "validado" após
-    teste em device real. Detalhes estão no `DEV_LOG_ANDROID.md`.
+10. **Screenshots de teste (Roborazzi) devem ser gerados em modo escuro.** O app roda
+    em tema escuro; stubs de teste com cores translúcidas/texto claro sobre o fundo
+    branco padrão da janela do Robolectric saem praticamente invisíveis no PNG.
+    Padrão: `HeroLogTheme(darkTheme = true)` + fundo `QuestPanel` no root do
+    `setContent` (ver `FocusTabBodyDiagnosticTest.kt`). Incidente: baselines da aba
+    Foco (issue #22) tiveram de ser regravados por esse motivo.
+11. **Dialogs e `BackHandler`**: dentro de `Dialog`, o handler precisa estar na janela do
+     próprio `Dialog` e ter guard `enabled = isOpen && ...`. Só considerar "validado" após
+     teste em device real. Detalhes estão no `DEV_LOG_ANDROID.md`.
 
 ### Padrão de teste de lógica
 
