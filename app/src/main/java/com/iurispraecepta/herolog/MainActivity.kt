@@ -101,6 +101,7 @@ import com.iurispraecepta.herolog.ui.focus.BreakPrepScreen
 import com.iurispraecepta.herolog.ui.focus.FocusModeScreen
 import com.iurispraecepta.herolog.ui.focus.FocusOrb
 import com.iurispraecepta.herolog.ui.focus.FocusOrbSize
+import com.iurispraecepta.herolog.ui.focus.FocusTabBody
 import com.iurispraecepta.herolog.ui.focus.IncursionModeModal
 import com.iurispraecepta.herolog.ui.focus.ModeDescriptionModal
 import com.iurispraecepta.herolog.ui.focus.QuickActionsBar
@@ -1079,61 +1080,65 @@ fun FocusOrbPreviewScreen(
                     onCloseTooltip = { showFocusTooltip = false },
                     onOpenQuestFab = { isQuestFabOpen = true }
                 )
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    SkillInlineCarousel(
-                        skills = characterState.skills,
-                        selectedIndex = validSkillIdx,
-                        onSelectIndex = { selectedSkillIdx = it },
-                        disabled = false,
-                        onOpenSkillsManager = { isSkillSelectorOpen = true }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    FocusOrb(
-                        timeLeft = breakTimerState.secondsLeft,
-                        totalSeconds = breakTimerState.selectedBreakMins * 60,
-                        isRunning = false,
-                        isPaused = false,
-                        isBreakActive = true,
-                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
-                        isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
-                        orbConcept = orbConcept,
-                        size = FocusOrbSize.STANDARD
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    BreakEndButton(onClick = { viewModel.skipBreak() })
-                    Spacer(modifier = Modifier.height(12.dp))
-                    RaidModeInfoBox(
-                        mode = raidModeFrom(breakTimerState.wasLastSessionDungeonMode, breakTimerState.wasLastSessionWildernessMode),
-                        dungeonSessions = breakTimerState.lastSessionDungeonSessions,
-                        dungeonOnCooldown = false,
-                        lootChancePercent = lootChancePercentFrom(
-                            studiedMinutes = focusDuration,
-                            isDungeon = breakTimerState.wasLastSessionDungeonMode,
-                            equippedTitleId = characterState.equippedTitle
-                        ),
-                        onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                        onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                        onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    QuickActionsBar(
-                        isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
-                        isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
-                        isRunning = false,
-                        onOpenModeModal = { isIncursionModalOpen = true },
-                        activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
-                        onOpenAmbientModal = { isAmbientModalOpen = true },
-                        isSettingsEnabled = false,
-                        onOpenSettingsModal = {},
-                        onEnterFullscreen = { onEnterFullscreen() }
-                    )
-                }
+                FocusTabBody(
+                    modifier = Modifier.weight(1f),
+                    top = {
+                        SkillInlineCarousel(
+                            skills = characterState.skills,
+                            selectedIndex = validSkillIdx,
+                            onSelectIndex = { selectedSkillIdx = it },
+                            disabled = false,
+                            onOpenSkillsManager = { isSkillSelectorOpen = true }
+                        )
+                        // gap-2 + event notifier h-1.5 + gap-2 (App.tsx:2383, 2396)
+                        Spacer(modifier = Modifier.height(22.dp))
+                    },
+                    timer = {
+                        FocusOrb(
+                            timeLeft = breakTimerState.secondsLeft,
+                            totalSeconds = breakTimerState.selectedBreakMins * 60,
+                            isRunning = false,
+                            isPaused = false,
+                            isBreakActive = true,
+                            isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                            isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                            orbConcept = orbConcept,
+                            size = FocusOrbSize.STANDARD
+                        )
+                    },
+                    bottom = {
+                        // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        BreakEndButton(onClick = { viewModel.skipBreak() })
+                        Spacer(modifier = Modifier.height(12.dp))
+                        RaidModeInfoBox(
+                            mode = raidModeFrom(breakTimerState.wasLastSessionDungeonMode, breakTimerState.wasLastSessionWildernessMode),
+                            dungeonSessions = breakTimerState.lastSessionDungeonSessions,
+                            dungeonOnCooldown = false,
+                            lootChancePercent = lootChancePercentFrom(
+                                studiedMinutes = focusDuration,
+                                isDungeon = breakTimerState.wasLastSessionDungeonMode,
+                                equippedTitleId = characterState.equippedTitle
+                            ),
+                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        QuickActionsBar(
+                            isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
+                            isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
+                            isRunning = false,
+                            onOpenModeModal = { isIncursionModalOpen = true },
+                            activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                            onOpenAmbientModal = { isAmbientModalOpen = true },
+                            isSettingsEnabled = false,
+                            onOpenSettingsModal = {},
+                            onEnterFullscreen = { onEnterFullscreen() }
+                        )
+                        Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
+                    }
+                )
             }
         } else if (focusState.isRunning) {
             // Sessão ativa, mas NÃO em tela cheia — orb inline + Pausar/Abandonar, igual a
@@ -1149,152 +1154,154 @@ fun FocusOrbPreviewScreen(
                     onCloseTooltip = { showFocusTooltip = false },
                     onOpenQuestFab = { isQuestFabOpen = true }
                 )
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                SkillInlineCarousel(
-                    skills = characterState.skills,
-                    selectedIndex = config?.selectedSkillIdx ?: 0,
-                    onSelectIndex = { selectedSkillIdx = it },
-                    disabled = true,
-                    onOpenSkillsManager = { isSkillSelectorOpen = true }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                FocusOrb(
-                    timeLeft = focusState.timeLeft,
-                    totalSeconds = focusState.totalSeconds,
-                    isRunning = focusState.isRunning,
-                    isPaused = focusState.isPaused,
-                    isDungeonMode = config?.isDungeonMode ?: false,
-                    isWildernessMode = config?.isWildernessChecked ?: false,
-                    orbConcept = orbConcept,
-                    size = FocusOrbSize.STANDARD
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { viewModel.togglePauseQuest() },
-                        colors = if (focusState.isPaused) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFF581C87).copy(alpha = 0.1f),
-                                contentColor = Color(0xFFD8B4FE)
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFF0C0A09).copy(alpha = 0.4f),
-                                contentColor = Color(0xFFF5DFA0)
-                            )
-                        },
-                        border = BorderStroke(
-                            1.dp,
-                            if (focusState.isPaused) Color(0xFFA855F7) else Color(0xFFE5C158).copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (focusState.isPaused) R.drawable.lucide_ic_play else R.drawable.lucide_ic_pause
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                FocusTabBody(
+                    modifier = Modifier.weight(1f),
+                    top = {
+                        SkillInlineCarousel(
+                            skills = characterState.skills,
+                            selectedIndex = config?.selectedSkillIdx ?: 0,
+                            onSelectIndex = { selectedSkillIdx = it },
+                            disabled = true,
+                            onOpenSkillsManager = { isSkillSelectorOpen = true }
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            if (focusState.isPaused) "Retomar Missão" else "Pausar Missão",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.5.sp,
-                            fontSize = 14.sp
+                        // gap-2 + event notifier h-1.5 + gap-2 (App.tsx:2383, 2396)
+                        Spacer(modifier = Modifier.height(22.dp))
+                    },
+                    timer = {
+                        FocusOrb(
+                            timeLeft = focusState.timeLeft,
+                            totalSeconds = focusState.totalSeconds,
+                            isRunning = focusState.isRunning,
+                            isPaused = focusState.isPaused,
+                            isDungeonMode = config?.isDungeonMode ?: false,
+                            isWildernessMode = config?.isWildernessChecked ?: false,
+                            orbConcept = orbConcept,
+                            size = FocusOrbSize.STANDARD
                         )
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            if (!isConfirmingAbandon) {
-                                isConfirmingAbandon = true
-                                viewModel.addSystemLog(
-                                    "⚠️ Atenção: Clique novamente em \"Abandonar\" para confirmar a desistência da missão."
+                    },
+                    bottom = {
+                        // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.togglePauseQuest() },
+                                colors = if (focusState.isPaused) {
+                                    ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFF581C87).copy(alpha = 0.1f),
+                                        contentColor = Color(0xFFD8B4FE)
+                                    )
+                                } else {
+                                    ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFF0C0A09).copy(alpha = 0.4f),
+                                        contentColor = Color(0xFFF5DFA0)
+                                    )
+                                },
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (focusState.isPaused) Color(0xFFA855F7) else Color(0xFFE5C158).copy(alpha = 0.3f)
+                                ),
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(4.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (focusState.isPaused) R.drawable.lucide_ic_play else R.drawable.lucide_ic_pause
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                confirmAbandonJob?.cancel()
-                                confirmAbandonJob = coroutineScope.launch {
-                                    delay(5000)
-                                    isConfirmingAbandon = false
-                                }
-                            } else {
-                                confirmAbandonJob?.cancel()
-                                isConfirmingAbandon = false
-                                viewModel.abandonSession()
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    if (focusState.isPaused) "Retomar Missão" else "Pausar Missão",
+                                    fontFamily = Cinzel,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.5.sp,
+                                    fontSize = 14.sp
+                                )
                             }
-                        },
-                        colors = if (isConfirmingAbandon) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFFDC2626),
-                                contentColor = Color.White
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFF450A0A).copy(alpha = 0.4f),
-                                contentColor = Color(0xFFF87171)
-                            )
-                        },
-                        border = BorderStroke(
-                            1.dp,
-                            if (isConfirmingAbandon) Color(0xFFF87171) else Color(0xFFEF4444).copy(alpha = 0.3f)
-                        ),
-                        shape = RoundedCornerShape(4.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.lucide_ic_x),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            OutlinedButton(
+                                onClick = {
+                                    if (!isConfirmingAbandon) {
+                                        isConfirmingAbandon = true
+                                        viewModel.addSystemLog(
+                                            "⚠️ Atenção: Clique novamente em \"Abandonar\" para confirmar a desistência da missão."
+                                        )
+                                        confirmAbandonJob?.cancel()
+                                        confirmAbandonJob = coroutineScope.launch {
+                                            delay(5000)
+                                            isConfirmingAbandon = false
+                                        }
+                                    } else {
+                                        confirmAbandonJob?.cancel()
+                                        isConfirmingAbandon = false
+                                        viewModel.abandonSession()
+                                    }
+                                },
+                                colors = if (isConfirmingAbandon) {
+                                    ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFFDC2626),
+                                        contentColor = Color.White
+                                    )
+                                } else {
+                                    ButtonDefaults.outlinedButtonColors(
+                                        containerColor = Color(0xFF450A0A).copy(alpha = 0.4f),
+                                        contentColor = Color(0xFFF87171)
+                                    )
+                                },
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isConfirmingAbandon) Color(0xFFF87171) else Color(0xFFEF4444).copy(alpha = 0.3f)
+                                ),
+                                shape = RoundedCornerShape(4.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.lucide_ic_x),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(if (isConfirmingAbandon) "Confirmar?" else "Abandonar", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal, fontSize = 12.sp)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        RaidModeInfoBox(
+                            mode = currentRaidModeRunning,
+                            dungeonSessions = dungeonSessionsProgress,
+                            dungeonOnCooldown = false,
+                            lootChancePercent = lootChancePercentFrom(
+                                studiedMinutes = focusDuration,
+                                isDungeon = config?.isDungeonMode ?: false,
+                                equippedTitleId = characterState.equippedTitle
+                            ),
+                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(if (isConfirmingAbandon) "Confirmar?" else "Abandonar", fontWeight = if (isConfirmingAbandon) FontWeight.Bold else FontWeight.Normal, fontSize = 12.sp)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        QuickActionsBar(
+                            isDungeonMode = config?.isDungeonMode ?: false,
+                            isWildernessMode = config?.isWildernessChecked ?: false,
+                            isRunning = true,
+                            onOpenModeModal = { /* Modo não editável com sessão em andamento, fonte já trata via disabled */ },
+                            activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                            onOpenAmbientModal = { isAmbientModalOpen = true },
+                            isSettingsEnabled = false,
+                            onOpenSettingsModal = {},
+                            onEnterFullscreen = { onEnterFullscreen() }
+                        )
+
+                        Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                     }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                RaidModeInfoBox(
-                    mode = currentRaidModeRunning,
-                    dungeonSessions = dungeonSessionsProgress,
-                    dungeonOnCooldown = false,
-                    lootChancePercent = lootChancePercentFrom(
-                        studiedMinutes = focusDuration,
-                        isDungeon = config?.isDungeonMode ?: false,
-                        equippedTitleId = characterState.equippedTitle
-                    ),
-                    onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                    onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                    onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                QuickActionsBar(
-                    isDungeonMode = config?.isDungeonMode ?: false,
-                    isWildernessMode = config?.isWildernessChecked ?: false,
-                    isRunning = true,
-                    onOpenModeModal = { /* Modo não editável com sessão em andamento, fonte já trata via disabled */ },
-                    activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
-                    onOpenAmbientModal = { isAmbientModalOpen = true },
-                    isSettingsEnabled = false,
-                    onOpenSettingsModal = {},
-                    onEnterFullscreen = { onEnterFullscreen() }
-                )
-
-                Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
-                }
             }
         } else {
             val currentRaidMode = raidModeFrom(isDungeonModePreview, isWildernessPreview)
@@ -1309,102 +1316,102 @@ fun FocusOrbPreviewScreen(
                     onOpenQuestFab = { isQuestFabOpen = true }
                 )
 
-                // Content (existing focus tab UI)
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    SkillInlineCarousel(
-                        skills = characterState.skills,
-                        selectedIndex = validSkillIdx,
-                        onSelectIndex = { selectedSkillIdx = it },
-                        disabled = focusState.isRunning,
-                        onOpenSkillsManager = { isSkillSelectorOpen = true }
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    FocusOrb(
-                        timeLeft = focusDuration * 60,
-                        totalSeconds = focusDuration * 60,
-                        isRunning = false,
-                        isPaused = false,
-                        isBreakActive = false,
-                        isDungeonMode = isDungeonModePreview,
-                        isWildernessMode = isWildernessPreview,
-                        orbConcept = orbConcept,
-                        size = FocusOrbSize.STANDARD
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
-                                )
-                            )
-                            .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(4.dp))
-                            .clickable {
-                                val config = FocusSessionConfig(
-                                    selectedSkillIdx = validSkillIdx,
-                                    isWildernessChecked = isWildernessPreview,
-                                    isDungeonMode = isDungeonModePreview,
-                                    dungeonSessions = dungeonSessionsProgress
-                                )
-                                viewModel.startSession(config, durationMinutes = focusDuration)
-                            }
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "▶ INICIAR MISSÃO DE FOCO",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 14.sp,
-                            letterSpacing = 1.2.sp,
-                            color = Color(0xFF0C0A09)
+                // Content — paridade com App.tsx:2383 (flex-1) + timer flex-1 (2477)
+                FocusTabBody(
+                    modifier = Modifier.weight(1f),
+                    top = {
+                        SkillInlineCarousel(
+                            skills = characterState.skills,
+                            selectedIndex = validSkillIdx,
+                            onSelectIndex = { selectedSkillIdx = it },
+                            disabled = focusState.isRunning,
+                            onOpenSkillsManager = { isSkillSelectorOpen = true }
                         )
+                        // gap-2 + event notifier h-1.5 + gap-2 (App.tsx:2383, 2396)
+                        Spacer(modifier = Modifier.height(22.dp))
+                    },
+                    timer = {
+                        FocusOrb(
+                            timeLeft = focusDuration * 60,
+                            totalSeconds = focusDuration * 60,
+                            isRunning = false,
+                            isPaused = false,
+                            isBreakActive = false,
+                            isDungeonMode = isDungeonModePreview,
+                            isWildernessMode = isWildernessPreview,
+                            orbConcept = orbConcept,
+                            size = FocusOrbSize.STANDARD
+                        )
+                    },
+                    bottom = {
+                        // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(Color(0xFFB48C26), Color(0xFFE5C158), Color(0xFFF5DFA0))
+                                    )
+                                )
+                                .border(1.dp, Color(0xFFE5C158), RoundedCornerShape(4.dp))
+                                .clickable {
+                                    val config = FocusSessionConfig(
+                                        selectedSkillIdx = validSkillIdx,
+                                        isWildernessChecked = isWildernessPreview,
+                                        isDungeonMode = isDungeonModePreview,
+                                        dungeonSessions = dungeonSessionsProgress
+                                    )
+                                    viewModel.startSession(config, durationMinutes = focusDuration)
+                                }
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "▶ INICIAR MISSÃO DE FOCO",
+                                fontFamily = Cinzel,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 14.sp,
+                                letterSpacing = 1.2.sp,
+                                color = Color(0xFF0C0A09)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        RaidModeInfoBox(
+                            mode = currentRaidMode,
+                            dungeonSessions = dungeonSessionsProgress,
+                            dungeonOnCooldown = false,
+                            lootChancePercent = lootChancePercentFrom(
+                                studiedMinutes = focusDuration,
+                                isDungeon = isDungeonModePreview,
+                                equippedTitleId = characterState.equippedTitle
+                            ),
+                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
+                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
+                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        QuickActionsBar(
+                            isDungeonMode = isDungeonModePreview,
+                            isWildernessMode = isWildernessPreview,
+                            isRunning = false,
+                            onOpenModeModal = { isIncursionModalOpen = true },
+                            activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
+                            onOpenAmbientModal = { isAmbientModalOpen = true },
+                            isSettingsEnabled = true,
+                            onOpenSettingsModal = { isTimerSettingsOpen = true },
+                            onEnterFullscreen = { onEnterFullscreen() }
+                        )
+
+                        Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                     }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    RaidModeInfoBox(
-                        mode = currentRaidMode,
-                        dungeonSessions = dungeonSessionsProgress,
-                        dungeonOnCooldown = false,
-                        lootChancePercent = lootChancePercentFrom(
-                            studiedMinutes = focusDuration,
-                            isDungeon = isDungeonModePreview,
-                            equippedTitleId = characterState.equippedTitle
-                        ),
-                        onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                        onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                        onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    QuickActionsBar(
-                        isDungeonMode = isDungeonModePreview,
-                        isWildernessMode = isWildernessPreview,
-                        isRunning = false,
-                        onOpenModeModal = { isIncursionModalOpen = true },
-                        activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
-                        onOpenAmbientModal = { isAmbientModalOpen = true },
-                        isSettingsEnabled = true,
-                        onOpenSettingsModal = { isTimerSettingsOpen = true },
-                        onEnterFullscreen = { onEnterFullscreen() }
-                    )
-
-                    Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
-                }
+                )
             }
 
             // QuestFab Modal — contratos ativos (port de QuestFab.tsx)
