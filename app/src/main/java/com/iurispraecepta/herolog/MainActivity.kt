@@ -78,6 +78,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.SkillLogic
+import com.iurispraecepta.herolog.ui.focus.PendingCelebrationModal
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharClass
@@ -1023,7 +1024,15 @@ fun FocusOrbPreviewScreen(
     val focusDuration = characterState.pomodoroSettings.focusDuration
 
     Box(modifier = modifier.fillMaxSize()) {
-        if (focusState.isFocusCompleted) {
+        // spec-008 T11: celebrações pendentes de sessões concluídas em background
+        // (single → FocusCompletionFlow; multiple → MultipleSessionCelebration)
+        val pendingCelebration = viewModel.pendingCelebration.value
+        if (pendingCelebration != null) {
+            PendingCelebrationModal(
+                summary = pendingCelebration,
+                onDismiss = { viewModel.confirmPendingCelebration() }
+            )
+        } else if (focusState.isFocusCompleted) {
             val rewards = focusState.pendingRewardsCalculation
             if (rewards != null) {
                 val streak = characterState.streak
@@ -1047,6 +1056,7 @@ fun FocusOrbPreviewScreen(
                         // pendingCelebration single/agregado.
                         viewModel.confirmPendingCelebration()
                     },
+                    insideModal = true,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
