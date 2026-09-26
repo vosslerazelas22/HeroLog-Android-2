@@ -36,6 +36,9 @@ class FocusSessionViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val testContext: android.content.Context
+        get() = ApplicationProvider.getApplicationContext()
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -75,7 +78,7 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 25)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.focusSessionState.value
@@ -88,7 +91,7 @@ class FocusSessionViewModelTest {
         assertEquals(defaultConfig, state.config)
         assertNull(state.pendingRewardsCalculation)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -108,7 +111,7 @@ class FocusSessionViewModelTest {
 
         val initialCharState = viewModel.characterState.value!!
 
-        viewModel.startSession(defaultConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         // Avança 10 minutos (600 segundos = 600.000 ms)
@@ -128,7 +131,7 @@ class FocusSessionViewModelTest {
         assertEquals(initialCharState.totalXP, finalCharState.totalXP)
         assertEquals(initialCharState.inventory, finalCharState.inventory)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -146,7 +149,7 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 10) // 600s
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10) // 600s
         testDispatcher.scheduler.runCurrent()
 
         // Avança 100 segundos
@@ -155,7 +158,7 @@ class FocusSessionViewModelTest {
 
         assertEquals(500, viewModel.focusSessionState.value.timeLeft)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val pausedState = viewModel.focusSessionState.value
@@ -170,7 +173,7 @@ class FocusSessionViewModelTest {
 
         assertEquals(500, viewModel.focusSessionState.value.timeLeft)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -188,7 +191,7 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 5) // 300s
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 5) // 300s
         testDispatcher.scheduler.runCurrent()
 
         // Avança 100s
@@ -196,7 +199,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.runCurrent()
         assertEquals(200, viewModel.focusSessionState.value.timeLeft)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
         assertEquals(1, viewModel.focusSessionState.value.pauseCount)
 
@@ -204,7 +207,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.advanceTimeBy(500_000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.togglePauseQuest() // Resume
+        viewModel.togglePauseQuest(testContext) // Resume
         testDispatcher.scheduler.runCurrent()
 
         assertFalse(viewModel.focusSessionState.value.isPaused)
@@ -219,7 +222,7 @@ class FocusSessionViewModelTest {
         assertFalse(finalState.isRunning)
         assertNotNull(finalState.pendingRewardsCalculation)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -237,23 +240,23 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
         assertEquals(0, viewModel.focusSessionState.value.pauseCount)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
         assertEquals(1, viewModel.focusSessionState.value.pauseCount)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
         assertEquals(1, viewModel.focusSessionState.value.pauseCount)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
         assertEquals(2, viewModel.focusSessionState.value.pauseCount)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -273,13 +276,13 @@ class FocusSessionViewModelTest {
 
         val initialCharState = viewModel.characterState.value!!
 
-        viewModel.startSession(defaultConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         testDispatcher.scheduler.advanceTimeBy(50_000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.focusSessionState.value
@@ -308,12 +311,12 @@ class FocusSessionViewModelTest {
         val initialFocusState = viewModel.focusSessionState.value
         assertFalse(initialFocusState.isRunning)
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(initialFocusState, viewModel.focusSessionState.value)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -332,7 +335,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val startTime = testDispatcher.scheduler.currentTime
-        viewModel.startSession(defaultConfig, durationMinutes = 25)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
         val persisted = focusRepository.getSession()
@@ -342,7 +345,7 @@ class FocusSessionViewModelTest {
         assertEquals(startTime + 25 * 60 * 1000L, persisted?.endTimeMillis)
         assertNull(persisted?.pendingCalculation)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -360,18 +363,18 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 20)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 20)
         testDispatcher.scheduler.runCurrent()
 
         assertNotNull(focusRepository.getSession())
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val persisted = focusRepository.getSession()
         assertNull(persisted)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -390,7 +393,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val startTime = testDispatcher.scheduler.currentTime
-        viewModel.startSession(defaultConfig, durationMinutes = 10) // 600s
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10) // 600s
         testDispatcher.scheduler.runCurrent()
 
         val originalPersisted = focusRepository.getSession()
@@ -402,7 +405,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.advanceTimeBy(100_000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
         assertNull(focusRepository.getSession())
 
@@ -410,7 +413,7 @@ class FocusSessionViewModelTest {
         testDispatcher.scheduler.advanceTimeBy(500_000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.togglePauseQuest()
+        viewModel.togglePauseQuest(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val resumedPersisted = focusRepository.getSession()
@@ -422,7 +425,7 @@ class FocusSessionViewModelTest {
         // Novo end time deve ser o tempo atual (startTime + 100s + 500s) + 500s restantes
         assertEquals(startTime + 600_000L + 500_000L, resumedPersisted.endTimeMillis)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -440,12 +443,12 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 15)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 15)
         testDispatcher.scheduler.runCurrent()
 
         assertNotNull(focusRepository.getSession())
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val persisted = focusRepository.getSession()
@@ -467,7 +470,7 @@ class FocusSessionViewModelTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startSession(defaultConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, defaultConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         // Avança 10 minutos (600s)
@@ -483,7 +486,7 @@ class FocusSessionViewModelTest {
         assertEquals(0, persisted?.pendingCalculation?.skillIdx)
         assertEquals(10, persisted?.pendingCalculation?.durationMins)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }

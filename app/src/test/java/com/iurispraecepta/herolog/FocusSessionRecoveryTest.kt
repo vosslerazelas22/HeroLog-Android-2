@@ -36,6 +36,9 @@ class FocusSessionRecoveryTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val testContext: android.content.Context
+        get() = ApplicationProvider.getApplicationContext()
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -82,7 +85,7 @@ class FocusSessionRecoveryTest {
         assertFalse(state.isFocusCompleted)
         assertNull(state.pendingRewardsCalculation)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -102,7 +105,7 @@ class FocusSessionRecoveryTest {
         )
         testDispatcher.scheduler.runCurrent()
 
-        viewModel1.startSession(defaultConfig, durationMinutes = 20) // 1200s
+        viewModel1.startSession(testContext, defaultConfig, durationMinutes = 20) // 1200s
         testDispatcher.scheduler.runCurrent()
 
         // Avança 300 segundos (5 min) sem cancelar a sessão no VM1 (simula fechamento abrupto)
@@ -126,8 +129,8 @@ class FocusSessionRecoveryTest {
         assertEquals(20, state2.durationMinutes)
         assertEquals(defaultConfig, state2.config)
 
-        viewModel2.cancelSession()
-        viewModel1.cancelSession()
+        viewModel2.cancelSession(testContext)
+        viewModel1.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -148,7 +151,7 @@ class FocusSessionRecoveryTest {
 
         val initialCharState = viewModel1.characterState.value!!
 
-        viewModel1.startSession(defaultConfig, durationMinutes = 10) // 600s
+        viewModel1.startSession(testContext, defaultConfig, durationMinutes = 10) // 600s
         testDispatcher.scheduler.runCurrent()
 
         // Avança o tempo além do tempo limite (700s > 600s) ANTES de criar o segundo ViewModel
@@ -183,8 +186,8 @@ class FocusSessionRecoveryTest {
         assertNotNull(persisted?.pendingCalculation)
         assertEquals(state2.pendingRewardsCalculation, persisted?.pendingCalculation)
 
-        viewModel2.cancelSession()
-        viewModel1.cancelSession()
+        viewModel2.cancelSession(testContext)
+        viewModel1.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -241,7 +244,7 @@ class FocusSessionRecoveryTest {
         assertEquals(999999, state.pendingRewardsCalculation?.xpEarned)
         assertEquals(888888, state.pendingRewardsCalculation?.goldEarned)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }

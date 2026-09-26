@@ -30,6 +30,27 @@ class PendingRewardRepository(
     }
 
     /**
+     * Agrega os pendentes SEM marcar como consumidos (opção A, T12).
+     * O consumo acontece em [consumeIds], ligado ao Confirm do modal — morte do
+     * processo entre exibir e confirmar faz a celebração reaparecer, nunca sumir.
+     * Retorna `null` quando não há nada pendente.
+     */
+    suspend fun peekPendingCelebrations(): AggregatedCelebrationSummary? {
+        val pending = dao.getAllUnconsumed()
+        if (pending.isEmpty()) return null
+        return aggregateCelebrations(pending, json)
+    }
+
+    /**
+     * Consumo atômico (spec-008, FR-12): marca todos os registros exibidos juntos
+     * de uma vez, para nunca deixar estado parcialmente consumido se o processo
+     * morrer no meio da operação.
+     */
+    suspend fun consumeIds(ids: List<String>) {
+        dao.markAllConsumed(ids)
+    }
+
+    /**
      * Agrega os pendentes e os marca como consumidos numa única operação atômica.
      * Retorna `null` quando não há nada pendente.
      */

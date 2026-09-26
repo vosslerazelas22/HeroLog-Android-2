@@ -170,6 +170,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.iurispraecepta.herolog.logic.toSummary
 import com.iurispraecepta.herolog.ui.HeroLogViewModelFactory
 import com.iurispraecepta.herolog.ui.focus.FocusCompletionFlow
+import com.iurispraecepta.herolog.service.FocusNotificationPermission
+import com.iurispraecepta.herolog.service.FocusSessionService
 import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import com.iurispraecepta.herolog.model.CharacterState
@@ -244,13 +246,34 @@ class MainActivity : ComponentActivity() {
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
                         when (event) {
-                            Lifecycle.Event.ON_STOP -> heroLogViewModel.onAppBackgrounded()
+                            Lifecycle.Event.ON_STOP -> heroLogViewModel.onAppBackgrounded(context)
                             Lifecycle.Event.ON_START -> heroLogViewModel.onAppForegrounded()
                             else -> {}
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+
+                // spec-008 T10: retoma no Service uma sessão interrompida por morte
+                // de processo (deadline original preservado) e dispara descansos
+                // automáticos decididos pelo VM.
+                val pendingServiceResume by heroLogViewModel.pendingServiceResume.collectAsState()
+                LaunchedEffect(pendingServiceResume) {
+                    val resume = pendingServiceResume ?: return@LaunchedEffect
+                    FocusSessionService.startSession(
+                        context,
+                        resume.config,
+                        resume.durationMinutes,
+                        resume.endTimeMillis
+                    )
+                    heroLogViewModel.clearServiceResume()
+                }
+                val pendingBreakStart by heroLogViewModel.pendingBreakStart.collectAsState()
+                LaunchedEffect(pendingBreakStart) {
+                    val minutes = pendingBreakStart ?: return@LaunchedEffect
+                    FocusSessionService.startBreak(context, minutes)
+                    heroLogViewModel.clearBreakStart()
                 }
 
                 // spec-002: Full-screen focus replaces the entire app layout,
@@ -300,7 +323,7 @@ class MainActivity : ComponentActivity() {
                             totalSeconds = focusState.totalSeconds,
                             isRunning = focusState.isRunning,
                             isPaused = focusState.isPaused,
-                            onTogglePause = { heroLogViewModel.togglePauseQuest() },
+                            onTogglePause = { heroLogViewModel.togglePauseQuest(context) },
                             onExit = { isFocusMode = false },
                             isGraceActive = focusState.isGraceActive,
                             graceSecondsLeft = focusState.graceSecondsLeft,
@@ -957,6 +980,19 @@ fun FocusOrbPreviewScreen(
     var isConfirmingAbandon by remember { mutableStateOf(false) }
     var confirmAbandonJob by remember { mutableStateOf<Job?>(null) }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // spec-008 T10 (FR-14): POST_NOTIFICATIONS em runtime (Android 13+) antes de
+    // iniciar sessão com timer em background. Sem a permissão, a sessão roda
+    // igual (recompensa aplicada), só sem notificação.
+    var pendingFocusStart by remember { mutableStateOf<Pair<FocusSessionConfig, Int>?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        val (config, duration) = pendingFocusStart ?: return@rememberLauncherForActivityResult
+        pendingFocusStart = null
+        viewModel.startSession(context, config, duration)
+    }
 
     val focusState by viewModel.focusSessionState.collectAsState()
     val dungeonSessionsProgress by viewModel.dungeonSessionsProgress.collectAsState()
@@ -1004,8 +1040,12 @@ fun FocusOrbPreviewScreen(
                     shouldShowStreakCelebration = shouldShowStreakCelebration,
                     skillTags = skillTags,
                     newAchievements = newAchievements,
-                    onConfirm = { editedNotes, selectedTag ->
-                        viewModel.confirmFocusSession(editedNotes, selectedTag)
+                    onConfirm = { _, _ ->
+                        // spec-008 T10: ramo legado (isFocusCompleted nunca é setado
+                        // pós-migração — o Service aplica e a celebração vem da fila).
+                        // O Bloco 2 (T11) substitui este ramo pelo roteamento
+                        // pendingCelebration single/agregado.
+                        viewModel.confirmPendingCelebration()
                     },
                     modifier = Modifier.fillMaxSize()
                 )
@@ -1047,13 +1087,14 @@ fun FocusOrbPreviewScreen(
                         onSelectDuration = { viewModel.selectBreakDuration(it) },
                         onStartBreak = {
                             viewModel.startBreakTimer(
+                                context,
                                 minutes = breakTimerState.selectedBreakMins,
                                 wasDungeonMode = breakTimerState.wasLastSessionDungeonMode,
                                 wasWildernessMode = breakTimerState.wasLastSessionWildernessMode,
                                 lastDungeonSessions = breakTimerState.lastSessionDungeonSessions
                             )
                         },
-                        onSkipBreak = { viewModel.skipBreak() }
+                        onSkipBreak = { viewModel.skipBreak(context) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     QuickActionsBar(
@@ -1109,7 +1150,7 @@ fun FocusOrbPreviewScreen(
                     bottom = {
                         // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
                         Spacer(modifier = Modifier.height(8.dp))
-                        BreakEndButton(onClick = { viewModel.skipBreak() })
+                        BreakEndButton(onClick = { viewModel.skipBreak(context) })
                         Spacer(modifier = Modifier.height(12.dp))
                         RaidModeInfoBox(
                             mode = raidModeFrom(breakTimerState.wasLastSessionDungeonMode, breakTimerState.wasLastSessionWildernessMode),
@@ -1187,7 +1228,7 @@ fun FocusOrbPreviewScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { viewModel.togglePauseQuest() },
+                                onClick = { viewModel.togglePauseQuest(context) },
                                 colors = if (focusState.isPaused) {
                                     ButtonDefaults.outlinedButtonColors(
                                         containerColor = Color(0xFF581C87).copy(alpha = 0.1f),
@@ -1238,7 +1279,7 @@ fun FocusOrbPreviewScreen(
                                     } else {
                                         confirmAbandonJob?.cancel()
                                         isConfirmingAbandon = false
-                                        viewModel.abandonSession()
+                                        viewModel.abandonSession(context)
                                     }
                                 },
                                 colors = if (isConfirmingAbandon) {
@@ -1364,7 +1405,16 @@ fun FocusOrbPreviewScreen(
                                         isDungeonMode = isDungeonModePreview,
                                         dungeonSessions = dungeonSessionsProgress
                                     )
-                                    viewModel.startSession(config, durationMinutes = focusDuration)
+                                    // spec-008 T10: timer roda no Foreground Service
+                                    // (único dono); o VM espelha o estado.
+                                    if (FocusNotificationPermission.shouldRequest(context)) {
+                                        pendingFocusStart = config to focusDuration
+                                        notificationPermissionLauncher.launch(
+                                            android.Manifest.permission.POST_NOTIFICATIONS
+                                        )
+                                    } else {
+                                        viewModel.startSession(context, config, durationMinutes = focusDuration)
+                                    }
                                 }
                                 .padding(vertical = 12.dp),
                             contentAlignment = Alignment.Center

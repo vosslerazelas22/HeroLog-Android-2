@@ -44,6 +44,9 @@ class HeroLogViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val testContext: android.content.Context
+        get() = ApplicationProvider.getApplicationContext()
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -265,7 +268,7 @@ class HeroLogViewModelTest {
 
         // Simulate focus session running
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, false, false, 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.focusSessionState.value.isRunning)
 
@@ -276,7 +279,7 @@ class HeroLogViewModelTest {
         assertEquals(DeleteSkillEligibility.Blocked, eligibility)
         assertEquals(2, viewModel.characterState.value?.skills?.size) // Still 2
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -381,19 +384,19 @@ class HeroLogViewModelTest {
 
         // Start session with Wilderness checked
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.focusSessionState.value.isRunning)
 
         // App backgrounded
-        viewModel.onAppBackgrounded()
+        viewModel.onAppBackgrounded(testContext)
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.focusSessionState.value.isGraceActive)
         assertEquals(3, viewModel.focusSessionState.value.graceSecondsLeft)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -412,17 +415,17 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.onAppBackgrounded()
+        viewModel.onAppBackgrounded(testContext)
         testDispatcher.scheduler.runCurrent()
 
         // Converted to pause!
         assertTrue(viewModel.focusSessionState.value.isPaused)
         org.junit.Assert.assertFalse(viewModel.focusSessionState.value.isGraceActive)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -437,16 +440,16 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = false, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.onAppBackgrounded()
+        viewModel.onAppBackgrounded(testContext)
         testDispatcher.scheduler.runCurrent()
 
         org.junit.Assert.assertFalse(viewModel.focusSessionState.value.isGraceActive)
         org.junit.Assert.assertFalse(viewModel.focusSessionState.value.isPaused)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -469,10 +472,10 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.onAppBackgrounded()
+        viewModel.onAppBackgrounded(testContext)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.focusSessionState.value.isGraceActive)
 
@@ -508,10 +511,10 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.onAppBackgrounded()
+        viewModel.onAppBackgrounded(testContext)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.focusSessionState.value.isGraceActive)
 
@@ -523,7 +526,7 @@ class HeroLogViewModelTest {
         assertEquals(3, viewModel.focusSessionState.value.graceSecondsLeft)
         assertTrue(viewModel.focusSessionState.value.isRunning)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -604,7 +607,7 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startBreakTimer(5)
+        viewModel.startBreakTimer(testContext, 5)
         testDispatcher.scheduler.runCurrent()
 
         val breakStateInitial = viewModel.breakTimerState.value
@@ -623,7 +626,7 @@ class HeroLogViewModelTest {
         assertTrue(breakStateAfter2s.isBreakActive)
         assertEquals(298, breakStateAfter2s.secondsLeft)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -636,11 +639,11 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startBreakTimer(10)
+        viewModel.startBreakTimer(testContext, 10)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.breakTimerState.value.isBreakActive)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.breakTimerState.value
@@ -661,7 +664,7 @@ class HeroLogViewModelTest {
         val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.startBreakTimer(1) // 60s
+        viewModel.startBreakTimer(testContext, 1) // 60s
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.breakTimerState.value.isBreakActive)
 
@@ -673,7 +676,7 @@ class HeroLogViewModelTest {
         org.junit.Assert.assertFalse(finalState.isBreakActive)
         assertEquals(0, finalState.secondsLeft)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -706,7 +709,7 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(config, durationMinutes = 10)
+        viewModel.startSession(testContext, config, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         fakeTime += 600_000L
@@ -715,7 +718,6 @@ class HeroLogViewModelTest {
 
         assertTrue(viewModel.focusSessionState.value.isFocusCompleted)
 
-        viewModel.confirmFocusSession(editedNotes = "Done", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
 
         val breakState = viewModel.breakTimerState.value
@@ -723,7 +725,7 @@ class HeroLogViewModelTest {
         assertEquals(5, breakState.selectedBreakMins)
         assertEquals(300, breakState.secondsLeft)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -756,7 +758,7 @@ class HeroLogViewModelTest {
             isDungeonMode = true,
             dungeonSessions = 3 // 4th session completing
         )
-        viewModel.startSession(dungeonConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, dungeonConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         fakeTime += 600_000L
@@ -765,7 +767,6 @@ class HeroLogViewModelTest {
 
         assertTrue(viewModel.focusSessionState.value.isFocusCompleted)
 
-        viewModel.confirmFocusSession(editedNotes = "Dungeon Clear", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
 
         val breakState = viewModel.breakTimerState.value
@@ -773,7 +774,7 @@ class HeroLogViewModelTest {
         assertEquals(20, breakState.selectedBreakMins)
         assertEquals(1200, breakState.secondsLeft)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -806,7 +807,7 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(config, durationMinutes = 10)
+        viewModel.startSession(testContext, config, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
         fakeTime += 600_000L
@@ -815,14 +816,13 @@ class HeroLogViewModelTest {
 
         assertTrue(viewModel.focusSessionState.value.isFocusCompleted)
 
-        viewModel.confirmFocusSession(editedNotes = "Manual break", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
 
         val breakState = viewModel.breakTimerState.value
         org.junit.Assert.assertFalse(breakState.isBreakActive)
         assertTrue(breakState.isBreakPrep)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -891,7 +891,7 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(config, durationMinutes = 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.focusSessionState.value.isRunning)
 
@@ -901,11 +901,11 @@ class HeroLogViewModelTest {
         assertEquals(25, viewModel.characterState.value?.pomodoroSettings?.focusDuration)
 
         // Cancel session
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         // Start break timer
-        viewModel.startBreakTimer(5)
+        viewModel.startBreakTimer(testContext, 5)
         testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.breakTimerState.value.isBreakActive)
 
@@ -914,7 +914,7 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
         assertEquals(25, viewModel.characterState.value?.pomodoroSettings?.focusDuration)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -985,7 +985,7 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(config, durationMinutes = 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
         // Attempt saveCustomTimerSettings while running -> no-op
@@ -993,11 +993,11 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
         assertEquals(25, viewModel.characterState.value?.pomodoroSettings?.focusDuration)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         // Start break timer
-        viewModel.startBreakTimer(5)
+        viewModel.startBreakTimer(testContext, 5)
         testDispatcher.scheduler.runCurrent()
 
         // Attempt saveCustomTimerSettings while break active -> no-op
@@ -1005,7 +1005,7 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
         assertEquals(25, viewModel.characterState.value?.pomodoroSettings?.focusDuration)
 
-        viewModel.skipBreak()
+        viewModel.skipBreak(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -1114,12 +1114,11 @@ class HeroLogViewModelTest {
             isDungeonMode = true,
             dungeonSessions = 0
         )
-        viewModel.startSession(dungeonConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, dungeonConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
         testDispatcher.scheduler.advanceTimeBy(600_000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.confirmFocusSession(editedNotes = "", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.breakTimerState.value.isBreakPrep)
@@ -1147,10 +1146,10 @@ class HeroLogViewModelTest {
             isDungeonMode = true,
             dungeonSessions = 2
         )
-        viewModel.startSession(dungeonConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, dungeonConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.abandonSession()
+        viewModel.abandonSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(0, viewModel.dungeonSessionsProgress.value)
@@ -1180,11 +1179,10 @@ class HeroLogViewModelTest {
             isDungeonMode = true,
             dungeonSessions = 0
         )
-        viewModel.startSession(dungeonConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, dungeonConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
         testDispatcher.scheduler.advanceTimeBy(600_000L)
         testDispatcher.scheduler.runCurrent()
-        viewModel.confirmFocusSession(editedNotes = "", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
         assertEquals(1, viewModel.dungeonSessionsProgress.value)
 
@@ -1195,10 +1193,10 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(standardConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, standardConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.abandonSession()
+        viewModel.abandonSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(1, viewModel.dungeonSessionsProgress.value)
@@ -1225,11 +1223,11 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(standardConfig, durationMinutes = 10)
+        viewModel.startSession(testContext, standardConfig, durationMinutes = 10)
         testDispatcher.scheduler.runCurrent()
         assertNotNull(focusRepository.getSession())
 
-        viewModel.abandonSession()
+        viewModel.abandonSession(testContext)
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(FocusSessionState(), viewModel.focusSessionState.value)
@@ -2030,14 +2028,13 @@ class HeroLogViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
-        viewModel.startSession(config, 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.runCurrent()
 
         fakeTime += 25 * 60 * 1000L
         testDispatcher.scheduler.advanceTimeBy(25 * 60 * 1000L)
         testDispatcher.scheduler.runCurrent()
 
-        viewModel.confirmFocusSession(editedNotes = "", selectedTag = "")
         testDispatcher.scheduler.runCurrent()
 
         val logs = viewModel.systemLogs.value
@@ -2046,7 +2043,7 @@ class HeroLogViewModelTest {
         assertEquals("🏆 CONQUISTA HERÓICA: Desbloqueaste o selo [Sobrevivente da Wilderness]!", wildernessLog?.text)
         assertTrue(wildernessLog?.highlighted == true)
 
-        viewModel.cancelSession()
+        viewModel.cancelSession(testContext)
         testDispatcher.scheduler.runCurrent()
         db.close()
     }
@@ -2174,13 +2171,13 @@ class HeroLogViewModelTest {
             isDungeonMode = true,
             dungeonSessions = 2
         )
-        viewModel.startSession(config, durationMinutes = 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val logsBefore = viewModel.systemLogs.value
         assertEquals(0, logsBefore.count { it.text.contains("FRACASSO NA MASMORRA") })
 
-        viewModel.abandonSession()
+        viewModel.abandonSession(testContext)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val logsAfter = viewModel.systemLogs.value
@@ -2216,11 +2213,11 @@ class HeroLogViewModelTest {
             isDungeonMode = false,
             dungeonSessions = 0
         )
-        viewModel.startSession(config, durationMinutes = 25)
+        viewModel.startSession(testContext, config, durationMinutes = 25)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val countBefore = viewModel.systemLogs.value.size
-        viewModel.abandonSession()
+        viewModel.abandonSession(testContext)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val logsAfter = viewModel.systemLogs.value

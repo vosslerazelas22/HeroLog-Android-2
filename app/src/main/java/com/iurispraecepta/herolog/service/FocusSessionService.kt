@@ -7,6 +7,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.iurispraecepta.herolog.HeroLogApplication
@@ -57,6 +58,12 @@ class FocusSessionService : Service() {
         const val EXTRA_CONFIG = "extra_config_json"
         const val EXTRA_DURATION_MINUTES = "extra_duration_minutes"
         const val EXTRA_BREAK_MINUTES = "extra_break_minutes"
+        /**
+         * Deadline explícito (ms, wall clock). Quando presente, o Service retoma um
+         * timer interrompido por morte de processo em vez de recontar a duração
+         * cheia (recovery do ViewModel, caso 3).
+         */
+        const val EXTRA_END_TIME_MILLIS = "extra_end_time_millis"
 
         /**
          * Fallback de skill — idêntico ao de `FocusRewardsLogic.calculate`, para que
@@ -66,6 +73,15 @@ class FocusSessionService : Service() {
 
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state
+
+        /**
+         * Testes apenas: injeta estado no holder (o holder é global ao processo;
+         * sem isso os testes precisariam subir o Service real para cada fase).
+         */
+        @VisibleForTesting
+        internal fun setStateForTests(state: ServiceState) {
+            _state.value = state
+        }
 
         fun actionIntent(context: Context, action: String): android.app.PendingIntent =
             FocusNotifications.servicePendingIntent(
@@ -85,11 +101,34 @@ class FocusSessionService : Service() {
         }
 
         /** Chamado pela UI (bloco T10) ao iniciar uma sessão. */
-        fun startSession(context: Context, config: FocusSessionConfig, durationMinutes: Int) {
+        fun startSession(
+            context: Context,
+            config: FocusSessionConfig,
+            durationMinutes: Int,
+            endTimeMillis: Long? = null
+        ) {
             val intent = Intent(context, FocusSessionService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_CONFIG, JsonConfig.default.encodeToString(config))
                 putExtra(EXTRA_DURATION_MINUTES, durationMinutes)
+                if (endTimeMillis != null) putExtra(EXTRA_END_TIME_MILLIS, endTimeMillis)
+            }
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        /** Dispara PAUSE/RESUME/STOP/SKIP_BREAK/START_NEW_SESSION a partir da UI. */
+        fun sendAction(context: Context, action: String) {
+            val intent = Intent(context, FocusSessionService::class.java).apply {
+                this.action = action
+            }
+            ContextCompat.startForegroundService(context, intent)
+        }
+
+        /** Inicia um descanso com duração explícita a partir da UI. */
+        fun startBreak(context: Context, minutes: Int) {
+            val intent = Intent(context, FocusSessionService::class.java).apply {
+                action = ACTION_START_BREAK
+                putExtra(EXTRA_BREAK_MINUTES, minutes)
             }
             ContextCompat.startForegroundService(context, intent)
         }
@@ -140,7 +179,9 @@ class FocusSessionService : Service() {
         when (action) {
             ACTION_START -> {
                 val (config, duration) = parseStartExtras(intent) ?: return START_NOT_STICKY
-                handleStart(config, duration)
+                val endTime = intent.getLongExtra(EXTRA_END_TIME_MILLIS, 0L)
+                    .takeIf { it > 0 }
+                handleStart(config, duration, endTime)
             }
             ACTION_PAUSE -> handlePause()
             ACTION_RESUME -> handleResume()
@@ -209,12 +250,17 @@ class FocusSessionService : Service() {
 
     // ---- Sessão ----
 
-    private fun handleStart(config: FocusSessionConfig, durationMinutes: Int) {
+    private fun handleStart(
+        config: FocusSessionConfig,
+        durationMinutes: Int,
+        endTimeOverride: Long? = null
+    ) {
         val current = _state.value
         if (current.phase == ServicePhase.RUNNING || current.phase == ServicePhase.PAUSED) return
         tickJob?.cancel()
         val now = System.currentTimeMillis()
-        val endTime = now + durationMinutes * 60_000L
+        val endTime = endTimeOverride?.takeIf { it > now }
+            ?: (now + durationMinutes * 60_000L)
         scope.launch {
             if (destroyed) return@launch
             val charState = repos().characterRepository.getCharacterState()
