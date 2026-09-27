@@ -608,7 +608,7 @@ class HeroLogViewModel(
     fun toggleDaily(dailyId: String) {
         val current = _characterState.value ?: return
         val daily = current.dailies.find { it.id == dailyId } ?: return
-        val result = DailyLogic.toggle(daily, current)
+        val result = DailyLogic.toggle(daily, current, referenceDate = Date(clock()))
         val updatedDailies = current.dailies.map { if (it.id == dailyId) result.updatedDaily else it }
         saveCharacterState(result.updatedState.copy(dailies = updatedDailies))
 
