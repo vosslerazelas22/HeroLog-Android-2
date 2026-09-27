@@ -6041,3 +6041,57 @@ anotado).
 
 **Validação:** assembleDebug OK; XML bruto TOTAL 666, failures 0, errors 0, skipped 0 (90
 arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.
+
+---
+
+## [2026-09-27] Bloco: TavernFeat — Navegação, Foco, Personagem, Títulos, Feed e Taverna (Specs A–F, PR #30)
+
+**Merge commit:** `1b2911b` (merge de `feat/tavern-specs` → `main`). **Branch React de referência:** `HeroLogReact_TavernFeat` commit `c89af8f` (e ancestrais). **12 commits, 41 arquivos, +4.527/-657 linhas.**
+
+### Onda 1 — Spec F (Activity Feed / `recentActivity`)
+**Commits:** `a520ee6` (modelo), `4f9d1ad` (ActivityFeedLogic), `50944bb` (integração Focus/Todo/Habit/Daily), `5511460` (testes).
+**Arquivos novos/alterados:** `model/CharacterModels.kt` (+`ActivityEntry`, `ActivityType`, `ActivitySource`, `recentActivity`), `logic/ActivityFeedLogic.kt`, `logic/focus/FocusApplyLogic.kt`, `logic/quests/{Daily,Habit,Todo}Logic.kt`, `HeroLogViewModel.kt`, testes: `ActivityFeedLogicTest` (23), `ActivityFeedIntegrationTest`, `ActivityFeedSerializationTest`.
+**Resumo:** Feed de atividade limitado a 20 itens (`record`/`revoke`), persistido no blob JSON do `CharacterState`. Integração ponta a ponta: conclusão de foco, claim de todo/habit/daily gravam entrada. Serialização JSON round-trip validada (campo opcional no React, obrigatório no Android com default vazio).
+
+### Onda 2 — Spec A (Bottom Nav) + Spec E (Copy de títulos)
+**Commits:** `062b66a` (Spec E), `16032d3` (Spec A), `e01f42b` (diagnóstico visual Spec A).
+**Spec E:** 4 edições literais em `TitleEquipModal.kt` e `TitleSelectorScreen.kt` — removidos "honorífico"/"honorário" dos textos de título (paridade com React `c89af8f`). `grep -rni honor` → zero ocorrências.
+**Spec A:** `HeroLogBottomNav.kt` reescrito — `NAV_ITEMS` = focus/rituals/tavern/character/kingdom (ícones `beer`/`crown` da `icons-lucide-android:2.2.1`), `getActiveModule` agrupa skills em character e 5 abas de rituais em rituals, `MODULE_TITLES`/`SUB_TABS` reescritos (missions removido). Rótulo sempre visível, Cinzel 9.5sp, ativo Champagne400 escala 1.05 + pill 8%/20%, inativo Zinc300@40% + Zinc400 #A1A1AA. Botão Taverna 48dp elevado sobre faixa reservada 16dp, estados ativo/inativo com glow via `drawBehind`, sem pill quando Taverna ativa. Sheet com padding 12/20dp, gap 6dp, linha 10x12dp, ícones 16dp, alpha 0.70. `MainActivity.kt`: `activeTab` inicial "tavern" + branch `PlaceholderScreen("tavern")`. `NavigationConfigTest` (18 testes nominais). `BottomNavDiagnosticTest` + 3 PNGs Roborazzi (labels visíveis em 375×667 e 390×844).
+
+### Onda 3 — Spec B (Taverna) + Spec C (Personagem)
+**Spec B — Commits:** `e1add66` (TavernLogic + 32 testes), `8cd25b7` (TavernScreen + integração + 6 screenshots), `5a5dffc` (baselines Spec B).
+**Arquivos:** `logic/TavernLogic.kt` (funções puras: xp, tempo, ouro, streak, relativo), `TavernLogicTest.kt` (32 testes), `ui/tavern/TavernScreen.kt` (3 seções: cartão herói, atalhos 2×2, Recentes), `TavernScreenScreenshotTest.kt` (6 testes: vazio, 4 itens, nome longo × 2 viewports), `MainActivity.kt` (rota `tavern` com wrapper `QuestPanel`).
+**Baselines Spec B (6):** `tavern_screen_vazio_375x667`, `tavern_screen_vazio_390x844`, `tavern_screen_4itens_375x667`, `tavern_screen_4itens_390x844`, `tavern_screen_nome_longo_375x667`, `tavern_screen_nome_longo_390x844`.
+
+**Spec C — Commit:** `59a8bcb`.
+**Arquivos:** `CharacterScreen.kt` reescrito (4 seções: Identidade, Progressão, Equipamento, Efeitos Ativos), `CharacterViewLogic.kt` + `CharacterViewLogicTest.kt` (21 testes), `CharacterScreenScreenshotTest.kt` (4 cenários: equipado, zerado, sem título, nome longo), `Color.kt` (+Rose400/500/300, Red600, Emerald300), `MainActivity.kt` (+`onNavigateToInventory` para aba inventory).
+**Baselines Spec C (4 regravados + 2 novos):** `character_screen_equipped.png`, `character_screen_zeroed.png` (regravados), `character_screen_no_title.png`, `character_screen_long_name.png` (novos).
+
+### Onda 4 — Spec D (Header da Câmara de Foco)
+**Commits:** `5140003` (código), `5a5dffc` (baselines - mesmo commit das baselines Spec B).
+**Arquivos:** `FocusHeaderBanner` reescrito — sem gradiente, min-height 35dp, padding 16/16/10, linha inferior 1dp `0x1AF59E0B` via `drawBehind`. Título centralizado com `Modifier.align(Center)` sem entrada de ponteiro. QuestFab 18dp (ícone 10dp), "?" 18dp. Tooltip `Popup` com `IntOffset(0, 44dp)` relativo ao header. Padding de conteúdo 12/16/16 nos 4 call sites. Divergências pré-existentes corrigidas: gap 6→8dp, letterSpacing 1→0.6sp.
+**Baselines regenerados:** `focus_tabbody_diag_390x844.png`, `focus_tabbody_diag_390x844_scrolled.png`.
+
+### Validação (Android)
+- **Build:** `./gradlew assembleDebug` — BUILD SUCCESSFUL
+- **Testes unitários:** Suite completa **491 testes, 0 falhas, 0 erros, 0 skipped** (XML nominal, `--no-build-cache --rerun-tasks`)
+  - Spec F: 23 + 1 + 1 = 25 testes
+  - Spec A: 18 + 5 = 23 testes
+  - Spec B: 32 + 6 = 38 testes
+  - Spec C: 21 + 4 = 25 testes
+  - Spec D: via `verifyRoborazziDebug` (baselines regenerados)
+- **Screenshots Roborazzi:** 3 (Spec A) + 6 (Spec B) + 4 (Spec C) + 2 (Spec D) = 15 PNGs novos/regravados, `verifyRoborazziDebug` verde
+- **Visual em device/emulador:** **PENDENTE** (recomendado antes de marcar "Fiel" no PARIDADE.md)
+
+### Pendências / Próximos passos (não bloqueantes para o merge)
+1. Validação visual humana (Spec B e C): screenshots Roborazzi gerados, mas conferência lado a lado em device/emulador real (375×667 e 390×844) pendente.
+2. Spec D — screenshot do header: `verifyRoborazziDebug` verde, mas inspeção visual humana do header em 375×667 e 390×844 (sem gradiente, título centrado, tooltip posicionado) pendente.
+3. React: merge do `HeroLogReact_TavernFeat` não está neste repo. Paridade Android↔React deve ser revalidada após o merge React.
+4. `PARIDADE.md` atualizado nesta entrada (abaixo).
+
+**Desvios de escopo:** Nenhum — escopo das 7 specs coberto integralmente.
+
+**Decisões conscientes registradas:**
+- Spec A: `lastDungeonClearedTime` persistido no Android (campo em `CharacterState`) — divergência consciente vs React (não persiste, reload reseta cooldown). Precedente: `Skill.id` no Bloco 15.
+- Spec E: Copy de títulos alinhado ao React `c89af8f` (sem "honorífico"/"honorário").
+- Spec F: `recentActivity` campo obrigatório no Android (default lista vazia) vs opcional no React — serialização JSON compatível.
