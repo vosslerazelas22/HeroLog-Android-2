@@ -124,6 +124,7 @@ import com.iurispraecepta.herolog.ui.skills.SkillSelectorModal
 import com.iurispraecepta.herolog.ui.skills.SkillsScreen
 import com.iurispraecepta.herolog.ui.habits.HabitsScreen
 import com.iurispraecepta.herolog.ui.dailies.DailiesScreen
+import com.iurispraecepta.herolog.ui.tavern.TavernScreen
 import com.iurispraecepta.herolog.ui.todos.TodosScreen
 import com.iurispraecepta.herolog.ui.quests.QuestsScreen
 import com.iurispraecepta.herolog.ui.history.HistoryScreen
@@ -639,7 +640,8 @@ class MainActivity : ComponentActivity() {
                                             activeBuffs = InventoryLogic.activeBuffs(state.inventory),
                                             onUnequipItem = { slotIdx -> heroLogViewModel.unequipItem(slotIdx) },
                                             ownedTitles = state.ownedTitles ?: emptyList(),
-                                            onEquipTitle = { titleId -> heroLogViewModel.equipTitle(titleId) }
+                                            onEquipTitle = { titleId -> heroLogViewModel.equipTitle(titleId) },
+                                            onNavigateToInventory = { activeTab = "inventory" }
                                         )
                                     }
                                 }
@@ -857,9 +859,47 @@ class MainActivity : ComponentActivity() {
                             }
                             "logs" -> LogsScreen(logs = heroLogViewModel.systemLogs.collectAsState().value)
                             "guide" -> GuideScreen()
-                            // Spec A: a rota existe e a aba inicial é a Taverna; o conteúdo real
-                            // só chega com a Spec B (TavernScreen).
-                            "tavern" -> PlaceholderScreen(title = "tavern")
+                            // Spec B (T10): a Taverna é o hub/home do app. O painel-wrapper é o
+                            // porte de `bg-quest-panel border border-white/10 rounded-lg p-3`
+                            // (App.tsx:2391); o rolagem/inset seguem o padrão das demais abas.
+                            "tavern" -> {
+                                val state = characterState
+                                if (state == null) {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Carregando taverna...", color = Amber400)
+                                    }
+                                } else {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .verticalScroll(rememberScrollState())
+                                            .padding(16.dp)
+                                            .padding(bottom = LocalBottomBarInset.current)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(QuestPanel)
+                                                .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(8.dp))
+                                                .padding(12.dp)
+                                        ) {
+                                            TavernScreen(
+                                                charName = state.charName,
+                                                charClass = state.charClass,
+                                                combatLevel = state.combatLevel,
+                                                combatXP = state.combatXP,
+                                                streak = state.streak,
+                                                bestStreak = state.bestStreak,
+                                                totalMinutes = state.totalMinutes,
+                                                gold = state.gold,
+                                                recentActivity = state.recentActivity,
+                                                onNavigate = { activeTab = it }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             else -> PlaceholderScreen(title = activeTab)
                         }
                     }
