@@ -148,7 +148,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
@@ -158,7 +158,7 @@ private fun AchievementCard(achievement: Achievement, isUnlocked: Boolean) {
                     fontSize = 14.sp,
                     letterSpacing = 0.025.em,
                     color = Amber100.copy(alpha = 0.90f),
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
