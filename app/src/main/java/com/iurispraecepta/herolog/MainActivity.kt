@@ -32,11 +32,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -65,6 +70,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -168,6 +174,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.iurispraecepta.herolog.logic.toSummary
 import com.iurispraecepta.herolog.ui.HeroLogViewModelFactory
@@ -1122,7 +1129,7 @@ fun FocusOrbPreviewScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
+                        .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     SkillInlineCarousel(
@@ -1719,6 +1726,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 // Banner "CÂMARA DE FOCO" + tooltip flutuante — extraído para reaproveitamento entre os
 // estados da aba Foco (idle, sessão rodando inline, break prep, break active).
 // Fonte: App.tsx:2338-2381 (banner estrutural, sempre visível quando activeTab === 'focus').
+// TavernFeat c89af8f: sem gradiente, min-h-[35px], pb-2.5, border-b border-amber-500/10,
+// título absolute center pointer-events-none, QuestFab w-4.5 h-4.5 (18dp) ícone w-2.5 (10dp),
+// "?" w-4.5 h-4.5, tooltip absolute right-0 top-11 (44dp).
 @Composable
 private fun FocusHeaderBanner(
     showTooltip: Boolean,
@@ -1726,42 +1736,47 @@ private fun FocusHeaderBanner(
     onCloseTooltip: () -> Unit,
     onOpenQuestFab: () -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        // Banner (without tooltip — tooltip floats above via sibling Box)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0x0DF59E0B), Color(0x0DA855F7))
-                    )
-                )
-                .border(1.dp, Color(0x1AF59E0B))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            // Left: QuestFab button (absolute)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                    .clickable { onOpenQuestFab() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.lucide_ic_scroll),
-                    contentDescription = "Ver Contratos Ativos",
-                    tint = Champagne400,
-                    modifier = Modifier.size(11.dp)
+    // Header container: min-height 35dp, padding top=16 / horizontal=16 / bottom=10,
+    // bottom border 1dp 0x1AF59E0B via drawBehind (not 4-sided border)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 35.dp)
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 10.dp)
+            .drawBehind {
+                drawRect(
+                    color = Color(0x1AF59E0B),
+                    topLeft = Offset(0f, size.height - 1.dp.toPx()),
+                    size = Size(size.width, 1.dp.toPx())
                 )
             }
+    ) {
+        // Left: QuestFab button — 18dp circle, icon 10dp
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .size(18.dp)
+                .clip(CircleShape)
+                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                .clickable { onOpenQuestFab() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.lucide_ic_scroll),
+                contentDescription = "Ver Contratos Ativos",
+                tint = Champagne400,
+                modifier = Modifier.size(10.dp)
+            )
+        }
 
-            // Center: Timer icon + title
+        // Center: Timer icon + title — centered horizontally, no pointer input
+        Box(
+            modifier = Modifier.align(Alignment.Center),
+            contentAlignment = Alignment.Center
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // gap-2 = 8dp per spec audit
             ) {
                 Icon(
                     painter = painterResource(R.drawable.lucide_ic_timer),
@@ -1775,81 +1790,82 @@ private fun FocusHeaderBanner(
                     fontWeight = FontWeight.Black,
                     fontSize = 12.sp,
                     color = Champagne400,
-                    letterSpacing = 1.sp
-                )
-            }
-
-            // Right: Tooltip button (absolute)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(18.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
-                    .clickable { onToggleTooltip() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "?",
-                    fontSize = 10.sp,
-                    lineHeight = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Champagne400.copy(alpha = 0.8f)
+                    letterSpacing = 0.6.sp // tracking-wider = 0.05em ≈ 0.6sp at 12sp
                 )
             }
         }
-    }
 
-    // Tooltip popup — floats above banner via Popup overlay, does not affect layout
-    if (showTooltip) {
-        Popup(
-            alignment = Alignment.TopEnd,
-            properties = PopupProperties(focusable = false),
-            onDismissRequest = { onCloseTooltip() }
+        // Right: Tooltip button — 18dp circle
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .size(18.dp)
+                .clip(CircleShape)
+                .border(1.dp, Champagne500.copy(alpha = 0.3f), CircleShape)
+                .clickable { onToggleTooltip() },
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(top = 48.dp, end = 16.dp)
-                    .widthIn(max = 280.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xF20C0A09))
-                    .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                    .padding(14.dp)
+            Text(
+                text = "?",
+                fontSize = 10.sp,
+                lineHeight = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Champagne400.copy(alpha = 0.8f)
+            )
+        }
+
+        // Tooltip popup — positioned 44dp below header top, aligned to header's right edge
+        if (showTooltip) {
+            val tooltipOffsetY = with(LocalDensity.current) { 44.dp.roundToPx() }
+            Popup(
+                alignment = Alignment.TopEnd,
+                offset = IntOffset(x = 0, y = tooltipOffsetY),
+                properties = PopupProperties(focusable = false),
+                onDismissRequest = { onCloseTooltip() }
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Câmara de Foco (POMODORO)",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            color = Champagne400,
-                            letterSpacing = 0.5.sp
-                        )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onCloseTooltip() }
-                                .padding(2.dp)
+                Box(
+                    modifier = Modifier
+                        .widthIn(max = 280.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xF20C0A09))
+                        .border(1.dp, Champagne500.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "×",
-                                fontSize = 12.sp,
+                                text = "Câmara de Foco (POMODORO)",
+                                fontFamily = Cinzel,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0x66A8A29E)
+                                fontSize = 11.sp,
+                                color = Champagne400,
+                                letterSpacing = 0.5.sp
                             )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .clickable { onCloseTooltip() }
+                                    .padding(2.dp)
+                            ) {
+                                Text(
+                                    text = "×",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0x66A8A29E)
+                                )
+                            }
                         }
+                        Text(
+                            text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
+                            fontSize = 11.sp,
+                            color = Color(0xCCD6D3D1),
+                            lineHeight = 16.sp
+                        )
                     }
-                    Text(
-                        text = "O painel principal de controle. Escolha o tipo de missão, defina uma duração e clique em \"Iniciar Missão de Foco\". Você ganha XP a cada minuto que estuda.",
-                        fontSize = 11.sp,
-                        color = Color(0xCCD6D3D1),
-                        lineHeight = 16.sp
-                    )
                 }
             }
         }
