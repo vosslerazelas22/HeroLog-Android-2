@@ -71,6 +71,48 @@ data class HistoryEntry(
     val subskillTag: String? = null
 )
 
+/**
+ * Apresentação da entrada no feed da Taverna (Spec F). O mapeamento `source → type` é fixo:
+ * `session→focus`, `todo→mission`, `habit→ritual`, `daily→ritual`.
+ */
+@Serializable
+enum class ActivityType {
+    @SerialName("focus") Focus,
+    @SerialName("mission") Mission,
+    @SerialName("ritual") Ritual
+}
+
+/** Origem da entrada no feed; é por `source` que [com.iurispraecepta.herolog.logic.ActivityFeedLogic.revoke] casa. */
+@Serializable
+enum class ActivitySource {
+    @SerialName("session") Session,
+    @SerialName("todo") Todo,
+    @SerialName("habit") Habit,
+    @SerialName("daily") Daily
+}
+
+/**
+ * Entrada do feed persistido `CharacterState.recentActivity` (Spec F) — mais recente primeiro,
+ * máx. 20. Forma JSON idêntica à do React (D8): save exportado de um app importa no outro.
+ *
+ * - [id]: `"${source}_${epochMs}"` (prefixo = valor JSON de [source]).
+ * - [at]: instante ISO-8601 em UTC com milissegundos (`2026-09-20T14:23:10.000Z`), mesmo
+ *   formato do `completedAt` do React (`new Date().toISOString()`).
+ * - [minutes]: só faz sentido para `type=focus`; `0` nos demais tipos.
+ */
+@Serializable
+data class ActivityEntry(
+    val id: String,
+    val type: ActivityType,
+    val source: ActivitySource,
+    val refId: String,
+    val title: String,
+    val minutes: Int = 0,
+    val xp: Int = 0,
+    val gold: Int = 0,
+    val at: String
+)
+
 @Serializable
 enum class Difficulty {
     @SerialName("Trivial") Trivial,
@@ -199,7 +241,9 @@ data class CharacterState(
     val pomodoroSettings: PomodoroSettings,
     val orbConcept: OrbConcept = OrbConcept.D,
     val lastDungeonClearedTime: Long = 0L,
-    val isPlayerDead: Boolean = false
+    val isPlayerDead: Boolean = false,
+    /** Feed persistido de atividades recentes (Spec F) — mais recente primeiro, máx. 20. */
+    val recentActivity: List<ActivityEntry> = emptyList()
 )
 
 @Serializable
