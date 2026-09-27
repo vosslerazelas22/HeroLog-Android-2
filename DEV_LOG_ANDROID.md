@@ -5939,3 +5939,105 @@ Refactor sem bloco próprio até aqui: `DailyReportModal.kt` migrado para `Dialo
 
 **Desvios de escopo aprovados:**
 - Caso overflow-scroll extra (valida o contrato de scroll do KDoc) + screenshots dos stubs refeitos em dark (pedido do usuário).
+
+---
+
+## [2026-09-26] Bloco: spec-008 núcleo (FocusUseCase + pending celebrations, sem Service)
+
+**Arquivos:** FocusUseCase.kt, CelebrationAggregation.kt, PendingRewardCelebrationEntity.kt,
+PendingRewardCelebrationDao.kt, PendingRewardRepository.kt (novos); HeroLogDatabase.kt (v3 +
+MIGRATION_2_3, schema 3.json gerado e conferido); HeroLogApplication.kt (+pendingRewardRepository);
+4 classes de teste novas (21 testes).
+
+**Resumo:** camada compartilhada calcular→aplicar→enfileirar (FR-5/T2), fila Room de celebrações
+(FR-10/FR-12, T3), agregação pura (FR-11, T4); semântica idêntica a confirmFocusSession/
+onFocusSessionCompleted; defaults background editedNotes=""/selectedTag=null.
+
+**Validação:** assembleDebug bloqueado por debug.keystore ausente (pré-existente); 21/21 novos +
+107/107 regressão via XML bruto. Visual: N/A (sem UI).
+
+**Desvios:** previousLevel+newLevel (spec previa só newLevel); ServiceState/Service/notificações
+ficam para o próximo bloco.
+
+---
+
+## [2026-09-26] Bloco: spec-008 Service (FGS + notificações + backup, sem trigger/UI)
+
+**Arquivos:** service/ (5 novos: State, Notifications, Service, Receiver, Permission);
+AndroidManifest.xml (permissões + service specialUse + receiver); + núcleo do bloco anterior.
+
+**Resumo:** T5–T9. specialUse reavaliado e mantido; chronometer trocado por texto m:ss (conta p/ cima
+no sistema); break no Service; backup sessão+descanso; VM/MainActivity intocados (trigger no T10
+p/ evitar apply duplo — guarda bilateral do lado Service pronta).
+
+**Validação:** assembleDebug BUILD SUCCESSFUL; 107/107 testes via XML bruto. Visual/device: PENDENTE
+(roteiro adb acima).
+
+---
+
+## [2026-09-26] Bloco: spec-008 correções do review (bloqueante + importantes)
+
+**Arquivos:** service/FocusSessionService.kt (prestartForeground síncrono, destroyed,
+persist-sem-cálculo, fallback Código Sagrado); service/FocusSessionReceiver.kt (reagenda
+disparo precoce); service/FocusNotifications.kt + ic_focus_small + strings.xml (badge,
+categoria, ícone, i18n); FocusServiceStartTest (3) + FocusSessionBackupTest (2) novos.
+
+**Resumo:** 🔴1 (ForegroundServiceDidNotStartInTime) corrigido; 🟡1 via cálculo único na
+conclusão; 🟡4 reagenda; 🟡2/3/7 rejeitados com justificativa registrada; nits de lógica
+diferidos.
+
+**Validação:** assembleDebug BUILD SUCCESSFUL; 124/124 via XML bruto. Visual/device: PENDENTE.
+
+---
+
+## [2026-09-26] Bloco: spec-008 correções review + validação device
+
+**Arquivos:** service/* (prestart, postProvisionalAndFail, shouldServiceCompleteSession,
+reagenda precoce, pacote notificações); ServiceStateTest/FocusServiceStartTest/
+FocusSessionBackupTest.
+
+**Resumo:** 🔴1 + 🟡1/4/5 corrigidos; 🟡2/3/7 rejeitados c/ justificativa; device achou
+stop-sem-foreground (corrigido) e risco de apply-duplo pós-backup (guarda exige registro
+vivo; +3 testes). FR-5 validado ponta a ponta no emulador (1 linha pendente, ativos zerados).
+
+Achados no device (emulador 390×844, prints inspecionados):
+1. Crash real pré-fix: extras JSON mutilados pelo shell → parseStartExtras null → stopSelf sem
+   foreground → ForegroundServiceDidNotStartInTimeException. Fix: postProvisionalAndFail
+   (foreground provisório antes do stop) + Log.e. Logcat limpo após o fix.
+2. Bug real de apply-duplo (novo, corrigido): sessão concluída pelo backup (tick lento no emulador
+   SwiftShader) + tick obsoleto do Service re-aplicaria, pois a guarda só olhava
+   pendingCalculation != null e o receiver limpa a sessão (null). Fix:
+   shouldServiceCompleteSession exige registro vivo não-calculado; ausente → para sem aplicar.
+3. Artefato de emulador, não bug: tick ~45s atrasado sob SwiftShader; FR-9 funcionou para esse
+   caso. Revalidar timing em hardware real.
+
+**Validação:** assembleDebug OK; 127/127 XML bruto; prints 390×844 inspecionados (timer,
+pausa, conclusão — Sessão concluída! +2 XP · +3 ouro, pending_reward_celebrations = 1 linha,
+active_focus_session = 0 — FR-5 exatamente-uma-vez). Restante device: sugestão pós-descanso em
+hardware real.
+
+---
+
+## [2026-09-27] Bloco: spec-008 fechamento T12/T13/T16 + reescrita dos testes pós-migração T10 (PR #29)
+
+**Commits:** `8939df3` (branch Notifications-feature-android-first; fecha 913d664, 6486b4e,
+3d544bf) + `c5b1885` (merge PR #29).
+
+**Arquivos (só testes + spec gitignored):** PendingRewardRepositoryTest.kt (+4 peek/consumeIds);
+PendingCelebrationModalTest.kt, MultipleSessionCelebrationTest.kt, ShadowFocusSessionService.kt
+(novos); FocusSessionRecoveryTest.kt (reescrito, 4 casos via setStateForTests, sem Service real);
+FocusSessionViewModelTest.kt (reescrito 12→7: espelho + intents); HeroLogViewModelTest.kt (15
+stale corrigidos: abandon/break/completion→delegação e handleServiceCompleted; shadow na classe;
+62/62); specs/spec-008-... (checkboxes T1–T16, desvio opção A, Q1–Q3 resolvidos / Q4–Q5 em aberto).
+
+**Resumo:** T12 já estava ligado (peek+confirm, commit 2); registrado o desvio opção A (morte antes
+do Confirm REEXIBE, nunca perde — relaxa a letra do FR-12). Hang de 29+ min diagnosticado por
+jstack (ticker + advanceUntilIdle + Service real assíncrono); testes reescritos com o padrão
+setStateForTests + shadow + reset IDLE + releaseMirrorTicker. 15 falhas do HeroLogViewModelTest
+todas stale, 0 regressões; drift de texto de log de conquista documentado
+(CONQUISTA HERÓICA: Desbloqueaste o selo → Conquista heroica: desbloqueada runa especial, commit 2).
+breakTimer_reachingZero deletado (comportamento no Service, sem cobertura equivalente — gap
+anotado).
+
+**Validação:** assembleDebug OK; XML bruto TOTAL 666, failures 0, errors 0, skipped 0 (90
+arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.

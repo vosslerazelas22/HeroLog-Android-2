@@ -17,6 +17,8 @@
 | Feature | Módulo | Status | Descrição | Bloco/data |
 |---|---|---|---|---|
 | (exemplo) | Foco | Implementada | — | — |
+| Celebrações pendentes de Foco (fila + agregação) | Foco | Concluído (PR #29) | Sessões concluídas em background enfileiram recompensa (fila Room + agregação 2+ ao reabrir via modal) | Bloco spec-008 núcleo / 26-09 → PR #29 / 27-09 |
+| Notificações de foco + Foreground Service | Foco | Implementada | Timer com app fechado; notificação persistente com Pausar/Retomar/Parar; recompensa aplicada em background; encadeamento sessão→descanso→nova sessão pela notificação; celebração single/agregada ao reabrir | PR #29 (2026-09-27) |
 
 ## Decisões relacionadas
 - (espaço para justificar decisões de produto por trás de cada feature, se não óbvio)
