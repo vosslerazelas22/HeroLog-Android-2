@@ -1,10 +1,12 @@
 package com.iurispraecepta.herolog.logic.focus
 
+import com.iurispraecepta.herolog.logic.ActivityFeedLogic
 import com.iurispraecepta.herolog.logic.CombatLogic
 import com.iurispraecepta.herolog.logic.SkillLogic
 import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog
 import com.iurispraecepta.herolog.logic.achievements.AchievementLogic
 import com.iurispraecepta.herolog.logic.quests.QuestLogic
+import com.iurispraecepta.herolog.model.ActivitySource
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.HistoryEntry
 import com.iurispraecepta.herolog.model.InventoryItem
@@ -147,6 +149,18 @@ object FocusApplyLogic {
             }
         }
 
-        return candidateState.copy(achievements = unlockedIds)
+        // Spec F (FEED-1): a entrada do feed nasce junto com o HistoryEntry da mesma sessão
+        // (atomicidade com a recompensa). refId/xp/gold são exatamente os do HistoryEntry e
+        // title é o skillName com fallback "Estudo".
+        return ActivityFeedLogic.record(
+            state = candidateState.copy(achievements = unlockedIds),
+            source = ActivitySource.Session,
+            refId = historyObj.id,
+            title = calc.skillName.ifBlank { "Estudo" },
+            minutes = calc.durationMins,
+            xp = calc.xpEarned,
+            gold = totalGoldGained,
+            at = referenceDate
+        )
     }
 }

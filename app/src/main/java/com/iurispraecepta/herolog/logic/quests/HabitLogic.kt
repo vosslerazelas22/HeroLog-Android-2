@@ -1,6 +1,8 @@
 package com.iurispraecepta.herolog.logic.quests
 
+import com.iurispraecepta.herolog.logic.ActivityFeedLogic
 import com.iurispraecepta.herolog.logic.CombatLogic
+import com.iurispraecepta.herolog.model.ActivitySource
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.Difficulty
@@ -57,7 +59,7 @@ object HabitLogic {
         }
         val nextHp = if (didLevelUp) state.maxHp else state.hp
 
-        val updatedState = state.copy(
+        val rewardedState = state.copy(
             gold = state.gold + goldEarned,
             totalGoldEarned = state.totalGoldEarned + goldEarned,
             totalXP = state.totalXP + xpEarned,
@@ -66,13 +68,25 @@ object HabitLogic {
             hp = nextHp
         )
 
+        // Spec F (FEED-3): só o ramo positivo entra no feed (D1); hábito é repetível, então cada
+        // acionamento cria uma entrada nova com o mesmo refId.
+        val updatedStateWithFeed = ActivityFeedLogic.record(
+            state = rewardedState,
+            source = ActivitySource.Habit,
+            refId = habit.id,
+            title = habit.title,
+            xp = xpEarned,
+            gold = goldEarned,
+            at = referenceDate
+        )
+
         val updatedHabit = habit.copy(
             upCount = habit.upCount + 1,
             streak = habit.streak + 1,
             lastTriggeredDate = todayStr
         )
 
-        return HabitTriggerResult(updatedHabit, updatedState)
+        return HabitTriggerResult(updatedHabit, updatedStateWithFeed)
     }
 
     private fun triggerDown(

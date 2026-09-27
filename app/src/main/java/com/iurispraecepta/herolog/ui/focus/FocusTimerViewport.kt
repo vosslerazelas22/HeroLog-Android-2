@@ -104,8 +104,8 @@ fun FocusTimerViewport(
 /**
  * Área de conteúdo da aba Foco sob o banner (equivalente ao `div.flex-1` de
  * `App.tsx:2383`): ocupa o leftover da aba via `weight` no caller, mede a
- * viewport, aplica padding horizontal 16dp / top 8dp (`p-4` + `py-2`) e monta
- * [FocusTimerViewport] dentro de `verticalScroll` (overflow em altura curta).
+ * viewport, aplica padding horizontal 16dp / top 12dp / bottom 16dp (FOC-6)
+ * e monta [FocusTimerViewport] dentro de `verticalScroll` (overflow em altura curta).
  */
 @Composable
 fun FocusTabBody(
@@ -119,12 +119,12 @@ fun FocusTabBody(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             FocusTimerViewport(
-                availableHeight = viewportHeight - 8.dp,
+                availableHeight = viewportHeight - 12.dp - 16.dp,
                 modifier = Modifier.fillMaxWidth(),
                 top = top,
                 timer = timer,

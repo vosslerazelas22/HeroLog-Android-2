@@ -1,6 +1,8 @@
 package com.iurispraecepta.herolog.logic.quests
 
+import com.iurispraecepta.herolog.logic.ActivityFeedLogic
 import com.iurispraecepta.herolog.logic.CombatLogic
+import com.iurispraecepta.herolog.model.ActivitySource
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.Difficulty
@@ -46,13 +48,23 @@ object TodoLogic {
             completed = true,
             completedAt = referenceDate.toInstant().toString()
         )
-        val updatedState = state.copy(
+        val rewardedState = state.copy(
             gold = state.gold + finalGold,
             totalGoldEarned = state.totalGoldEarned + finalGold,
             totalXP = state.totalXP + finalXP,
             combatLevel = currentCombatLevel,
             combatXP = combatXPApplied,
             hp = nextHp
+        )
+        // Spec F (FEED-2): a entrada no feed nasce junto com a recompensa (atomicidade).
+        val updatedState = ActivityFeedLogic.record(
+            state = rewardedState,
+            source = ActivitySource.Todo,
+            refId = todo.id,
+            title = todo.title,
+            xp = finalXP,
+            gold = finalGold,
+            at = referenceDate
         )
         return TodoToggleResult(updatedTodo, updatedState)
     }
@@ -70,7 +82,7 @@ object TodoLogic {
         if (combatXPApplied < 0) combatXPApplied = 0
 
         val updatedTodo = todo.copy(completed = false, completedAt = null)
-        val updatedState = state.copy(
+        val rewardedState = state.copy(
             gold = max(0, state.gold - finalGold),
             totalGoldEarned = max(0, state.totalGoldEarned - finalGold),
             totalXP = max(0, state.totalXP - finalXP),
@@ -78,6 +90,8 @@ object TodoLogic {
             combatXP = combatXPApplied
             // hp: propositalmente NÃO tocado, mesma fidelidade do Daily
         )
+        // Spec F (FEED-5 / D3): desfazer remove a entrada do feed; se não houver, no-op.
+        val updatedState = ActivityFeedLogic.revoke(rewardedState, ActivitySource.Todo, todo.id)
         return TodoToggleResult(updatedTodo, updatedState)
     }
 }

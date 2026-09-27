@@ -122,7 +122,7 @@ fun TitleEquipModal(
     HeroLogModal(
         isOpen = isOpen,
         onClose = onClose,
-        title = "Equipar Título Honorífico",
+        title = "Equipar Título",
         variant = ModalVariant.Amber
     ) {
         val unlockedTitles = TITLE_CATALOG.filter { ownedTitles.contains(it.id) }
@@ -147,7 +147,7 @@ fun TitleEquipModal(
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                text = "Selecione qual brasão ou título honorífico você deseja carregar em sua ficha de herói:",
+                text = "Selecione qual brasão ou título você deseja carregar em sua ficha de herói:",
                 style = TextStyle(
                     fontFamily = FontFamily.Serif,
                     fontStyle = FontStyle.Italic,
@@ -203,7 +203,7 @@ fun TitleEquipModal(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Nenhum título honorífico foi conquistado ainda. Cultive seu foco nas missões ou compre brasões no Bazar!",
+                            text = "Nenhum título foi conquistado ainda. Cultive seu foco nas missões ou compre brasões no Bazar!",
                             style = TextStyle(
                                 fontFamily = FontFamily.Serif,
                                 fontSize = 10.sp,

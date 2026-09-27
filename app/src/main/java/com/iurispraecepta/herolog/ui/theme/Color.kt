@@ -54,7 +54,14 @@ val Zinc950 = Color(0xFF09090B)
 val Red500 = Color(0xFFEF4444)
 val Red400 = Color(0xFFF87171)
 val Red300 = Color(0xFFFCA5A5)
+val Red600 = Color(0xFFDC2626)
 val Red950 = Color(0xFF450A0A)
+
+val Rose500 = Color(0xFFF43F5E)
+val Rose400 = Color(0xFFFB7185)
+val Rose300 = Color(0xFFFDA4AF)
+
+val Emerald300 = Color(0xFF6EE7B7)
 
 val Purple500 = Color(0xFFA855F7)
 val Purple400 = Color(0xFFC084FC)
