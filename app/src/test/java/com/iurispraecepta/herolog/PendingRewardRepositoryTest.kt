@@ -115,4 +115,64 @@ class PendingRewardRepositoryTest {
         assertEquals(1, dao.markAllConsumedCalls.size)
         assertEquals(listOf("s1", "s2"), dao.markAllConsumedCalls.first().sorted())
     }
+
+    @Test
+    fun peek_twoPending_returnsAggregatedSummaryWithoutConsuming() = runTest {
+        val dao = FakePendingRewardCelebrationDao()
+        val repository = PendingRewardRepository(dao)
+        repository.queue(entity("s1", xp = 60, gold = 90, completedAt = 1_000L))
+        repository.queue(entity("s2", xp = 50, gold = 75, completedAt = 2_000L))
+
+        val summary = repository.peekPendingCelebrations()
+
+        assertNotNull(summary)
+        assertEquals(2, summary!!.sessionCount)
+        assertEquals(110, summary.totalXp)
+        assertEquals(165, summary.totalGold)
+        assertEquals(2, repository.countPending())
+        assertTrue(dao.markAllConsumedCalls.isEmpty())
+    }
+
+    @Test
+    fun peek_empty_returnsNull() = runTest {
+        val dao = FakePendingRewardCelebrationDao()
+        val repository = PendingRewardRepository(dao)
+
+        val summary = repository.peekPendingCelebrations()
+
+        assertNull(summary)
+        assertTrue(dao.markAllConsumedCalls.isEmpty())
+    }
+
+    @Test
+    fun consumeIds_consumesOnlyShownIds() = runTest {
+        val dao = FakePendingRewardCelebrationDao()
+        val repository = PendingRewardRepository(dao)
+        repository.queue(entity("s1", completedAt = 1_000L))
+        repository.queue(entity("s2", completedAt = 2_000L))
+        repository.queue(entity("s3", completedAt = 3_000L))
+
+        repository.consumeIds(listOf("s1", "s2"))
+
+        assertEquals(1, dao.markAllConsumedCalls.size)
+        assertEquals(listOf("s1", "s2"), dao.markAllConsumedCalls.first())
+        assertEquals(listOf("s3"), repository.getPending().map { it.id })
+    }
+
+    @Test
+    fun consumeIds_afterPeekDeathBeforeConfirm_reexhibitsNeverLoses() = runTest {
+        val repository = PendingRewardRepository(FakePendingRewardCelebrationDao())
+        repository.queue(entity("s1", xp = 60, gold = 90, completedAt = 1_000L))
+        repository.queue(entity("s2", xp = 50, gold = 75, completedAt = 2_000L))
+
+        val shown = repository.peekPendingCelebrations()
+        val reopened = repository.peekPendingCelebrations()
+
+        assertNotNull(shown)
+        assertNotNull(reopened)
+        assertEquals(shown!!.sessions.map { it.id }, reopened!!.sessions.map { it.id })
+        assertEquals(shown.totalXp, reopened.totalXp)
+        assertEquals(shown.totalGold, reopened.totalGold)
+        assertEquals(2, repository.countPending())
+    }
 }

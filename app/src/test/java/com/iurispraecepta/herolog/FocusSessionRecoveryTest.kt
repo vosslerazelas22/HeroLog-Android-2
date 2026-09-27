@@ -5,10 +5,13 @@ import androidx.test.core.app.ApplicationProvider
 import com.iurispraecepta.herolog.data.database.HeroLogDatabase
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
+import com.iurispraecepta.herolog.data.repository.PendingRewardRepository
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
-import com.iurispraecepta.herolog.logic.focus.FocusSessionState
 import com.iurispraecepta.herolog.logic.focus.PersistedFocusSession
+import com.iurispraecepta.herolog.service.FocusSessionService
+import com.iurispraecepta.herolog.service.ServicePhase
+import com.iurispraecepta.herolog.service.ServiceState
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
 import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +23,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -36,16 +38,15 @@ class FocusSessionRecoveryTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private val testContext: android.content.Context
-        get() = ApplicationProvider.getApplicationContext()
-
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        FocusSessionService.setStateForTests(ServiceState())
     }
 
     @After
     fun tearDown() {
+        FocusSessionService.setStateForTests(ServiceState())
         Dispatchers.resetMain()
     }
 
@@ -58,6 +59,16 @@ class FocusSessionRecoveryTest {
             .build()
     }
 
+    private fun createViewModel(db: HeroLogDatabase): HeroLogViewModel {
+        return HeroLogViewModel(
+            CharacterRepository(db.characterStateDao()),
+            FocusSessionRepository(db.activeFocusSessionDao()),
+            SfxManager.noOp(),
+            clock = { testDispatcher.scheduler.currentTime },
+            pendingRewardRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        )
+    }
+
     private val defaultConfig = FocusSessionConfig(
         selectedSkillIdx = 0,
         isWildernessChecked = false,
@@ -66,139 +77,46 @@ class FocusSessionRecoveryTest {
     )
 
     @Test
-    fun recoverFocusSession_whenNoSessionPersisted_initializesWithDefaultState() = runTest {
+    fun recover_case1_holderRunning_mirrorsServiceWithoutTouchingRoom() = runTest {
         val db = createInMemoryDatabase()
-        val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-
-        val viewModel = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
+        FocusSessionService.setStateForTests(
+            ServiceState(
+                phase = ServicePhase.RUNNING,
+                sessionConfig = defaultConfig,
+                durationMinutes = 20,
+                endTimeMillis = 1_200_000L
+            )
         )
+
+        val viewModel = createViewModel(db)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.focusSessionState.value
-        assertEquals(FocusSessionState(), state)
-        assertFalse(state.isRunning)
+        assertTrue(state.isRunning)
+        assertFalse(state.isPaused)
         assertFalse(state.isFocusCompleted)
-        assertNull(state.pendingRewardsCalculation)
+        assertEquals(1200, state.timeLeft)
+        assertEquals(20, state.durationMinutes)
+        assertEquals(defaultConfig, state.config)
 
-        viewModel.cancelSession(testContext)
-        testDispatcher.scheduler.runCurrent()
+        assertNull(focusRepository.getSession())
+        assertNull(viewModel.pendingServiceResume.value)
+        assertNull(viewModel.pendingCelebration.value)
+
+        FocusSessionService.setStateForTests(ServiceState())
+        testDispatcher.scheduler.advanceTimeBy(1_000L)
+
         db.close()
     }
 
     @Test
-    fun recoverFocusSession_state1_inProgress_resumesTimerWithCorrectRemainingTime() = runTest {
+    fun recover_case2_storedCalculation_appliesExactlyOnceClearsAndQueuesCelebration() = runTest {
         val db = createInMemoryDatabase()
-        val repository = CharacterRepository(db.characterStateDao())
+        val characterRepository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
 
-        // Primeiro ViewModel inicia a sessão e simula fechamento abrupto
-        val viewModel1 = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        viewModel1.startSession(testContext, defaultConfig, durationMinutes = 20) // 1200s
-        testDispatcher.scheduler.runCurrent()
-
-        // Avança 300 segundos (5 min) sem cancelar a sessão no VM1 (simula fechamento abrupto)
-        testDispatcher.scheduler.advanceTimeBy(300_000L)
-        testDispatcher.scheduler.runCurrent()
-
-        // Segundo ViewModel reabre o app no mesmo banco com tempo avançado
-        val viewModel2 = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        val state2 = viewModel2.focusSessionState.value
-        assertTrue(state2.isRunning)
-        assertFalse(state2.isPaused)
-        assertFalse(state2.isFocusCompleted)
-        assertEquals(900, state2.timeLeft) // 1200 - 300 = 900s restantes
-        assertEquals(20, state2.durationMinutes)
-        assertEquals(defaultConfig, state2.config)
-
-        viewModel2.cancelSession(testContext)
-        viewModel1.cancelSession(testContext)
-        testDispatcher.scheduler.runCurrent()
-        db.close()
-    }
-
-    @Test
-    fun recoverFocusSession_state2_expiredWithoutCalculation_calculatesOnceAndDoesNotApplyToCharacterState() = runTest {
-        val db = createInMemoryDatabase()
-        val repository = CharacterRepository(db.characterStateDao())
-        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-
-        val viewModel1 = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        val initialCharState = viewModel1.characterState.value!!
-
-        viewModel1.startSession(testContext, defaultConfig, durationMinutes = 10) // 600s
-        testDispatcher.scheduler.runCurrent()
-
-        // Avança o tempo além do tempo limite (700s > 600s) ANTES de criar o segundo ViewModel
-        testDispatcher.scheduler.advanceTimeBy(700_000L)
-        testDispatcher.scheduler.runCurrent()
-
-        // Segundo ViewModel reabre o app
-        val viewModel2 = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
-        )
-        testDispatcher.scheduler.runCurrent()
-
-        val state2 = viewModel2.focusSessionState.value
-        assertFalse(state2.isRunning)
-        assertFalse(state2.isPaused)
-        assertTrue(state2.isFocusCompleted)
-        assertEquals(0, state2.timeLeft)
-        assertNotNull(state2.pendingRewardsCalculation)
-
-        // Prova de que NÃO aplicou automaticamente as recompensas ao personagem
-        val finalCharState = viewModel2.characterState.value!!
-        assertEquals(initialCharState.gold, finalCharState.gold)
-        assertEquals(initialCharState.totalXP, finalCharState.totalXP)
-        assertEquals(initialCharState.inventory, finalCharState.inventory)
-
-        // Confirma que pendingCalculation foi persistido pelo onFocusSessionCompleted() chamado na recuperação
-        val persisted = focusRepository.getSession()
-        assertNotNull(persisted)
-        assertNotNull(persisted?.pendingCalculation)
-        assertEquals(state2.pendingRewardsCalculation, persisted?.pendingCalculation)
-
-        viewModel2.cancelSession(testContext)
-        viewModel1.cancelSession(testContext)
-        testDispatcher.scheduler.runCurrent()
-        db.close()
-    }
-
-    @Test
-    fun recoverFocusSession_state3_alreadyCalculated_reloadsPersistedCalculationWithoutRecalculating() = runTest {
-        val db = createInMemoryDatabase()
-        val repository = CharacterRepository(db.characterStateDao())
-        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
-
-        // Monta diretamente a sessão persistida com um valor não-natural de teste
         val dummyCalc = FocusRewardsCalculation(
             skillIdx = 0,
             skillName = "Arcane Logic",
@@ -217,35 +135,100 @@ class FocusSessionRecoveryTest {
             isDungeonMode = false,
             comboBonusPercent = 0
         )
-        val persistedSession = PersistedFocusSession(
-            config = defaultConfig,
-            durationMinutes = 15,
-            endTimeMillis = testDispatcher.scheduler.currentTime - 1000L,
-            pendingCalculation = dummyCalc
+        focusRepository.saveSession(
+            PersistedFocusSession(
+                config = defaultConfig,
+                durationMinutes = 15,
+                endTimeMillis = testDispatcher.scheduler.currentTime - 1000L,
+                pendingCalculation = dummyCalc
+            )
         )
-        focusRepository.saveSession(persistedSession)
 
-        // ViewModel inicializa lendo esse estado persistido
-        val viewModel = HeroLogViewModel(
-            repository,
-            focusRepository,
-            clock = { testDispatcher.scheduler.currentTime },
-            sfxManager = SfxManager.noOp()
-        )
+        val viewModel = createViewModel(db)
         testDispatcher.scheduler.runCurrent()
 
-        val state = viewModel.focusSessionState.value
-        assertFalse(state.isRunning)
-        assertFalse(state.isPaused)
-        assertTrue(state.isFocusCompleted)
-        assertEquals(0, state.timeLeft)
-        assertNotNull(state.pendingRewardsCalculation)
-        assertEquals(dummyCalc, state.pendingRewardsCalculation)
-        assertEquals(999999, state.pendingRewardsCalculation?.xpEarned)
-        assertEquals(888888, state.pendingRewardsCalculation?.goldEarned)
+        val finalCharState = characterRepository.getCharacterState()!!
+        assertEquals(999999, finalCharState.totalXP)
+        assertEquals(200 + 100 + 888888, finalCharState.gold)
 
-        viewModel.cancelSession(testContext)
+        assertNull(focusRepository.getSession())
+
+        assertEquals(1, pendingRepository.countPending())
+        val queued = pendingRepository.getPending().single()
+        assertEquals(999999, queued.xpGained)
+        assertEquals(888888, queued.goldGained)
+        assertEquals("Arcane Logic", queued.skillName)
+        assertEquals(15, queued.durationMinutes)
+
+        val celebration = viewModel.pendingCelebration.value
+        assertEquals(1, celebration?.sessionCount)
+        assertEquals(999999, celebration?.totalXp)
+        assertEquals(888888, celebration?.totalGold)
+
+        assertFalse(viewModel.focusSessionState.value.isRunning)
+        assertNull(viewModel.pendingServiceResume.value)
+
+        db.close()
+    }
+
+    @Test
+    fun recover_case3_futureSessionWithoutCalculation_exposesServiceResume() = runTest {
+        val db = createInMemoryDatabase()
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        focusRepository.saveSession(
+            PersistedFocusSession(
+                config = defaultConfig,
+                durationMinutes = 10,
+                endTimeMillis = testDispatcher.scheduler.currentTime + 600_000L,
+                pendingCalculation = null
+            )
+        )
+
+        val viewModel = createViewModel(db)
         testDispatcher.scheduler.runCurrent()
+
+        val resume = viewModel.pendingServiceResume.value
+        assertEquals(600_000L, resume?.endTimeMillis)
+        assertEquals(10, resume?.durationMinutes)
+        assertEquals(defaultConfig, resume?.config)
+
+        assertFalse(viewModel.focusSessionState.value.isRunning)
+        assertNull(viewModel.pendingCelebration.value)
+
+        db.close()
+    }
+
+    @Test
+    fun recover_case4_expiredWithoutCalculation_completesViaBackupAndQueuesCelebration() = runTest {
+        val db = createInMemoryDatabase()
+        val characterRepository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        focusRepository.saveSession(
+            PersistedFocusSession(
+                config = defaultConfig,
+                durationMinutes = 10,
+                endTimeMillis = testDispatcher.scheduler.currentTime - 1000L,
+                pendingCalculation = null
+            )
+        )
+
+        val viewModel = createViewModel(db)
+        testDispatcher.scheduler.runCurrent()
+
+        assertNull(focusRepository.getSession())
+
+        assertEquals(1, pendingRepository.countPending())
+
+        val finalCharState = characterRepository.getCharacterState()!!
+        assertTrue(finalCharState.totalXP > 0)
+        assertTrue(finalCharState.gold > 200)
+
+        assertEquals(1, viewModel.pendingCelebration.value?.sessionCount)
+
+        assertFalse(viewModel.focusSessionState.value.isRunning)
+        assertNull(viewModel.pendingServiceResume.value)
+
         db.close()
     }
 }
