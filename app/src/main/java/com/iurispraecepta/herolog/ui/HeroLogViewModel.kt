@@ -1,10 +1,12 @@
 package com.iurispraecepta.herolog.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.iurispraecepta.herolog.data.createInitialCharacterState
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
+import com.iurispraecepta.herolog.data.repository.PendingRewardRepository
 import com.iurispraecepta.herolog.logic.CombatLogic
 import com.iurispraecepta.herolog.logic.EquipTitleResult
 import com.iurispraecepta.herolog.logic.InventoryLogic
@@ -33,11 +35,11 @@ import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.quests.RolloverLogic
 import com.iurispraecepta.herolog.logic.quests.TodoLogic
 import com.iurispraecepta.herolog.logic.focus.BreakTimerState
-import com.iurispraecepta.herolog.logic.focus.FocusApplyLogic
-import com.iurispraecepta.herolog.logic.focus.FocusRewardsLogic
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import com.iurispraecepta.herolog.logic.focus.FocusSessionState
+import com.iurispraecepta.herolog.logic.focus.FocusUseCase
 import com.iurispraecepta.herolog.logic.focus.PersistedFocusSession
+import com.iurispraecepta.herolog.logic.focus.AggregatedCelebrationSummary
 import com.iurispraecepta.herolog.logic.focus.WILDERNESS_GRACE_PERIOD_SECONDS
 import com.iurispraecepta.herolog.logic.focus.WildernessInfractionOutcome
 import com.iurispraecepta.herolog.logic.focus.resolveWildernessInfraction
@@ -53,6 +55,9 @@ import com.iurispraecepta.herolog.logic.achievements.Achievement
 import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog
 import com.iurispraecepta.herolog.logic.achievements.AchievementDetection
 import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
+import com.iurispraecepta.herolog.service.FocusSessionService
+import com.iurispraecepta.herolog.service.ServicePhase
+import com.iurispraecepta.herolog.service.completeSessionFromBackup
 import com.iurispraecepta.herolog.ui.sfx.SfxManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -68,7 +73,6 @@ import java.util.UUID
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.roundToInt
 
 data class ProcessedQuest(
     val id: String,
@@ -86,7 +90,8 @@ class HeroLogViewModel(
     private val repository: CharacterRepository,
     private val focusSessionRepository: FocusSessionRepository,
     private val sfxManager: SfxManager,
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { System.currentTimeMillis() },
+    private val pendingRewardRepository: PendingRewardRepository? = null
 ) : ViewModel() {
 
     private val _characterState = MutableStateFlow<CharacterState?>(null)
@@ -119,6 +124,23 @@ class HeroLogViewModel(
     // Limpa ao iniciar nova sessão; populada em confirmFocusSession antes do save.
     private val _pendingFocusAchievements = MutableStateFlow<List<Achievement>>(emptyList())
     val pendingFocusAchievements: StateFlow<List<Achievement>> = _pendingFocusAchievements.asStateFlow()
+
+    // Celebrações pendentes vindas de conclusões em background (spec-008, T10–T12,
+    // opção A: peek ao abrir + consume dos IDs exibidos no Confirm).
+    private val _pendingCelebration = MutableStateFlow<AggregatedCelebrationSummary?>(null)
+    val pendingCelebration: StateFlow<AggregatedCelebrationSummary?> = _pendingCelebration.asStateFlow()
+    private var shownCelebrationIds: List<String> = emptyList()
+
+    // Retomada de sessão interrompida por morte de processo (recovery caso 3):
+    // o VM não tem Context no init — expõe o registro e a MainActivity despacha
+    // o Service com o deadline original.
+    private val _pendingServiceResume = MutableStateFlow<PersistedFocusSession?>(null)
+    val pendingServiceResume: StateFlow<PersistedFocusSession?> = _pendingServiceResume.asStateFlow()
+
+    // Descanso automático (autoStartBreak): o VM decide os minutos, a MainActivity
+    // despacha o Service (VM não tem Context).
+    private val _pendingBreakStart = MutableStateFlow<Int?>(null)
+    val pendingBreakStart: StateFlow<Int?> = _pendingBreakStart.asStateFlow()
 
     /**
      * Descarta a primeira conquista da fila de anúncios (FR-009).
@@ -153,12 +175,8 @@ class HeroLogViewModel(
             .take(51)
     }
 
-    private var focusTickJob: Job? = null
-    private var focusEndTimeMillis: Long = 0L
     private var graceTickJob: Job? = null
     private var graceEndTimeMillis: Long = 0L
-    private var breakTickJob: Job? = null
-    private var breakEndTimeMillis: Long = 0L
 
     init {
         viewModelScope.launch {
@@ -231,6 +249,8 @@ class HeroLogViewModel(
             }
 
             recoverFocusSession()
+            observeServiceState()
+            refreshPendingCelebration()
         }
     }
 
@@ -238,53 +258,240 @@ class HeroLogViewModel(
         _dailyReport.value = null
     }
 
+    /**
+     * Recuperação pós-reabertura (spec-008, T10 — migração total: o Service detém
+     * o timer; o VM só espelha e reconcilia o Room).
+     *
+     * - Caso 1: holder do Service ativo (RUNNING/PAUSED/BREAK_RUNNING) → só
+     *   espelhar; a coleta de [observeServiceState] já cuida.
+     * - Caso 2: cálculo guardado (`pendingCalculation != null`, morte na janela
+     *   calculate→apply) → aplica o cálculo guardado, nunca recalcula.
+     * - Caso 3: sessão futura sem cálculo → expõe em [pendingServiceResume] para
+     *   a MainActivity retomar o Service com o deadline original (VM sem Context).
+     * - Caso 4: sessão expirada sem cálculo → aplica agora (caminho do backup).
+     */
     private suspend fun recoverFocusSession() {
-        val persisted = focusSessionRepository.getSession() ?: return
-
-        if (persisted.pendingCalculation != null) {
-            // Estado 3: já calculated, só recarrega, NUNCA recalcula.
-            _focusSessionState.value = FocusSessionState(
-                isRunning = false,
-                isPaused = false,
-                isFocusCompleted = true,
-                timeLeft = 0,
-                totalSeconds = persisted.durationMinutes * 60,
-                config = persisted.config,
-                durationMinutes = persisted.durationMinutes,
-                pendingRewardsCalculation = persisted.pendingCalculation
-            )
+        val holderPhase = FocusSessionService.state.value.phase
+        if (holderPhase == ServicePhase.RUNNING ||
+            holderPhase == ServicePhase.PAUSED ||
+            holderPhase == ServicePhase.BREAK_RUNNING
+        ) {
             return
         }
 
-        val remaining = max(0, ((persisted.endTimeMillis - clock()) / 1000.0).roundToInt())
+        val persisted = focusSessionRepository.getSession() ?: return
 
-        if (remaining <= 0) {
-            // Estado 2: expirou enquanto o app estava fechado. Calcula UMA VEZ agora.
-            focusEndTimeMillis = persisted.endTimeMillis
-            _focusSessionState.value = FocusSessionState(
-                isRunning = false,
-                isPaused = false,
-                isFocusCompleted = false,
-                timeLeft = 0,
-                totalSeconds = persisted.durationMinutes * 60,
-                config = persisted.config,
-                durationMinutes = persisted.durationMinutes
+        val stored = persisted.pendingCalculation
+        if (stored != null) {
+            val useCase = buildUseCase() ?: return
+            useCase.applyRewards(stored, referenceDate = Date(clock()))
+            focusSessionRepository.clearSession()
+            refreshPendingCelebration()
+            return
+        }
+
+        if (persisted.endTimeMillis - clock() <= 0) {
+            val repo = pendingRewardRepository ?: return
+            completeSessionFromBackup(
+                repository,
+                focusSessionRepository,
+                repo,
+                persisted.config,
+                persisted.durationMinutes,
+                Date(clock())
             )
-            onFocusSessionCompleted() // já persiste o resultado calculado (Bloco 31)
+            refreshPendingCelebration()
         } else {
-            // Estado 1: ainda em andamento. Retoma o timer normalmente.
-            focusEndTimeMillis = persisted.endTimeMillis
-            _focusSessionState.value = FocusSessionState(
+            _pendingServiceResume.value = persisted
+        }
+    }
+
+    /** Marca o resume do caso 3 como despachado (chamado pela MainActivity). */
+    fun clearServiceResume() {
+        _pendingServiceResume.value = null
+    }
+
+    /** Consome o pedido de descanso automático (chamado pela MainActivity). */
+    fun clearBreakStart() {
+        _pendingBreakStart.value = null
+    }
+
+    private fun buildUseCase(): FocusUseCase? {
+        val repo = pendingRewardRepository ?: return null
+        return FocusUseCase(repository, focusSessionRepository, repo)
+    }
+
+    // ── Espelho do Service (FR-13) ────────────────────────────────────────────
+    // O VM nunca calcula/encerra sessão; apenas reflete ServiceState em
+    // FocusSessionState/BreakTimerState para a UI. O ticker abaixo é puramente
+    // apresentacional (timeLeft/secondsLeft); sem lógica de conclusão.
+
+    private var mirrorPrevPhase: ServicePhase = ServicePhase.IDLE
+    private var mirrorTickJob: Job? = null
+
+    private fun observeServiceState() {
+        viewModelScope.launch {
+            FocusSessionService.state.collect { serviceState ->
+                mapServiceToMirror(serviceState)
+                // Ticker apresentacional só existe durante fases ativas — fora
+                // delas seria um loop infinito que travaria advanceUntilIdle e
+                // gastaria CPU à toa em produção.
+                if (serviceState.phase == ServicePhase.RUNNING ||
+                    serviceState.phase == ServicePhase.PAUSED ||
+                    serviceState.phase == ServicePhase.BREAK_RUNNING
+                ) {
+                    startMirrorTickJob()
+                } else {
+                    mirrorTickJob?.cancel()
+                }
+                if (serviceState.phase == ServicePhase.COMPLETED &&
+                    mirrorPrevPhase != ServicePhase.COMPLETED
+                ) {
+                    handleServiceCompleted()
+                }
+                mirrorPrevPhase = serviceState.phase
+            }
+        }
+    }
+
+    private fun mapServiceToMirror(serviceState: com.iurispraecepta.herolog.service.ServiceState) {
+        val now = clock()
+        val grace = _focusSessionState.value.let { it.isGraceActive to it.graceSecondsLeft }
+        _focusSessionState.value = when (serviceState.phase) {
+            ServicePhase.RUNNING -> FocusSessionState(
                 isRunning = true,
                 isPaused = false,
-                isFocusCompleted = false,
-                timeLeft = remaining,
-                totalSeconds = persisted.durationMinutes * 60,
-                pauseCount = 0,
-                config = persisted.config,
-                durationMinutes = persisted.durationMinutes
+                timeLeft = max(0, ((serviceState.endTimeMillis - now) / 1000L).toInt()),
+                totalSeconds = serviceState.durationMinutes * 60,
+                config = serviceState.sessionConfig,
+                durationMinutes = serviceState.durationMinutes
             )
-            startFocusTickJob()
+            ServicePhase.PAUSED -> FocusSessionState(
+                isRunning = true,
+                isPaused = true,
+                timeLeft = max(0, (serviceState.pausedRemainingMillis / 1000L).toInt()),
+                totalSeconds = serviceState.durationMinutes * 60,
+                pauseCount = serviceState.pauseCount,
+                config = serviceState.sessionConfig,
+                durationMinutes = serviceState.durationMinutes
+            )
+            else -> FocusSessionState()
+        }.copy(isGraceActive = grace.first, graceSecondsLeft = grace.second)
+
+        _breakTimerState.value = when (serviceState.phase) {
+            ServicePhase.BREAK_RUNNING -> BreakTimerState(
+                isBreakActive = true,
+                selectedBreakMins = serviceState.breakDurationMinutes,
+                secondsLeft = max(0, ((serviceState.breakEndTimeMillis - now) / 1000L).toInt()),
+                totalSeconds = serviceState.breakTotalSeconds,
+                wasLastSessionDungeonMode = serviceState.lastSessionDungeonMode,
+                wasLastSessionWildernessMode = serviceState.lastSessionWildernessMode,
+                lastSessionDungeonSessions = serviceState.lastSessionDungeonSessions
+            )
+            ServicePhase.IDLE, ServicePhase.SUGGESTING -> BreakTimerState()
+            else -> _breakTimerState.value
+        }
+    }
+
+    private fun startMirrorTickJob() {
+        if (mirrorTickJob?.isActive == true) return
+        mirrorTickJob?.cancel()
+        mirrorTickJob = viewModelScope.launch {
+            while (isActive) {
+                delay(1000)
+                val serviceState = FocusSessionService.state.value
+                if (serviceState.phase == ServicePhase.RUNNING ||
+                    serviceState.phase == ServicePhase.PAUSED ||
+                    serviceState.phase == ServicePhase.BREAK_RUNNING
+                ) {
+                    mapServiceToMirror(serviceState)
+                } else {
+                    return@launch
+                }
+            }
+        }
+    }
+
+    /**
+     * Pós-processamento de conclusão com app aberto: a recompensa já foi aplicada
+     * pelo Service — aqui vão só os efeitos de UX (logs, sons, progresso de
+     * masmorra, conquistas p/ o Flow), derivados da celebração enfileirada.
+     */
+    private suspend fun handleServiceCompleted() {
+        val repo = pendingRewardRepository ?: return
+        val latest = repo.getPending().lastOrNull()
+        val holder = FocusSessionService.state.value
+        if (latest != null) {
+            addSystemLog("🎉 Sessão de foco concluída: +${latest.xpGained} XP, +${latest.goldGained} ouro!", true)
+            sfxManager.playCoins()
+            if (latest.leveledUp) {
+                addSystemLog("🎉 ${latest.skillName} alcançou o Nível ${latest.newLevel}.", true)
+                sfxManager.playLevelUp()
+            }
+            if (latest.lootedItems != "[]") {
+                addSystemLog("✨ Espólio encontrado! Vá ao Inventário para visualizá-lo ou equipá-lo.", true)
+            }
+            if (latest.droppedTitle != null) {
+                addSystemLog("✨ Sorte ancestral: você dropou um TÍTULO RARO!", true)
+            }
+            val achievements = runCatching {
+                com.iurispraecepta.herolog.data.JsonConfig.default
+                    .decodeFromString<List<String>>(latest.achievementsUnlocked)
+            }.getOrDefault(emptyList())
+            val newlyUnlocked = achievements.mapNotNull { id ->
+                AchievementCatalog.ACHIEVEMENTS_LIST.firstOrNull { it.id == id }
+            }
+            _pendingFocusAchievements.value = newlyUnlocked
+            newlyUnlocked.forEach { ach ->
+                addSystemLog("🏆 Conquista heroica: desbloqueada runa especial [${ach.name}]!", true)
+            }
+        }
+        val charState = _characterState.value
+        if (charState != null && holder.lastSessionDungeonMode) {
+            val nextSessions = holder.lastSessionDungeonSessions + 1
+            _dungeonSessionsProgress.value = if (nextSessions >= 4) 0 else nextSessions
+            if (nextSessions >= 4) {
+                addSystemLog("🏆 Exploração masmorra sucesso: concluiu as 4 sessões heroicas! Bônus monumental de +2.500 GP adicionado!", true)
+            } else {
+                addSystemLog("⚔️ Masmorra Progresso: (${nextSessions}/4) focos consecutivos selados.", true)
+            }
+        }
+        if (charState != null) {
+            if (charState.pomodoroSettings.autoStartBreak) {
+                val breakMins = if (holder.lastSessionDungeonMode &&
+                    holder.lastSessionDungeonSessions + 1 >= 4
+                ) {
+                    charState.pomodoroSettings.longBreakDuration.takeIf { it > 0 } ?: 15
+                } else {
+                    charState.pomodoroSettings.shortBreakDuration.takeIf { it > 0 } ?: 5
+                }
+                _pendingBreakStart.value = breakMins
+            } else {
+                enterBreakPrep(
+                    wasDungeonMode = holder.lastSessionDungeonMode,
+                    wasWildernessMode = holder.lastSessionWildernessMode,
+                    lastDungeonSessions = holder.lastSessionDungeonSessions
+                )
+            }
+        }
+        refreshPendingCelebration()
+    }
+
+    /** Peek da fila (opção A): agrega sem marcar; o Confirm consome (T12). */
+    fun refreshPendingCelebration() {
+        viewModelScope.launch {
+            val summary = pendingRewardRepository?.peekPendingCelebrations()
+            shownCelebrationIds = summary?.sessions?.map { it.id } ?: emptyList()
+            _pendingCelebration.value = summary
+        }
+    }
+
+    /** Confirm do modal (FR-12): consome exatamente os IDs exibidos, atomicamente. */
+    fun confirmPendingCelebration() {
+        viewModelScope.launch {
+            pendingRewardRepository?.consumeIds(shownCelebrationIds)
+            shownCelebrationIds = emptyList()
+            _pendingCelebration.value = null
         }
     }
 
@@ -703,26 +910,25 @@ class HeroLogViewModel(
         }
     }
 
-    fun startSession(config: FocusSessionConfig, durationMinutes: Int) {
+    /**
+     * Inicia uma sessão delegando o timer ao Service (spec-008, T10 — migração
+     * total). Persiste o registro ativo (sem cálculo) para recovery e dispara o
+     * Foreground Service, única fonte de verdade do timer.
+     */
+    fun startSession(context: Context, config: FocusSessionConfig, durationMinutes: Int) {
         if (_focusSessionState.value.isRunning) return
-        focusTickJob?.cancel()
-        graceTickJob?.cancel()
-        breakTickJob?.cancel()
+        cancelAllTimers()
         _breakTimerState.value = BreakTimerState()
+        _pendingFocusAchievements.value = emptyList()
 
         val totalSeconds = durationMinutes * 60
-        focusEndTimeMillis = clock() + totalSeconds * 1000L
-
         _focusSessionState.value = FocusSessionState(
             isRunning = true,
             isPaused = false,
-            isFocusCompleted = false,
             timeLeft = totalSeconds,
             totalSeconds = totalSeconds,
-            pauseCount = 0,
             config = config,
-            durationMinutes = durationMinutes,
-            pendingRewardsCalculation = null
+            durationMinutes = durationMinutes
         )
 
         viewModelScope.launch {
@@ -730,74 +936,44 @@ class HeroLogViewModel(
                 PersistedFocusSession(
                     config = config,
                     durationMinutes = durationMinutes,
-                    endTimeMillis = focusEndTimeMillis,
+                    endTimeMillis = clock() + totalSeconds * 1000L,
                     pendingCalculation = null
                 )
             )
         }
 
-        startFocusTickJob()
+        FocusSessionService.startSession(context, config, durationMinutes)
         sfxManager.playFocusBell()
     }
 
-    fun togglePauseQuest() {
-        val current = _focusSessionState.value
-        if (!current.isRunning) return
-
-        if (!current.isPaused) {
-            // Pausando
-            focusTickJob?.cancel()
-            _focusSessionState.value = current.copy(
-                isPaused = true,
-                pauseCount = current.pauseCount + 1
-            )
-            viewModelScope.launch {
-                focusSessionRepository.clearSession()
-            }
+    fun togglePauseQuest(context: Context) {
+        val phase = FocusSessionService.state.value.phase
+        if (phase != ServicePhase.RUNNING && phase != ServicePhase.PAUSED) return
+        if (phase == ServicePhase.RUNNING) {
+            FocusSessionService.sendAction(context, FocusSessionService.ACTION_PAUSE)
         } else {
-            // Retomando
-            focusEndTimeMillis = clock() + current.timeLeft * 1000L
-            _focusSessionState.value = current.copy(isPaused = false)
-            val config = current.config
-            val durationMinutes = current.durationMinutes
-            if (config != null) {
-                viewModelScope.launch {
-                    focusSessionRepository.saveSession(
-                        PersistedFocusSession(
-                            config = config,
-                            durationMinutes = durationMinutes,
-                            endTimeMillis = focusEndTimeMillis,
-                            pendingCalculation = null
-                        )
-                    )
-                }
-            }
-            startFocusTickJob()
+            FocusSessionService.sendAction(context, FocusSessionService.ACTION_RESUME)
         }
     }
 
     fun cancelAllTimers() {
-        focusTickJob?.cancel()
         graceTickJob?.cancel()
-        breakTickJob?.cancel()
     }
 
     override fun onCleared() {
         super.onCleared()
-        cancelAllTimers()
+        graceTickJob?.cancel()
+        mirrorTickJob?.cancel()
     }
 
-    fun cancelSession() {
+    fun cancelSession(context: Context) {
         cancelAllTimers()
-        _focusSessionState.value = FocusSessionState()
-        viewModelScope.launch {
-            focusSessionRepository.clearSession()
-        }
+        FocusSessionService.sendAction(context, FocusSessionService.ACTION_STOP)
     }
 
-    fun abandonSession() {
+    fun abandonSession(context: Context) {
         val wasDungeonMode = _focusSessionState.value.config?.isDungeonMode == true
-        cancelSession()
+        cancelSession(context)
         if (wasDungeonMode) {
             _dungeonSessionsProgress.value = 0
             addSystemLog(
@@ -809,7 +985,7 @@ class HeroLogViewModel(
         }
     }
 
-    fun onAppBackgrounded() {
+    fun onAppBackgrounded(context: Context) {
         val current = _focusSessionState.value
         val charState = _characterState.value
         if (!current.isRunning || current.isPaused || current.config?.isWildernessChecked != true ||
@@ -819,18 +995,18 @@ class HeroLogViewModel(
         when (resolveWildernessInfraction(equippedTitleId)) {
             WildernessInfractionOutcome.CONVERTED_TO_PAUSE -> {
                 if (!_focusSessionState.value.isPaused) {
-                    togglePauseQuest()
+                    togglePauseQuest(context)
                 }
                 sfxManager.playWildernessWarning()
             }
             WildernessInfractionOutcome.GRACE_PERIOD_STARTED -> {
-                startGracePeriod()
+                startGracePeriod(context)
                 sfxManager.playWildernessWarning()
             }
         }
     }
 
-    private fun startGracePeriod() {
+    private fun startGracePeriod(context: Context) {
         graceEndTimeMillis = clock() + WILDERNESS_GRACE_PERIOD_SECONDS * 1000L
         _focusSessionState.value = _focusSessionState.value.copy(
             isGraceActive = true,
@@ -843,7 +1019,7 @@ class HeroLogViewModel(
                 val remainingSec = ceil(remainingMs / 1000.0).toInt().coerceAtLeast(0)
                 _focusSessionState.value = _focusSessionState.value.copy(graceSecondsLeft = remainingSec)
                 if (remainingMs <= 0) {
-                    triggerCognitiveDeath()
+                    triggerCognitiveDeath(context)
                     break
                 }
                 delay(250)
@@ -851,7 +1027,12 @@ class HeroLogViewModel(
         }
     }
 
-    private fun triggerCognitiveDeath() {
+    /**
+     * Morte cognitiva: para o timer no Service (único dono), limpa a sessão e
+     * atualiza o espelho. Sem isso o Service concluiria e aplicaria a recompensa
+     * de uma sessão já morta.
+     */
+    private fun triggerCognitiveDeath(context: Context) {
         graceTickJob?.cancel()
         val charState = _characterState.value ?: return
         val result = resolveCognitiveDeath(charState.charClass, charState.streak)
@@ -862,7 +1043,7 @@ class HeroLogViewModel(
                 isPlayerDead = true
             )
         )
-        focusTickJob?.cancel()
+        FocusSessionService.sendAction(context, FocusSessionService.ACTION_STOP)
         _focusSessionState.value = _focusSessionState.value.copy(
             isGraceActive = false,
             isRunning = false
@@ -901,103 +1082,6 @@ class HeroLogViewModel(
         }
     }
 
-    fun confirmFocusSession(editedNotes: String, selectedTag: String) {
-        val current = _focusSessionState.value
-        val calc = current.pendingRewardsCalculation ?: return
-        val charState = _characterState.value ?: return
-        val config = current.config
-
-        val newState = FocusApplyLogic.apply(
-            state = charState,
-            calc = calc,
-            editedNotes = editedNotes,
-            selectedTag = selectedTag.ifEmpty { null },
-            referenceDate = Date(clock())
-        )
-
-        // Skill level up
-        val newSkillLevel = newState.skills.getOrNull(calc.skillIdx)?.level
-        val oldSkillLevel = charState.skills.getOrNull(calc.skillIdx)?.level
-        if (newSkillLevel != null && oldSkillLevel != null && newSkillLevel > oldSkillLevel) {
-            addSystemLog("${calc.skillName} alcançou o Nível ${newSkillLevel}.", true)
-            sfxManager.playLevelUp()
-        }
-
-        // Combat level up
-        if (newState.combatLevel > charState.combatLevel) {
-            sfxManager.playLevelUp()
-        }
-
-        // Loot
-        calc.lootedItems.forEach {
-            addSystemLog("✨ ESPÓLIO ENCONTRADO: Você localizou o item \"${it.emoji} ${it.name}\"! Vá ao Inventário para visualizá-lo ou equipá-lo.", true)
-        }
-
-        // Título raro
-        calc.droppedTitle?.let {
-            addSystemLog("✨ SORTUDO UNMISSABLE: O reino abençoou sua constância e você dropou o TÍTULO RARO [${it.name}]!", true)
-        }
-
-        // Equipamento quebrado (charges <= 0 após decremento)
-        calc.usedEquipmentIndicesAndCharges.forEach { (index, charges) ->
-            if (charges <= 0) {
-                charState.equippedEquipment?.getOrNull(index)?.let { item ->
-                    addSystemLog("⚠️ O equipamento \"${item.emoji} ${item.name}\" gastou todas as suas cargas e quebrou!", false)
-                }
-            }
-        }
-
-        // Masmorra
-        if (calc.dungeonClearGoldBonus > 0) {
-            addSystemLog("🏆 EXPLORAÇÃO MASMORRA SUCESSO: Concluiu as 4 sessões heróicas consecutivas! Um bônus monumental místico de +2.500 GP foi adicionado aos teus espólios!", true)
-        } else if (calc.isDungeonMode && config != null) {
-            val nextSessions = config.dungeonSessions + 1
-            addSystemLog("⚔️ Masmorra Progresso: (${nextSessions}/4) focos consecutivos selados. Só mais ${4 - nextSessions} sessões para a glória eterna!", true)
-        }
-
-        // Conquistas novas (FR-004: detecção central, idempotente)
-        val newAchievements = AchievementDetection.detectNewAchievements(charState, newState)
-        val stateWithAchievements = AchievementDetection.withAchievements(newState, newAchievements.map { it.id })
-        newAchievements.forEach { ach ->
-            if (ach.id == "survive_wilderness") {
-                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueaste o selo [Sobrevivente da Wilderness]!", true)
-            } else {
-                addSystemLog("🏆 CONQUISTA HERÓICA: Desbloqueada rúnica especial [${ach.name}]!", true)
-            }
-        }
-
-        // Armazenar conquistas para o FocusCompletionFlow (etapa entre Loot e Notas)
-        _pendingFocusAchievements.value = newAchievements
-
-        saveCharacterState(stateWithAchievements)
-        sfxManager.playCoins()
-
-        if (config?.isDungeonMode == true) {
-            val nextSessions = config.dungeonSessions + 1
-            _dungeonSessionsProgress.value = if (nextSessions >= 4) 0 else nextSessions
-        }
-
-        val isDungeon = config?.isDungeonMode == true
-        val isWilderness = config?.isWildernessChecked == true
-        val dungeonSessions = config?.dungeonSessions ?: 0
-        val charForBreak = newState
-        if (charForBreak.pomodoroSettings.autoStartBreak) {
-            val breakMins = if (isDungeon && (dungeonSessions + 1) >= 4) {
-                charForBreak.pomodoroSettings.longBreakDuration.takeIf { it > 0 } ?: 15
-            } else {
-                charForBreak.pomodoroSettings.shortBreakDuration.takeIf { it > 0 } ?: 5
-            }
-            startBreakTimer(breakMins, isDungeon, isWilderness, dungeonSessions)
-        } else {
-            enterBreakPrep(wasDungeonMode = isDungeon, wasWildernessMode = isWilderness, lastDungeonSessions = dungeonSessions)
-        }
-
-        _focusSessionState.value = FocusSessionState()
-        viewModelScope.launch {
-            focusSessionRepository.clearSession()
-        }
-    }
-
     fun selectBreakDuration(minutes: Int) {
         _breakTimerState.value = _breakTimerState.value.copy(selectedBreakMins = minutes)
     }
@@ -1013,43 +1097,23 @@ class HeroLogViewModel(
         )
     }
 
-    fun startBreakTimer(minutes: Int, wasDungeonMode: Boolean = false, wasWildernessMode: Boolean = false, lastDungeonSessions: Int = 0) {
-        cancelSession() // mesma chamada de segurança que o React faz, mesmo já esperando sessão zerada
-        val totalSeconds = minutes * 60
-        breakEndTimeMillis = clock() + totalSeconds * 1000L
-        _breakTimerState.value = _breakTimerState.value.copy(
-            isBreakPrep = false,
-            isBreakActive = true,
-            selectedBreakMins = minutes,
-            secondsLeft = totalSeconds,
-            totalSeconds = totalSeconds,
-            wasLastSessionDungeonMode = wasDungeonMode,
-            wasLastSessionWildernessMode = wasWildernessMode,
-            lastSessionDungeonSessions = lastDungeonSessions
-        )
-        breakTickJob?.cancel()
-        breakTickJob = viewModelScope.launch {
-            while (true) {
-                delay(1000)
-                val remaining = max(0, ((breakEndTimeMillis - clock()) / 1000.0).roundToInt())
-                _breakTimerState.value = _breakTimerState.value.copy(secondsLeft = remaining)
-                if (remaining <= 0) {
-                    onBreakTimerCompleted()
-                    return@launch
-                }
-            }
-        }
+    /**
+     * Inicia o descanso delegando ao Service (spec-008, T10). O espelho de
+     * [_breakTimerState] é atualizado pela coleta do holder; sem tick próprio.
+     * Os antigos `wasLastSession*` continuam viajando no holder do Service.
+     */
+    fun startBreakTimer(
+        context: Context,
+        minutes: Int,
+        wasDungeonMode: Boolean = false,
+        wasWildernessMode: Boolean = false,
+        lastDungeonSessions: Int = 0
+    ) {
+        FocusSessionService.startBreak(context, minutes)
     }
 
-    private fun onBreakTimerCompleted() {
-        breakTickJob?.cancel()
-        _breakTimerState.value = _breakTimerState.value.copy(isBreakActive = false)
-        sfxManager.playLevelUp()
-    }
-
-    fun skipBreak() {
-        breakTickJob?.cancel()
-        _breakTimerState.value = BreakTimerState()
+    fun skipBreak(context: Context) {
+        FocusSessionService.sendAction(context, FocusSessionService.ACTION_SKIP_BREAK)
     }
 
     fun changeFocusDuration(minutes: Int) {
@@ -1088,88 +1152,6 @@ class HeroLogViewModel(
                 autoStartFocus = !current.pomodoroSettings.autoStartFocus
             )
         ))
-    }
-
-    private fun startFocusTickJob() {
-        focusTickJob?.cancel()
-        focusTickJob = viewModelScope.launch {
-            while (true) {
-                delay(1000)
-                val remaining = max(0, ((focusEndTimeMillis - clock()) / 1000.0).roundToInt())
-                _focusSessionState.value = _focusSessionState.value.copy(timeLeft = remaining)
-                if (remaining <= 0) {
-                    onFocusSessionCompleted()
-                    return@launch
-                }
-            }
-        }
-    }
-
-    private fun onFocusSessionCompleted() {
-        val current = _focusSessionState.value
-        val config = current.config ?: return
-        val durationMins = current.durationMinutes
-        val charState = _characterState.value ?: return
-
-        val calc = FocusRewardsLogic.calculate(
-            state = charState,
-            config = config,
-            studiedMinutes = durationMins
-        )
-
-        _focusSessionState.value = current.copy(
-            isRunning = false,
-            isPaused = false,
-            isFocusCompleted = true,
-            timeLeft = 0,
-            pendingRewardsCalculation = calc
-        )
-
-        viewModelScope.launch {
-            focusSessionRepository.saveSession(
-                PersistedFocusSession(
-                    config = config,
-                    durationMinutes = durationMins,
-                    endTimeMillis = focusEndTimeMillis,
-                    pendingCalculation = calc
-                )
-            )
-        }
-
-        // Pré-detecção de conquistas (FR-003/US-03): espelha os campos numéricos que
-        // FocusApplyLogic.apply() vai alterar, para que o FocusCompletionFlow já tenha
-        // a lista de conquistas antes do usuário confirmar.
-        val totalGoldGained = calc.goldEarned + calc.dungeonClearGoldBonus
-        val todayString = QuestLogic.toDateStringJs(Date(clock()))
-        val newStreak = if (charState.lastStudyDate != todayString) charState.streak + 1 else charState.streak
-
-        var combatXPApplied = charState.combatXP + (calc.xpEarned * 0.4).toInt()
-        var currentCombatLevel = charState.combatLevel
-        var combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
-        while (combatXPApplied >= combatXPReq) {
-            combatXPApplied -= combatXPReq
-            currentCombatLevel += 1
-            combatXPReq = CombatLogic.requiredXpForCombatLevel(currentCombatLevel)
-        }
-
-        val candidateState = charState.copy(
-            gold = charState.gold + totalGoldGained,
-            totalGoldEarned = charState.totalGoldEarned + totalGoldGained,
-            totalXP = charState.totalXP + calc.xpEarned,
-            totalSessions = charState.totalSessions + 1,
-            totalMinutes = charState.totalMinutes + durationMins,
-            combatLevel = currentCombatLevel,
-            combatXP = combatXPApplied,
-            streak = newStreak,
-            bestStreak = maxOf(newStreak, charState.bestStreak),
-            wildernessWins = charState.wildernessWins + if (calc.isWildernessChecked) 1 else 0,
-            combo = charState.combo + 1,
-            todayMinutes = charState.todayMinutes + durationMins,
-            todayXP = charState.todayXP + calc.xpEarned
-        )
-
-        val focusAchievements = AchievementDetection.detectNewAchievements(charState, candidateState)
-        _pendingFocusAchievements.value = focusAchievements
     }
 
     fun updateCharacterProfile(name: String, charClass: CharClass) {

@@ -15,7 +15,8 @@ class HeroLogViewModelFactory(
         return HeroLogViewModel(
             repository = application.characterRepository,
             focusSessionRepository = application.focusSessionRepository,
-            sfxManager = sfxManager
+            sfxManager = sfxManager,
+            pendingRewardRepository = application.pendingRewardRepository
         ) as T
     }
 }
