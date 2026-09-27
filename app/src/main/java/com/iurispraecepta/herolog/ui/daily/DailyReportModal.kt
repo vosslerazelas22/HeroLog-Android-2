@@ -143,11 +143,10 @@ fun DailyReportModal(
                         )
                 )
 
-                // Sparkle particles
-                SparkleParticles()
-
-                // Main card — centralizado na área segura (fora das system bars); o teto de
-                // 80% da altura passa a vir do espaço real (maxHeight), não de screenHeightDp.
+                // Main card — centralizado na área segura (fora das system bars). Sparkles
+                // agora vivem dentro do card (ver SparkleParticles/CardContainer), confinadas
+                // pelo clip do card. O teto de 80% da altura é decisão consciente do design
+                // system Android (modais nunca ocupam a tela toda) — não é bug de paridade.
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxSize()
@@ -166,7 +165,7 @@ fun DailyReportModal(
 }
 
 @Composable
-private fun SparkleParticles() {
+private fun SparkleParticles(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "sparkles")
 
     val seeds = remember {
@@ -190,7 +189,7 @@ private fun SparkleParticles() {
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier) {
         seeds.forEach { seed ->
             val alpha by infiniteTransition.animateFloat(
                 initialValue = 0f,
@@ -252,11 +251,12 @@ private fun CardContainer(
         label = "iconScale"
     )
 
-    // Teto de altura: o .verticalScroll() sem limite deixava a coluna crescer além do
-    // viewport. O limite (80% do espaço útil, recebido em maxCardHeight) vive AQUI, com
-    // margem externa de 16dp (p-4 do React) e largura máxima de 448dp (sm:max-w-md do
-    // React) — o backdrop continua full-bleed de propósito (preto 95% sob as system bars).
-    Column(
+    // Teto de altura: 80% do espaço útil (maxCardHeight, decisão consciente do design system
+    // Android para modais — ver comentário no chamador). O .verticalScroll() interno é rede
+    // de segurança; a meta é que o CONTEÚDO caiba sem precisar dele (fonte/espaçamento do
+    // modal ajustados para tanto, não o teto de altura). Margem externa 16dp (p-4 do React),
+    // largura máxima 448dp (sm:max-w-md do React) — backdrop full-bleed sob as system bars.
+    Box(
         modifier = Modifier
             .padding(16.dp)
             .widthIn(max = 448.dp)
@@ -270,98 +270,108 @@ private fun CardContainer(
             .background(Stone950)
             .border(2.dp, Amber500, RoundedCornerShape(16.dp))
             .heightIn(max = maxCardHeight)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Sun icon
-        Box(
+        // Sparkle particles — matchParentSize (não fillMaxSize) para não forçar o Box a
+        // crescer até o teto de altura: o tamanho real continua ditado pelo Column de
+        // conteúdo, igual ao "absolute inset-0" do React dentro do card "relative", que
+        // não influencia o tamanho do pai. O clip acima confina as partículas ao card.
+        SparkleParticles(modifier = Modifier.matchParentSize())
+
+        Column(
             modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .border(2.dp, Amber500, CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Stone800, Stone950)
-                    )
-                ),
-            contentAlignment = Alignment.Center
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "\u2600\uFE0F",
-                fontSize = 36.sp,
-                modifier = Modifier.size((36 * iconScale).dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Header
-        Text(
-            text = "Um novo dia come\u00e7a.",
-            fontFamily = Cinzel,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 11.sp,
-            color = Color(0xFFE2B054),
-            letterSpacing = 0.15.sp
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "RELAT\u00d3RIO DI\u00c1RIO",
-            fontFamily = Cinzel,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 24.sp,
-            color = Amber400,
-            letterSpacing = 2.sp
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Gold reward card
-        GoldRewardCard(data.rewardAmount)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Streak section
-        StreakSection(data)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Tasks section
-        TasksSection(data)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Continue button
-        Button(
-            onClick = onDismiss,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Stone950
-            )
-        ) {
+            // Sun icon
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Amber500, CircleShape)
                     .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(Amber500, Amber400)
-                        ),
-                        RoundedCornerShape(12.dp)
+                        Brush.verticalGradient(
+                            colors = listOf(Stone800, Stone950)
+                        )
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Continuar",
-                    fontFamily = Cinzel,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 11.sp,
-                    letterSpacing = 2.sp
+                    text = "\u2600\uFE0F",
+                    fontSize = 30.sp,
+                    modifier = Modifier.size((30 * iconScale).dp)
                 )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Header
+            Text(
+                text = "Um novo dia come\u00e7a.",
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 11.sp,
+                color = Color(0xFFE2B054),
+                letterSpacing = 0.15.sp
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "RELAT\u00d3RIO DI\u00c1RIO",
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 24.sp,
+                color = Amber400,
+                letterSpacing = 2.sp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Gold reward card
+            GoldRewardCard(data.rewardAmount)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Streak section
+            StreakSection(data)
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Tasks section
+            TasksSection(data)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Continue button
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Stone950
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(Amber500, Amber400)
+                            ),
+                            RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Continuar",
+                        fontFamily = Cinzel,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        letterSpacing = 2.sp
+                    )
+                }
             }
         }
     }
@@ -375,7 +385,7 @@ private fun GoldRewardCard(amount: Int) {
             .clip(RoundedCornerShape(12.dp))
             .background(Stone900.copy(alpha = 0.6f))
             .border(1.dp, Amber500.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-            .padding(16.dp),
+            .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -391,7 +401,7 @@ private fun GoldRewardCard(amount: Int) {
             text = "\uD83D\uDC8E +$amount GP",
             fontFamily = Cinzel,
             fontWeight = FontWeight.ExtraBold,
-            fontSize = 30.sp,
+            fontSize = 26.sp,
             color = Amber400,
             textAlign = TextAlign.Center
         )
@@ -427,7 +437,7 @@ private fun StreakSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFF450a0a).copy(alpha = 0.2f))
                         .border(1.dp, Color(0xFF7F1D1D).copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
+                        .padding(8.dp)
                 ) {
                     Text(
                         text = "Sua chama se apagou por um dia. Hoje \u00e9 uma nova oportunidade para reacend\u00ea-la.",
@@ -445,7 +455,7 @@ private fun StreakSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFFFFF3C6).copy(alpha = 0.05f))
                         .border(1.dp, Color(0xFFFFF3C6).copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
+                        .padding(8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "\uD83D\uDEE1\uFE0F", fontSize = 12.sp)
@@ -467,7 +477,7 @@ private fun StreakSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Amber500.copy(alpha = 0.02f))
                         .border(1.dp, Amber500.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
-                        .padding(10.dp),
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -510,7 +520,7 @@ private fun TasksSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFFFFF3C6).copy(alpha = 0.05f))
                         .border(1.dp, Color(0xFFFFF3C6).copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
+                        .padding(8.dp)
                 ) {
                     Text(
                         text = "Incr\u00edvel! Todas as suas tarefas de ontem foram conclu\u00eddas.",
@@ -528,7 +538,7 @@ private fun TasksSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Stone900.copy(alpha = 0.4f))
                         .border(1.dp, Stone800, RoundedCornerShape(8.dp))
-                        .padding(10.dp),
+                        .padding(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Row(
@@ -566,7 +576,7 @@ private fun TasksSection(data: DailyReportData) {
                         .clip(RoundedCornerShape(8.dp))
                         .background(Stone900.copy(alpha = 0.3f))
                         .border(1.dp, Stone800.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .padding(10.dp),
+                        .padding(8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
