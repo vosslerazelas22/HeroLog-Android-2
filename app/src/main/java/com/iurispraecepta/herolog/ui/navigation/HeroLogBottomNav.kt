@@ -1,6 +1,5 @@
 package com.iurispraecepta.herolog.ui.navigation
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,8 +38,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -59,22 +62,24 @@ import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Zinc300
+import com.iurispraecepta.herolog.ui.theme.Zinc400
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.HazeMaterials
 
 /**
- * Porte fiel de `BottomNav.tsx` (fonte React). 5 módulos top-level: Foco, Herói, Skills,
- * Missões, Reino. Foco e Skills navegam direto (sem sub-abas). Herói, Missões e Reino abrem um
- * bottom sheet com as sub-abas do módulo — equivalente nativo ao "sheet" deslizante da fonte
- * (lá é uma `motion.div` fixa na base da tela; aqui é `ModalBottomSheet` do Material 3, que já
- * cobre o dismiss por toque fora e o gesto de arrastar pra fechar).
+ * Porte fiel de `BottomNav.tsx` (fonte React, TavernFeat `c89af8f`). 5 módulos top-level nesta
+ * ordem: Foco, Rituais, Taverna (botão central elevado), Herói, Reino. Foco e Taverna navegam
+ * direto (sem sub-abas); Rituais, Herói e Reino abrem um bottom sheet com as sub-abas do módulo —
+ * equivalente nativo ao "sheet" deslizante da fonte (lá é uma `motion.div` fixa na base da tela;
+ * aqui é `ModalBottomSheet` do Material 3, que já cobre o dismiss por toque fora e o gesto de
+ * arrastar pra fechar).
  *
- * NOTA DE FIDELIDADE: os ícones lucide-react da fonte não têm equivalente 1:1 em Material Icons.
- * Mapeamento por aproximação semântica registrado em cada `Icons.Filled.*` abaixo — ver comentário
- * ao lado de cada um. `Castle` e `Checklist` não foram confirmados por build real (sem acesso a
- * Gradle/Android SDK neste ambiente) — se o build falhar nesses dois símbolos, os substitutos
- * sugeridos são `Icons.Filled.AccountBalance` (Castle) e `Icons.Filled.List` (Checklist).
+ * Skills deixou de ser item de topo: passa a ser sub-aba do sheet do Herói (NAV-5). O módulo
+ * "missions" da fonte virou "rituals" e o id de aba de destino continua `habits` (ids inalterados).
+ *
+ * Rótulos são sempre visíveis (ativo e inativo) — NAV-6; só a Taverna tem estados visuais
+ * próprios (NAV-7/8/9), desenhada num overlay acima da barra sobre a faixa reservada de 16dp (D6).
  */
 
 // Cores dos ícones de sub-aba, fiéis às classes Tailwind da fonte (text-{cor}-{tom}).
@@ -91,9 +96,20 @@ private val Cyan400 = Color(0xFF22D3EE)
 private val Yellow500 = Color(0xFFEAB308)
 private val Stone300 = Color(0xFFD6D3D1)
 private val Red400 = Color(0xFFF87171)
-private val Zinc400 = Color(0xFF9CA3AF)
 private val White10 = Color(0x1AFFFFFF)
 private val trackingWider = 0.05.em
+
+// Botão da Taverna (NAV-7..9) — literais do React: bg-[#241A33], border/icon #E7C873,
+// gradiente #15121A→#0D0B10, borda inativa/rótulo #C9A44C.
+private val TavernReserveStrip = 16.dp
+private val TavernButtonSize = 48.dp
+private val TavernIconSize = 24.dp
+private val TavernActiveScale = 1.10f
+private val TavernActiveBg = Color(0xFF241A33)
+private val TavernGold = Color(0xFFE7C873)
+private val TavernBronze = Color(0xFFC9A44C)
+private val TavernGradientTop = Color(0xFF15121A)
+private val TavernGradientBottom = Color(0xFF0D0B10)
 
 data class SubTabOption(
     val value: String,
@@ -102,42 +118,44 @@ data class SubTabOption(
     val color: Color
 )
 
-private data class NavItem(
+data class NavItem(
     val id: String,
     val label: String,
     val iconRes: Int,
     val targetTab: String
 )
 
-// value -> id do módulo dono da aba, fiel a getActiveModule() da fonte.
-private val MISSIONS_TABS = setOf("habits", "dailies", "todos", "quests", "history")
-private val CHARACTER_TABS = setOf("character", "inventory")
+// value -> id do módulo dono da aba, fiel a getActiveModule() da fonte (TavernFeat c89af8f).
+// O módulo "missions" da fonte virou "rituals"; os ids de aba não mudaram.
+private val RITUALS_TABS = setOf("habits", "dailies", "todos", "quests", "history")
+private val CHARACTER_TABS = setOf("character", "inventory", "skills")
 
 fun getActiveModule(tab: String): String = when {
     tab == "focus" -> "focus"
+    tab == "tavern" -> "tavern"
     tab in CHARACTER_TABS -> "character"
-    tab == "skills" -> "skills"
-    tab in MISSIONS_TABS -> "missions"
+    tab in RITUALS_TABS -> "rituals"
     else -> "kingdom"
 }
 
 val MODULE_TITLES: Map<String, String> = mapOf(
-    "character" to "Herói",
-    "missions" to "Missões",
-    "kingdom" to "Reino"
+    "rituals" to "RITUAIS",
+    "character" to "HERÓI & EQUIPAMENTOS",
+    "kingdom" to "O REINO DE MYSTARA"
 )
 
 val SUB_TABS: Map<String, List<SubTabOption>> = mapOf(
-    "character" to listOf(
-        SubTabOption("character", "Status", R.drawable.lucide_ic_circle_user, Sky400),
-        SubTabOption("inventory", "Inventário", R.drawable.lucide_ic_backpack, Rose400)
-    ),
-    "missions" to listOf(
+    "rituals" to listOf(
         SubTabOption("habits", "Capela de Hábitos", R.drawable.lucide_ic_repeat, Emerald400),
         SubTabOption("dailies", "Tarefas Diárias", R.drawable.lucide_ic_calendar, Blue400),
         SubTabOption("todos", "Missões Avulsas", R.drawable.lucide_ic_clipboard_list, Slate300),
         SubTabOption("quests", "CONTRATOS", R.drawable.lucide_ic_scroll_text, Amber300),
         SubTabOption("history", "Crônicas Diárias", R.drawable.lucide_ic_history, Orange400)
+    ),
+    "character" to listOf(
+        SubTabOption("character", "Ficha do Herói", R.drawable.lucide_ic_shield_user, Sky400),
+        SubTabOption("inventory", "Mochila & Equipamentos", R.drawable.lucide_ic_backpack, Rose400),
+        SubTabOption("skills", "Grimório de Habilidades", R.drawable.lucide_ic_book_open, Emerald400)
     ),
     "kingdom" to listOf(
         SubTabOption("shop", "Bazar de Mystara", R.drawable.lucide_ic_coins, Yellow400),
@@ -150,15 +168,15 @@ val SUB_TABS: Map<String, List<SubTabOption>> = mapOf(
     )
 )
 
-private val NAV_ITEMS = listOf(
+val NAV_ITEMS = listOf(
     NavItem("focus", "Foco", R.drawable.lucide_ic_timer, "focus"),
+    NavItem("rituals", "Rituais", R.drawable.lucide_ic_compass, "habits"),
+    NavItem("tavern", "Taverna", R.drawable.lucide_ic_beer, "tavern"),
     NavItem("character", "Herói", R.drawable.lucide_ic_shield_user, "character"),
-    NavItem("skills", "Skills", R.drawable.lucide_ic_book_open, "skills"),
-    NavItem("missions", "Missões", R.drawable.lucide_ic_compass, "habits"),
-    NavItem("kingdom", "Reino", R.drawable.lucide_ic_castle, "shop")
+    NavItem("kingdom", "Reino", R.drawable.lucide_ic_crown, "shop")
 )
 
-private val MODULES_WITH_SUBTABS = setOf("character", "missions", "kingdom")
+private val MODULES_WITH_SUBTABS = setOf("rituals", "character", "kingdom")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -170,6 +188,7 @@ fun HeroLogBottomNav(
 ) {
     var openDropdown by remember { mutableStateOf<String?>(null) }
     val activeModule = getActiveModule(activeTab)
+    val isTavernActive = activeModule == "tavern"
 
     var rowWidthPx by remember { mutableFloatStateOf(0f) }
 
@@ -183,17 +202,23 @@ fun HeroLogBottomNav(
         label = "pillOffset"
     )
 
-    Column(modifier = modifier
-        .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin(containerColor = Stone950.copy(alpha = 0.7f)))
-        .shadow(12.dp, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-        .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-    ) {
-        val horizontalPad = 12.dp
-        val navItemVerticalPadding = 6.dp
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
+    val horizontalPad = 8.dp
+    val navItemVerticalPadding = 6.dp
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // D6: faixa reservada de 16dp no topo do bottomBar — o botão elevado da Taverna
+            // vive nela; assim ele fica dentro dos limites do pai (clip + hit-test válidos) e
+            // `innerPadding.calculateBottomPadding()` já o inclui no inset sem número mágico.
+            Spacer(modifier = Modifier.fillMaxWidth().height(TavernReserveStrip))
+
+            // Barra propriamente dita (haze, borda, clip) — parte inferior (NAV-10/B6 intacto).
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .hazeEffect(state = hazeState, style = HazeMaterials.ultraThin(containerColor = Stone950.copy(alpha = 0.7f)))
+                    .shadow(12.dp, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
+                    .clip(RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
                     .background(Stone950)
                     .drawBehind {
                         val strokePx = 2.dp.toPx()
@@ -204,82 +229,103 @@ fun HeroLogBottomNav(
                             strokeWidth = strokePx
                         )
                     }
-                    .navigationBarsPadding()
-                    .padding(horizontal = horizontalPad, vertical = navItemVerticalPadding)
-                    .onSizeChanged { rowWidthPx = it.width.toFloat() },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                NAV_ITEMS.forEach { item ->
-                    val isActive = activeModule == item.id
-                    val hasSubTabs = item.id in MODULES_WITH_SUBTABS
-
-                    Box(
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(48.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .clickable {
-                                if (hasSubTabs) {
-                                    openDropdown = if (openDropdown == item.id) null else item.id
-                                } else {
-                                    openDropdown = null
-                                    onChangeTab(item.targetTab)
-                                }
-                            }
-                            .padding(vertical = 4.dp, horizontal = 4.dp),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = horizontalPad, vertical = navItemVerticalPadding)
+                            .onSizeChanged { rowWidthPx = it.width.toFloat() },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val contentOffset by animateDpAsState(
-                            targetValue = if (isActive) 0.dp else 7.dp,
-                            animationSpec = tween(durationMillis = 200),
-                            label = "contentOffset"
-                        )
+                        NAV_ITEMS.forEach { item ->
+                            if (item.id == "tavern") {
+                                // Slot central: o botão da Taverna é desenhado no overlay acima,
+                                // por isso aqui fica só o espaçador que preserva as 5 colunas.
+                                Spacer(modifier = Modifier.weight(1f))
+                            } else {
+                                val isActive = activeModule == item.id
+                                val hasSubTabs = item.id in MODULES_WITH_SUBTABS
 
-                        Column(horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .offset(y = contentOffset)
-                                .graphicsLayer {
-                                    scaleX = if (isActive) 1.05f else 1f
-                                    scaleY = if (isActive) 1.05f else 1f
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable {
+                                            if (hasSubTabs) {
+                                                openDropdown = if (openDropdown == item.id) null else item.id
+                                            } else {
+                                                openDropdown = null
+                                                onChangeTab(item.targetTab)
+                                            }
+                                        }
+                                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // NAV-6: rótulo sempre visível; o hack .offset(y = 7.dp) do ícone
+                                    // inativo caiu junto (existia só pra centralizar sem rótulo).
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.graphicsLayer {
+                                            scaleX = if (isActive) 1.05f else 1f
+                                            scaleY = if (isActive) 1.05f else 1f
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(item.iconRes),
+                                            contentDescription = item.label,
+                                            tint = if (isActive) Champagne400 else Zinc300.copy(alpha = 0.40f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = item.label.uppercase(),
+                                            color = if (isActive) Champagne400 else Zinc400,
+                                            fontSize = 9.5.sp,
+                                            fontFamily = Cinzel,
+                                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                            letterSpacing = trackingWider,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1
+                                        )
+                                    }
                                 }
-                        ) {
-                            Icon(
-                                painter = painterResource(item.iconRes),
-                                contentDescription = item.label,
-                                tint = if (isActive) Champagne400 else Zinc300.copy(alpha = 0.40f),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            if (isActive) {
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = item.label.uppercase(),
-                                    color = Champagne400,
-                                    fontSize = 10.sp,
-                                    fontFamily = Cinzel,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = trackingWider,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1
-                                )
                             }
                         }
                     }
+
+                    // Animated active pill — height = 48.dp (matches nav item Box, replicates React's inset-0).
+                    // NAV-8: a fonte não desenha pílula nenhuma quando a Taverna está ativa.
+                    if (!isTavernActive) {
+                        val horizontalPadPx = with(LocalDensity.current) { horizontalPad.roundToPx() }
+                        val navVerticalPadPx = with(LocalDensity.current) { navItemVerticalPadding.roundToPx() }
+                        Box(
+                            modifier = Modifier
+                                .offset { IntOffset(animatedPillOffset.x + horizontalPadPx, navVerticalPadPx) }
+                                .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 48.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Champagne500.copy(alpha = 0.08f))
+                                .border(1.dp, Champagne500.copy(alpha = 0.20f), RoundedCornerShape(4.dp))
+                        )
+                    }
                 }
             }
-
-            // Animated active pill — height = 48.dp (matches nav item Box, replicates React's inset-0)
-            val horizontalPadPx = with(LocalDensity.current) { horizontalPad.roundToPx() }
-            val navVerticalPadPx = with(LocalDensity.current) { navItemVerticalPadding.roundToPx() }
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(animatedPillOffset.x + horizontalPadPx, navVerticalPadPx) }
-                    .size(width = with(LocalDensity.current) { itemWidthPx.toDp() }, height = 48.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Champagne500.copy(alpha = 0.05f))
-                    .border(1.dp, Champagne500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
-            )
         }
+
+        // NAV-7/NAV-9: botão circular central elevado, irmão da barra pra não sofrer o clip dela
+        // (glow/escala vazam pra cima como no React) e ainda assim ficar dentro dos limites do pai
+        // — a parte acima da barra continua tocável.
+        TavernNavItem(
+            isActive = isTavernActive,
+            onClick = {
+                openDropdown = null
+                onChangeTab("tavern")
+            },
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 
     val dropdown = openDropdown
@@ -290,7 +336,8 @@ fun HeroLogBottomNav(
             sheetState = sheetState,
             containerColor = Stone950
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
+            // NAV-4: p-3 pb-5 da fonte → 12dp lateral/topo, 20dp no rodapé.
+            Column(modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 20.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -317,7 +364,7 @@ fun HeroLogBottomNav(
                 Spacer(modifier = Modifier.height(8.dp))
                 Divider(color = White10, thickness = 1.dp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     (SUB_TABS[dropdown] ?: emptyList()).forEach { sub ->
                         val isSelected = activeTab == sub.value
                         Row(
@@ -334,7 +381,7 @@ fun HeroLogBottomNav(
                                     onChangeTab(sub.value)
                                     openDropdown = null
                                 }
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -343,12 +390,12 @@ fun HeroLogBottomNav(
                                     painter = painterResource(sub.iconRes),
                                     contentDescription = null,
                                     tint = sub.color,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = sub.label.uppercase(),
-                                    color = if (isSelected) Champagne300 else Zinc300.copy(alpha = 0.60f),
+                                    color = if (isSelected) Champagne300 else Zinc300.copy(alpha = 0.70f),
                                     fontFamily = Cinzel,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     letterSpacing = trackingWider,
@@ -360,14 +407,112 @@ fun HeroLogBottomNav(
                                     painter = painterResource(R.drawable.lucide_ic_check),
                                     contentDescription = null,
                                     tint = Champagne400,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
             }
         }
+    }
+}
+
+/**
+ * Item "Taverna" do nav (NAV-7..9): círculo de 48dp elevado sobre a faixa reservada de 16dp,
+ * com estados ativo/inativo distintos e rótulo sempre visível.
+ *
+ * Ativo: fundo `#241A33`, borda/ícone/rótulo `#E7C873`, glow `0 0 20px rgba(231,200,115,.35)`.
+ * Inativo: gradiente `#15121A → #0D0B10`, borda `#C9A44C`, ícone `#E7C873`, rótulo `#C9A44C`
+ * bold, sombra `0 4 16 rgba(0,0,0,.8)` + `0 0 10 rgba(201,164,76,.15)`.
+ * Glow/sombra são aproximação radial (`drawBehind`) — o box-shadow do CSS não tem equivalente
+ * direto em Compose sem elevação real; registrar como desvio de implementação, não de valor.
+ */
+@Composable
+private fun TavernNavItem(
+    isActive: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(TavernButtonSize)
+                .graphicsLayer {
+                    scaleX = if (isActive) TavernActiveScale else 1f
+                    scaleY = if (isActive) TavernActiveScale else 1f
+                }
+                .drawBehind { drawTavernAura(isActive) }
+                .clip(CircleShape)
+                .background(
+                    if (isActive) SolidColor(TavernActiveBg)
+                    else Brush.verticalGradient(listOf(TavernGradientTop, TavernGradientBottom))
+                )
+                .border(2.dp, if (isActive) TavernGold else TavernBronze, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.lucide_ic_beer),
+                contentDescription = "Taverna (Início)",
+                tint = TavernGold,
+                modifier = Modifier.size(TavernIconSize)
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = "TAVERNA",
+            color = if (isActive) TavernGold else TavernBronze,
+            fontSize = 9.5.sp,
+            fontFamily = Cinzel,
+            fontWeight = if (isActive) FontWeight.Black else FontWeight.Bold,
+            letterSpacing = trackingWider,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+    }
+}
+
+/** Aura do botão da Taverna: glow dourado (ativo) ou sombra deslocada + brilho (inativo). */
+private fun DrawScope.drawTavernAura(isActive: Boolean) {
+    val circleRadius = size.minDimension / 2f
+    if (isActive) {
+        // 0 0 20px rgba(231,200,115,.35)
+        val radius = circleRadius + 20.dp.toPx()
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(TavernGold.copy(alpha = 0.35f), TavernGold.copy(alpha = 0f)),
+                center = center,
+                radius = radius
+            ),
+            radius = radius,
+            center = center
+        )
+    } else {
+        // 0 4 16 rgba(0,0,0,.8)
+        val shadowRadius = circleRadius + 16.dp.toPx()
+        val shadowCenter = Offset(center.x, center.y + 4.dp.toPx())
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(Color.Black.copy(alpha = 0.8f), Color.Black.copy(alpha = 0f)),
+                center = shadowCenter,
+                radius = shadowRadius
+            ),
+            radius = shadowRadius,
+            center = shadowCenter
+        )
+        // 0 0 10 rgba(201,164,76,.15)
+        val glowRadius = circleRadius + 10.dp.toPx()
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(TavernBronze.copy(alpha = 0.15f), TavernBronze.copy(alpha = 0f)),
+                center = center,
+                radius = glowRadius
+            ),
+            radius = glowRadius,
+            center = center
+        )
     }
 }

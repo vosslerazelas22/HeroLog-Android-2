@@ -195,8 +195,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HeroLogTheme {
-                // Estado de navegação em string, fiel ao `activeTab` da fonte React (`useState<string>('focus')`).
-                var activeTab by remember { mutableStateOf("focus") }
+                // Estado de navegação em string, fiel ao `activeTab` da fonte React.
+                // TavernFeat (c89af8f): `useState<string>('tavern')` — o app abre na Taverna (NAV-1).
+                var activeTab by remember { mutableStateOf("tavern") }
                 var isFocusMode by remember { mutableStateOf(false) }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
                 // Prestige info popup da aba Skills (fonte: App.tsx isPrestigeInfoOpen).
@@ -856,6 +857,9 @@ class MainActivity : ComponentActivity() {
                             }
                             "logs" -> LogsScreen(logs = heroLogViewModel.systemLogs.collectAsState().value)
                             "guide" -> GuideScreen()
+                            // Spec A: a rota existe e a aba inicial é a Taverna; o conteúdo real
+                            // só chega com a Spec B (TavernScreen).
+                            "tavern" -> PlaceholderScreen(title = "tavern")
                             else -> PlaceholderScreen(title = activeTab)
                         }
                     }
