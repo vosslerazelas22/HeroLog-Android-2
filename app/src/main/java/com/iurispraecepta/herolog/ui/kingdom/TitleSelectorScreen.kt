@@ -226,7 +226,7 @@ private fun EmptyTitlesState() {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Nenhum título honorífico foi conquistado ainda. Cultive sua força de vontade nas Missões de Foco ou compre patentes de prestígio no Bazar de Mystara!",
+            text = "Nenhum título foi conquistado ainda. Cultive sua força de vontade nas Missões de Foco ou compre patentes de prestígio no Bazar de Mystara!",
             fontFamily = Cinzel,
             fontSize = 10.sp,
             lineHeight = 15.sp,
