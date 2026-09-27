@@ -433,7 +433,16 @@ class FocusSessionService : Service() {
 
     private fun handleStartBreak(requestedMinutes: Int?) {
         val current = _state.value
-        if (current.phase != ServicePhase.COMPLETED) return
+        // BUG: quando o processo do Service morre (a notificação de conclusão foi postada
+        // pelo backup do FocusSessionReceiver via AlarmManager), tocar em "iniciar descanso"
+        // recria o processo do zero -- o companion object `_state` reinicializa em
+        // ServiceState() (phase = IDLE), nunca em COMPLETED. O guard antigo (só COMPLETED)
+        // descartava a ação silenciosamente: a notificação provisória de descanso já postada
+        // por prestartForeground() nunca era substituída pela correta e ficava presa em
+        // "Descanso 0:00 restantes" para sempre. IDLE é seguro de aceitar aqui: esta função só
+        // roda a partir de um tap explícito do usuário (notificação) ou de startBreak() vindo
+        // da UI -- nunca dispara sozinha.
+        if (current.phase != ServicePhase.COMPLETED && current.phase != ServicePhase.IDLE) return
         tickJob?.cancel()
         scope.launch {
             if (destroyed) return@launch

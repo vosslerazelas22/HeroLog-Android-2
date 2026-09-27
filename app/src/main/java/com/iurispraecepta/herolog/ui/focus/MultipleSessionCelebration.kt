@@ -73,7 +73,8 @@ import androidx.compose.ui.draw.shadow
 fun MultipleSessionCelebration(
     summary: AggregatedCelebrationSummary,
     onDismiss: () -> Unit,
-    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier
+    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -162,7 +163,7 @@ fun MultipleSessionCelebration(
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = "+${summary.totalGold} Ouro",
+                            text = "+${summary.totalGold} GP",
                             color = Champagne400,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -269,11 +270,12 @@ fun MultipleSessionCelebration(
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
+                                    // Mesmo bug do LootBreakdownSection (SessionBreakdownItem.kt):
+                                    // fillMaxSize() no emoji empurrava o nome da conquista pra
+                                    // fora da caixa. Corrigido preventivamente aqui também.
                                     Text(
                                         text = achievement.icon,
-                                        fontSize = 32.sp,
-                                        modifier = Modifier
-                                            .fillMaxSize()
+                                        fontSize = 32.sp
                                     )
                                     Text(
                                         text = achievement.name,
@@ -367,16 +369,28 @@ fun MultipleSessionCelebration(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Breakdown items
+                    // BUG: cada item passava `onToggle = {}` (no-op) e `expanded = true` fixo --
+                    // o chevron de cada sessão era puramente decorativo. Agora cada sessão tem
+                    // seu próprio estado de expansão, independente das demais.
+                    val expandedSessionIds = remember { mutableStateOf(setOf<String>()) }
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         summary.sessions.forEach { session ->
+                            val isSessionExpanded = session.id in expandedSessionIds.value
                             SessionBreakdownItem(
                                 entity = session,
-                                onToggle = { },
-                                expanded = true
+                                onToggle = {
+                                    expandedSessionIds.value = if (isSessionExpanded) {
+                                        expandedSessionIds.value - session.id
+                                    } else {
+                                        expandedSessionIds.value + session.id
+                                    }
+                                },
+                                expanded = isSessionExpanded,
+                                skills = skills
                             )
                         }
                     }

@@ -153,6 +153,11 @@ class FocusSessionReceiver : BroadcastReceiver() {
                     session.durationMinutes
                 )
                 clearBackup(context)
+                // BUG: este caminho (processo do Service morto, alarme de backup cobre a
+                // conclusão) postava a notificação de "Sessão concluída" sem cancelar a
+                // notificação de timer/descanso ainda presa em ID_TIMER (ex.: "Foco: Leitura
+                // ... 0:00 restantes") -- as duas ficavam empilhadas na bandeja.
+                FocusNotifications.cancel(context, FocusNotifications.ID_TIMER)
                 if (completed) {
                     val pending = app.pendingRewardRepository.getPending().lastOrNull()
                     if (pending != null) {
@@ -168,6 +173,9 @@ class FocusSessionReceiver : BroadcastReceiver() {
             }
             KIND_BREAK -> {
                 clearBackup(context)
+                // Mesmo bug do ramo de sessão, mas para o descanso: sem isso, a notificação
+                // de "Descanso ..." presa em ID_TIMER convive com a de sugestão.
+                FocusNotifications.cancel(context, FocusNotifications.ID_TIMER)
                 val focusMinutes = app.characterRepository.getCharacterState()
                     ?.pomodoroSettings?.focusDuration?.takeIf { it > 0 } ?: 25
                 FocusNotifications.notifyIfAllowed(

@@ -1077,11 +1077,21 @@ fun FocusOrbPreviewScreen(
     Box(modifier = modifier.fillMaxSize()) {
         // spec-008 T11: celebrações pendentes de sessões concluídas em background
         // (single → FocusCompletionFlow; multiple → MultipleSessionCelebration)
-        val pendingCelebration = viewModel.pendingCelebration.value
-        if (pendingCelebration != null) {
+        // BUG CRÍTICO (Notifications feat android-first, PR #29): lia `.value` direto do
+        // StateFlow em vez de `collectAsState()` -- Compose nunca observava mudanças, então
+        // nem o término do timer (Service -> refreshPendingCelebration) nem o dismiss do
+        // modal (confirmPendingCelebration -> null) disparavam recomposição. O modal só
+        // "aparecia"/"sumia" de carona em outra recomposição não relacionada (ex.: abandonar
+        // sessão mexendo em focusState), daí o padrão relatado de "só abandonar faz algo".
+        val pendingCelebration by viewModel.pendingCelebration.collectAsState()
+        // Kotlin não faz smart cast de propriedade delegada (`by collectAsState()`) --
+        // captura numa val local antes do `if` pra poder usar não-nulo abaixo.
+        val pendingCelebrationSummary = pendingCelebration
+        if (pendingCelebrationSummary != null) {
             PendingCelebrationModal(
-                summary = pendingCelebration,
-                onDismiss = { viewModel.confirmPendingCelebration() }
+                summary = pendingCelebrationSummary,
+                onDismiss = { viewModel.confirmPendingCelebration() },
+                skills = characterState.skills
             )
         } else if (focusState.isFocusCompleted) {
             val rewards = focusState.pendingRewardsCalculation

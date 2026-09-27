@@ -68,8 +68,14 @@ import androidx.compose.ui.draw.shadow
 fun SessionBreakdownItem(
     entity: PendingRewardCelebrationEntity,
     onToggle: () -> Unit,
-    expanded: Boolean
+    expanded: Boolean,
+    // BUG: faltava emoji ao lado do nome da skill no header de cada sessão. A entity só
+    // guarda `skillName` (String) -- sem o emoji persistido -- então resolvemos por nome
+    // contra as skills atuais do personagem; se a skill foi apagada, cai sem emoji (nulo),
+    // igual ao comportamento anterior.
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
 ) {
+    val skillEmoji = skills.firstOrNull { it.name == entity.skillName }?.emoji
     val lootItems = runCatching { JsonConfig.default.decodeFromString<List<LootItem>>(entity.lootedItems) }
         .getOrDefault(emptyList())
 
@@ -101,14 +107,23 @@ fun SessionBreakdownItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text(
-                    text = entity.skillName,
-                    color = Color(0xFFE7E5E4),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = Cinzel,
-                    letterSpacing = 0.5.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (!skillEmoji.isNullOrBlank()) {
+                        Text(
+                            text = skillEmoji,
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(end = 6.dp)
+                        )
+                    }
+                    Text(
+                        text = entity.skillName,
+                        color = Color(0xFFE7E5E4),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = Cinzel,
+                        letterSpacing = 0.5.sp
+                    )
+                }
                 Text(
                     text = "${entity.durationMinutes} min",
                     color = Color(0xFFA8A29E),
@@ -134,7 +149,7 @@ fun SessionBreakdownItem(
                     )
                 )
                 Text(
-                    text = "+${entity.goldGained} Ouro",
+                    text = "+${entity.goldGained} GP",
                     color = Champagne400,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
@@ -293,11 +308,14 @@ private fun LootBreakdownSection(lootItems: List<LootItem>) {
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        // BUG: `.fillMaxSize()` aqui fazia o emoji reivindicar toda a altura
+                        // da caixa de 100dp dentro da Column, empurrando nome e badge pra fora
+                        // da área visível -- por isso a caixa de espólio só mostrava o emoji,
+                        // "sem dizer o nome do item". Sem o fillMaxSize o emoji só ocupa o
+                        // espaço do próprio texto, igual ao padrão usado em AchievementsBreakdownSection.
                         Text(
                             text = item.emoji,
-                            fontSize = 28.sp,
-                            modifier = Modifier
-                                .fillMaxSize()
+                            fontSize = 28.sp
                         )
 
                         Text(

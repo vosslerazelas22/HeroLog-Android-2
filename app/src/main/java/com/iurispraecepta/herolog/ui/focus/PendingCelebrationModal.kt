@@ -69,7 +69,8 @@ import com.iurispraecepta.herolog.ui.theme.Stone950
 fun PendingCelebrationModal(
     summary: AggregatedCelebrationSummary,
     onDismiss: () -> Unit,
-    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier
+    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
 ) {
     if (summary.sessionCount == 1) {
         // Single session: reusa FocusCompletionFlow existente
@@ -119,7 +120,8 @@ fun PendingCelebrationModal(
         ) {
             MultipleSessionCelebration(
                 summary = summary,
-                onDismiss = onDismiss
+                onDismiss = onDismiss,
+                skills = skills
             )
         }
     }
