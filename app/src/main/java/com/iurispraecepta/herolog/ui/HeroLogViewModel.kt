@@ -419,6 +419,12 @@ class HeroLogViewModel(
      */
     private suspend fun handleServiceCompleted() {
         val repo = pendingRewardRepository ?: return
+        // O Service gravou XP/ouro/loot direto no Room (characterRepository),
+        // sem passar pelo funil saveCharacterState() deste ViewModel — recarrega
+        // para _characterState (observado pela UI) não ficar desatualizado até
+        // reiniciar o app. A detecção de level-up abaixo não depende do valor
+        // antigo: usa latest.leveledUp, já calculado pelo FocusUseCase.
+        repository.getCharacterState()?.let { _characterState.value = it }
         val latest = repo.getPending().lastOrNull()
         val holder = FocusSessionService.state.value
         if (latest != null) {

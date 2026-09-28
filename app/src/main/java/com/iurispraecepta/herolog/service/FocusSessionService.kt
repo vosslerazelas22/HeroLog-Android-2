@@ -359,7 +359,12 @@ class FocusSessionService : Service() {
                 val current = _state.value
                 if (current.phase == ServicePhase.RUNNING) {
                     if (current.sessionRemainingMillis(System.currentTimeMillis()) <= 0L) {
-                        completeSession()
+                        // NUNCA chamar inline: completeSession() cancela o tickJob na
+                        // entrada — inline, isso seria auto-cancelamento da própria
+                        // coroutine (a próxima suspensão lança CancellationException
+                        // silenciosa e a conclusão nunca acontece). Nova coroutine,
+                        // mesmo padrão de handleSkipBreak().
+                        scope.launch { completeSession() }
                         return@launch
                     }
                     FocusNotifications.notifyIfAllowed(
@@ -369,7 +374,9 @@ class FocusSessionService : Service() {
                     )
                 } else if (current.phase == ServicePhase.BREAK_RUNNING) {
                     if (current.breakRemainingMillis(System.currentTimeMillis()) <= 0L) {
-                        completeBreak()
+                        // Idem acima: completeBreak() cancela o tickJob na entrada —
+                        // inline seria auto-cancelamento. Nova coroutine.
+                        scope.launch { completeBreak() }
                         return@launch
                     }
                     FocusNotifications.notifyIfAllowed(

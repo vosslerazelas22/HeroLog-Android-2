@@ -6095,3 +6095,18 @@ arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.
 - Spec A: `lastDungeonClearedTime` persistido no Android (campo em `CharacterState`) — divergência consciente vs React (não persiste, reload reseta cooldown). Precedente: `Skill.id` no Bloco 15.
 - Spec E: Copy de títulos alinhado ao React `c89af8f` (sem "honorífico"/"honorário").
 - Spec F: `recentActivity` campo obrigatório no Android (default lista vazia) vs opcional no React — serialização JSON compatível.
+
+---
+
+## [2026-09-28] Bloco: fix auto-cancelamento do tick em `FocusSessionService` + sync do ViewModel (bug crítico)
+
+**Bug:** `startTick()` chamava `completeSession()`/`completeBreak()` inline na coroutine do próprio `tickJob` (`FocusSessionService.kt:362,372`), e a primeira linha de ambas (`tickJob?.cancel()`) cancelava a si mesma. A próxima suspensão (Room `getSession()`) lançava `CancellationException` silenciosa — sessão/descanso travava em "00:00" no caminho ao vivo, sem modal, sem log, sem XP na UI. Presente desde `913d664` (PR #29); na implementação anterior (tudo no ViewModel) `onFocusSessionCompleted()` nunca se auto-cancelava.
+
+**Arquivos:**
+- `app/src/main/java/com/iurispraecepta/herolog/service/FocusSessionService.kt` — `startTick()`: `scope.launch { completeSession() }` / `scope.launch { completeBreak() }` (mesmo padrão de `handleSkipBreak()`); nada alterado dentro das funções de conclusão.
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` — `handleServiceCompleted()`: `repository.getCharacterState()?.let { _characterState.value = it }` no início (o Service grava direto no Room, fora do funil `saveCharacterState()`; detecção de level-up usa `latest.leveledUp`, não o valor antigo — reload seguro).
+- `app/src/test/java/com/iurispraecepta/herolog/FocusServiceSelfCancelTest.kt` (novo) — Service real via Robolectric + `EXTRA_END_TIME_MILLIS` (~2.5s), asserts phase COMPLETED + XP > 0 + sessão limpa + celebração enfileirada.
+
+**Validação (TDD):** RED antes do fix (`phase=RUNNING` após 15s de poll — sintoma exato), GREEN depois (1/1, XML bruto). `assembleDebug` OK. Suíte completa `--rerun-tasks`: XML bruto 99 arquivos, **772 testes, 2 failures, 0 errors, 0 skipped** — as 2 falhas (`MultipleSessionCelebrationTest.aggregated_...`, `PendingCelebrationModalTest.multiSession_...`, "component is not displayed") são **pré-existentes**, reproduzidas no HEAD limpo `d6989f7` via `git stash` (sem relação com este fix). Teste manual em device físico (sessão 1 min + descanso curto com tela ativa): **PENDENTE — obrigatório antes de fechar** (só se manifesta em coroutine real).
+
+**Fora de escopo (não mexido):** falta de `SCHEDULE_EXACT_ALARM` (backup atrasa com processo morto); `PendingCelebrationModal`/`MainActivity.kt` (corrigido em `d6989f7c`).
