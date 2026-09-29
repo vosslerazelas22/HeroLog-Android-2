@@ -6110,3 +6110,27 @@ arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.
 **Validação (TDD):** RED antes do fix (`phase=RUNNING` após 15s de poll — sintoma exato), GREEN depois (1/1, XML bruto). `assembleDebug` OK. Suíte completa `--rerun-tasks`: XML bruto 99 arquivos, **772 testes, 2 failures, 0 errors, 0 skipped** — as 2 falhas (`MultipleSessionCelebrationTest.aggregated_...`, `PendingCelebrationModalTest.multiSession_...`, "component is not displayed") são **pré-existentes**, reproduzidas no HEAD limpo `d6989f7` via `git stash` (sem relação com este fix). Teste manual em device físico (sessão 1 min + descanso curto com tela ativa): **PENDENTE — obrigatório antes de fechar** (só se manifesta em coroutine real).
 
 **Fora de escopo (não mexido):** falta de `SCHEDULE_EXACT_ALARM` (backup atrasa com processo morto); `PendingCelebrationModal`/`MainActivity.kt` (corrigido em `d6989f7c`).
+
+---
+
+## [2026-09-29] Bloco: plano-focus-completion-flow — host fullscreen + migration 3→4 + notas/tag via historyId
+
+**Decisões (aprovadas antes de codar):** (1) migration Room 3→4 gravando `streakAfter`, `showStreakCelebration`, `pauseCount` — exceção "estritamente necessária" à Fase 7; (2) `onConfirm` atualiza o `HistoryEntry` já gravado; (3) fullscreen puro sem chrome de modal (como em `710a8036`).
+
+**Gap encontrado em revisão (antes de codar):** o plano listava só 3 colunas, mas o passo 2 ("localiza o `HistoryEntry`") não tinha chave — `sessionCompletedAt` (epoch do enqueue) vs `HistoryEntry.date` (string pt-BR do apply) não se casam; timestamp aproximado quebraria com 2+ sessões próximas. Correção: 4ª coluna `historyId: String?` na mesma migration, preenchida em `queueCelebration` a partir do `historyObj.id` de `FocusApplyLogic` (mesmo id já usado como `refId` do feed) — `finalState.history.first().id` (`ActivityFeedLogic.record` não toca em `history`, verificado).
+
+**Arquivos:**
+- `data/entity/PendingRewardCelebrationEntity.kt` (+4 campos com default), `data/database/HeroLogDatabase.kt` (`MIGRATION_3_4`, `version = 4`), `HeroLogApplication.kt` (registra migration), `app/schemas/.../4.json` (gerado pelo build).
+- `logic/focus/FocusUseCase.kt`: `applyRewards` ganha `pauseCount = 0`, calcula snapshot de streak com a mesma semântica de `FocusApplyLogic` (pré-save, pois depois `lastStudyDate` já é hoje) e extrai `historyId`; `queueCelebration` persiste os 4.
+- `service/FocusSessionService.kt`: `completeSession` passa `pauseCount = current.pauseCount`. Backup/recovery mantêm default 0 (sem info de pausa pós-morte; sessão pausada já não é recuperável por design herdado).
+- `ui/HeroLogViewModel.kt`: `confirmPendingCelebrationWithNotes(historyId, notes, tag)` — update + consume na mesma coroutine (ordem garantida); `historyId` null ou sem match → só consome; tag em branco → null (semântica do default do Service).
+- `ui/focus/PendingCelebrationHost.kt` (novo, substitui `PendingCelebrationModal.kt` deletado): `selectCelebrationMode(sessionCount)` pura; single → `FocusCompletionFlow` com `skillTags` resolvidas via `skills.firstOrNull { name }` e streak PRÉ-sessão (`streakAfter - 1`, pois o fluxo soma +1 no preview — reproduz `710a8036` exato); multi → `MultipleSessionCelebrationContent` no mesmo `CompletionShell`.
+- `ui/focus/FocusCompletionFlow.kt`: parâmetro `insideModal` removido dos dois composables; `git diff 710a8036 -- FocusCompletionFlow.kt` vazio.
+- `ui/focus/MultipleSessionCelebration.kt`: conteúdo extraído (`MultipleSessionCelebrationContent`, rolável), container/botão próprios trocados pelo `CompletionShell` (botão passa a "RECEBER RECOMPENSAS").
+- `MainActivity.kt`: ramo legado `isFocusCompleted` removido (confirmado morto — nenhum `= true` no código); host fullscreen no mesmo ponto; imports órfãos (`FocusCompletionFlow`, `QuestLogic`) removidos.
+- Testes: `PendingCelebrationModalTest` → `PendingCelebrationHostTest` (6: seleção pura, single sem chrome + forward de historyId/notas/tag + tags reais, multi sem chrome + dismiss, historyId null); `PendingCelebrationNotesTest` (3, Room em memória); `PendingRewardMigrationTest` (3, SQL real via `FrameworkSQLiteOpenHelperFactory` — `FrameworkSQLiteDatabase` é internal na 2.7.0); `FocusUseCaseTest` +3 (snapshot streak 1º dia/mesmo dia, pauseCount, historyId); `MultipleSessionCelebrationTest` (expectativa `"Ouro"`→`"GP"`, ver achado abaixo).
+
+**Achado (corrige as 2 falhas "pré-existentes"):** `MultipleSessionCelebrationTest.aggregated_...` e o multi do modal falhavam com "component is not displayed" — diagnóstico via teste temporário (árvore dumpada em arquivo, depois deletado) mostrou que o nó EXISTE 1x mas `assertIsDisplayed` falha em nó ausente com a mesma mensagem: o teste esperava `"+245 Ouro"`, o código renderiza `"+245 GP"` (consistente com fluxo single e breakdown, que usam "GP" em todo o app). Era copy drift nos testes desde a spec-008, não layout. Reproduzido no HEAD limpo via `git stash` antes de corrigir.
+
+**Validação:** `./gradlew assembleDebug` BUILD SUCCESSFUL; direcionados 43/43 (XML bruto nominal); suíte completa `--rerun-tasks`: **784 testes, 0 falhas, 0 erros, 0 skipped** (101 arquivos XML). Roborazzi verify verde (shell restaurado byte a byte → pixels do completo inalterados).
+**Visual em device/emulador (375×667, 390×844) + interação (Voltar, IME, gestos): PENDENTE.**

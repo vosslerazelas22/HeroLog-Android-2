@@ -415,7 +415,7 @@ class FocusSessionService : Service() {
         }
         val calc = useCase().calculateRewards(config, current.durationMinutes)
             ?: return handleStop()
-        useCase().applyRewards(calc) ?: return handleStop()
+        useCase().applyRewards(calc, pauseCount = current.pauseCount) ?: return handleStop()
         repos().focusSessionRepository.clearSession()
         FocusSessionReceiver.cancelBackup(this)
         FocusNotifications.cancel(this, FocusNotifications.ID_TIMER)

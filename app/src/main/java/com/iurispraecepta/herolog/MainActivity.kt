@@ -84,7 +84,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.SkillLogic
-import com.iurispraecepta.herolog.ui.focus.PendingCelebrationModal
+import com.iurispraecepta.herolog.ui.focus.PendingCelebrationHost
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharClass
@@ -178,10 +178,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.iurispraecepta.herolog.logic.toSummary
 import com.iurispraecepta.herolog.ui.HeroLogViewModelFactory
-import com.iurispraecepta.herolog.ui.focus.FocusCompletionFlow
 import com.iurispraecepta.herolog.service.FocusNotificationPermission
 import com.iurispraecepta.herolog.service.FocusSessionService
-import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
 import com.iurispraecepta.herolog.model.CharacterState
 import androidx.compose.ui.text.style.TextAlign
@@ -1088,43 +1086,14 @@ fun FocusOrbPreviewScreen(
         // captura numa val local antes do `if` pra poder usar não-nulo abaixo.
         val pendingCelebrationSummary = pendingCelebration
         if (pendingCelebrationSummary != null) {
-            PendingCelebrationModal(
+            PendingCelebrationHost(
                 summary = pendingCelebrationSummary,
-                onDismiss = { viewModel.confirmPendingCelebration() },
+                onConfirmSingle = { historyId, notes, tag ->
+                    viewModel.confirmPendingCelebrationWithNotes(historyId, notes, tag)
+                },
+                onDismissAggregated = { viewModel.confirmPendingCelebration() },
                 skills = characterState.skills
             )
-        } else if (focusState.isFocusCompleted) {
-            val rewards = focusState.pendingRewardsCalculation
-            if (rewards != null) {
-                val streak = characterState.streak
-                val todayString = QuestLogic.toDateStringJs(java.util.Date())
-                val shouldShowStreakCelebration = characterState.lastStudyDate != todayString
-                val selectedSkillForSession = characterState.skills.getOrNull(rewards.skillIdx)
-                val skillTags = selectedSkillForSession?.tags ?: emptyList()
-                val newAchievements by viewModel.pendingFocusAchievements.collectAsState()
-
-                FocusCompletionFlow(
-                    rewardsCalculation = rewards,
-                    pauseCount = focusState.pauseCount,
-                    streak = streak,
-                    shouldShowStreakCelebration = shouldShowStreakCelebration,
-                    skillTags = skillTags,
-                    newAchievements = newAchievements,
-                    onConfirm = { _, _ ->
-                        // spec-008 T10: ramo legado (isFocusCompleted nunca é setado
-                        // pós-migração — o Service aplica e a celebração vem da fila).
-                        // O Bloco 2 (T11) substitui este ramo pelo roteamento
-                        // pendingCelebration single/agregado.
-                        viewModel.confirmPendingCelebration()
-                    },
-                    insideModal = true,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Erro: Cálculo de recompensa pendente ausente.", color = Amber400)
-                }
-            }
         } else if (breakTimerState.isBreakPrep) {
             // Break prep inline — React (App.tsx:2413-2475) mantém banner + carousel +
             // quick actions visíveis; só o viewport do timer vira o card de escolha de pausa.

@@ -6,6 +6,7 @@ import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.data.repository.PendingRewardRepository
 import com.iurispraecepta.herolog.logic.achievements.AchievementDetection
+import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.model.CharacterState
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -67,12 +68,17 @@ class FocusUseCase(
     /**
      * Fase 2: aplica a recompensa, persiste o personagem e enfileira a celebração.
      * Retorna `null` se não houver personagem persistido.
+     *
+     * @param pauseCount pausas da sessão (espelhado do `ServiceState.pauseCount` no
+     *   caminho do Service; `0` nos caminhos de backup/recovery sem essa informação).
+     *   Gravado na fila para o fluxo completo — nunca recalculado na exibição.
      */
     suspend fun applyRewards(
         calc: FocusRewardsCalculation,
         editedNotes: String = "",
         selectedTag: String? = null,
-        referenceDate: Date = Date()
+        referenceDate: Date = Date(),
+        pauseCount: Int = 0
     ): CharacterState? {
         val previous = characterRepository.getCharacterState() ?: return null
         val candidate = FocusApplyLogic.apply(
@@ -85,7 +91,21 @@ class FocusUseCase(
         val newIds = AchievementDetection.detectNewAchievementIds(previous, candidate)
         val finalState = AchievementDetection.withAchievements(candidate, newIds)
         characterRepository.saveCharacterState(finalState)
-        queueCelebration(calc, previous, finalState, newIds)
+        // Snapshot de streak com a MESMA semântica de FocusApplyLogic (linhas 92-94):
+        // calculado aqui, antes do save, porque depois `lastStudyDate` já é hoje.
+        val todayString = QuestLogic.toDateStringJs(referenceDate)
+        val showStreakCelebration = previous.lastStudyDate != todayString
+        val streakAfter = if (showStreakCelebration) previous.streak + 1 else previous.streak
+        // ActivityFeedLogic.record não toca em `history`: o primeiro item continua
+        // sendo o historyObj recém-gravado — correlação exata, sem timestamp.
+        val historyId = finalState.history.firstOrNull()?.id
+        queueCelebration(
+            calc, previous, finalState, newIds,
+            streakAfter = streakAfter,
+            showStreakCelebration = showStreakCelebration,
+            pauseCount = pauseCount,
+            historyId = historyId
+        )
         return finalState
     }
 
@@ -98,7 +118,11 @@ class FocusUseCase(
         calc: FocusRewardsCalculation,
         previous: CharacterState,
         newState: CharacterState,
-        achievementIds: List<String>
+        achievementIds: List<String>,
+        streakAfter: Int = 0,
+        showStreakCelebration: Boolean = false,
+        pauseCount: Int = 0,
+        historyId: String? = null
     ) {
         val previousLevel = previous.skills.getOrNull(calc.skillIdx)?.level
         val newLevel = newState.skills.getOrNull(calc.skillIdx)?.level
@@ -114,7 +138,11 @@ class FocusUseCase(
                 leveledUp = leveledUp,
                 previousLevel = previousLevel?.takeIf { leveledUp },
                 newLevel = newLevel?.takeIf { leveledUp },
-                achievementsUnlocked = json.encodeToString(achievementIds)
+                achievementsUnlocked = json.encodeToString(achievementIds),
+                streakAfter = streakAfter,
+                showStreakCelebration = showStreakCelebration,
+                pauseCount = pauseCount,
+                historyId = historyId
             )
         )
     }

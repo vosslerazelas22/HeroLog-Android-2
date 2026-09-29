@@ -27,8 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,11 +53,8 @@ import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.QuestPanel
-import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.model.Rarity
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.shadow
 
 
 /**
@@ -67,7 +62,10 @@ import androidx.compose.ui.draw.shadow
  *
  * Exibe: header com contagem, total fixo (XP/Gold), level-up final único,
  * achievements deduplicados (emoji + nome), breakdown colapsável por sessão,
- * botão "Continuar" que consome a fila atomicamente.
+ * botão "Receber Recompensas" (do [CompletionShell]) que consome a fila atomicamente.
+ *
+ * O container é o mesmo [CompletionShell] do fluxo completo (mesmo fundo, insets de
+ * barra e IME) — plano-focus-completion-flow, passo 4.
  */
 @Composable
 fun MultipleSessionCelebration(
@@ -76,18 +74,33 @@ fun MultipleSessionCelebration(
     modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
     skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    CompletionShell(
+        onNext = onDismiss,
+        isLastStep = true,
+        modifier = modifier
+    ) {
+        MultipleSessionCelebrationContent(
+            summary = summary,
+            skills = skills
+        )
+    }
+}
 
+/**
+ * Conteúdo rolável da celebração agregada, sem container nem botão próprio.
+ */
+@Composable
+fun MultipleSessionCelebrationContent(
+    summary: AggregatedCelebrationSummary,
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList(),
+    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier
+) {
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .background(QuestPanel)
-            .padding(
-                start = 24.dp,
-                top = 24.dp,
-                end = 24.dp,
-                bottom = 24.dp
-            )
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
         Column(
@@ -396,32 +409,6 @@ fun MultipleSessionCelebration(
                     }
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Confirm button
-        Button(
-            onClick = onDismiss,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .graphicsLayer { shadowElevation = 12.dp.toPx() },
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFC29544),
-                contentColor = Stone950
-            ),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE9C37A))
-        ) {
-            Text(
-                text = "Continuar",
-                fontWeight = FontWeight.Black,
-                fontSize = 14.sp,
-                letterSpacing = 2.sp,
-                fontFamily = Cinzel,
-                color = Stone950
-            )
         }
     }
 }

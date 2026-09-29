@@ -95,20 +95,19 @@ fun CompletionShell(
     onNext: () -> Unit,
     isLastStep: Boolean,
     modifier: Modifier = Modifier,
-    insideModal: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(QuestPanel)
+            .imePadding()
             .padding(
                 start = 24.dp,
                 top = 24.dp,
                 end = 24.dp,
-                bottom = if (insideModal) 24.dp else 24.dp + LocalBottomBarInset.current
+                bottom = 24.dp + LocalBottomBarInset.current
             )
-            .apply { if (!insideModal) this.imePadding() }
     ) {
         Box(
             modifier = Modifier
@@ -818,8 +817,7 @@ fun FocusCompletionFlow(
     initialNotes: String = "",
     onConfirm: (editedNotes: String, selectedTag: String) -> Unit,
     initialStepIndex: Int = 0,
-    modifier: Modifier = Modifier,
-    insideModal: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val hasLoot = remember(rewardsCalculation) {
         rewardsCalculation.lootedItems.isNotEmpty() || rewardsCalculation.droppedTitle != null
@@ -861,8 +859,7 @@ fun FocusCompletionFlow(
             }
         },
         isLastStep = isLastStep,
-        modifier = modifier,
-        insideModal = insideModal
+        modifier = modifier
     ) {
         when (currentStep) {
             "streak" -> StreakCelebrationScreen(streakPreview = streakPreview)

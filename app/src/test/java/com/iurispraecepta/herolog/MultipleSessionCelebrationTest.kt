@@ -79,7 +79,7 @@ class MultipleSessionCelebrationTest {
 
         composeTestRule.onNodeWithText("3 sessões concluídas enquanto você estava fora").assertIsDisplayed()
         composeTestRule.onNodeWithText("+180 XP").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+245 Ouro").assertIsDisplayed()
+        composeTestRule.onNodeWithText("+245 GP").assertIsDisplayed()
         composeTestRule.onNodeWithText("🎉 Level Up! Nv. 4 → 5").assertIsDisplayed()
     }
 

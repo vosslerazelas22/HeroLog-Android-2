@@ -140,4 +140,51 @@ class FocusUseCaseTest {
         assertNull(pending.previousLevel)
         assertNull(pending.newLevel)
     }
+
+    @Test
+    fun applyRewards_firstSessionOfDay_queuesStreakSnapshotAndHistoryId() = runTest {
+        val (useCase, charRepo, _, pendingRepo) = setUp()
+        // Estado inicial: lastStudyDate == null → mostra streak; streak 0 → 1.
+        charRepo.saveCharacterState(stateWithSkill())
+        val calc = useCase.calculateRewards(config, studiedMinutes = 25)!!
+        val referenceDate = Date(1_700_000_000_000L)
+
+        val newState = useCase.applyRewards(calc, referenceDate = referenceDate)
+
+        assertNotNull(newState)
+        val pending = pendingRepo.getPending().first()
+        assertTrue(pending.showStreakCelebration)
+        assertEquals(1, pending.streakAfter)
+        assertEquals(0, pending.pauseCount)
+        assertNotNull(pending.historyId)
+        assertEquals(newState!!.history.first().id, pending.historyId)
+    }
+
+    @Test
+    fun applyRewards_sameDaySecondSession_queuesNoStreak() = runTest {
+        val (useCase, charRepo, _, pendingRepo) = setUp()
+        charRepo.saveCharacterState(stateWithSkill())
+        val calc = useCase.calculateRewards(config, studiedMinutes = 25)!!
+        val referenceDate = Date(1_700_000_000_000L)
+
+        useCase.applyRewards(calc, referenceDate = referenceDate)
+        useCase.applyRewards(calc, referenceDate = referenceDate)
+
+        val pending = pendingRepo.getPending()
+        assertEquals(2, pending.size)
+        assertTrue(pending[0].showStreakCelebration)
+        assertEquals(false, pending[1].showStreakCelebration)
+        assertEquals(1, pending[1].streakAfter)
+    }
+
+    @Test
+    fun applyRewards_pauseCount_passedThroughToQueue() = runTest {
+        val (useCase, charRepo, _, pendingRepo) = setUp()
+        charRepo.saveCharacterState(stateWithSkill())
+        val calc = useCase.calculateRewards(config, studiedMinutes = 25)!!
+
+        useCase.applyRewards(calc, pauseCount = 3)
+
+        assertEquals(3, pendingRepo.getPending().first().pauseCount)
+    }
 }

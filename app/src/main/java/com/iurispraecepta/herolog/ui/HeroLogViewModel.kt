@@ -502,6 +502,39 @@ class HeroLogViewModel(
     }
 
     /**
+     * Confirm do fluxo completo single (plano-focus-completion-flow, decisão 2): atualiza
+     * notas/tag no `HistoryEntry` já gravado pelo Service e consome a fila, tudo na mesma
+     * coroutine para garantir a ordem (update antes do consume).
+     *
+     * A correlação é exata via [historyId] (gravado em `queueCelebration` a partir do
+     * `historyObj.id`), nunca por timestamp aproximado. `historyId == null` (linhas
+     * enfileiradas antes da migration 3→4) ou sem match → só consome, sem update.
+     * Tag em branco vira `null`, mesma semântica do default do Service (`selectedTag = null`).
+     */
+    fun confirmPendingCelebrationWithNotes(historyId: String?, notes: String, tag: String) {
+        viewModelScope.launch {
+            if (historyId != null) {
+                val current = repository.getCharacterState()
+                if (current != null && current.history.any { it.id == historyId }) {
+                    val normalizedTag = tag.ifBlank { null }
+                    val updated = current.copy(
+                        history = current.history.map { entry ->
+                            if (entry.id == historyId) {
+                                entry.copy(notes = notes.trim(), subskillTag = normalizedTag)
+                            } else entry
+                        }
+                    )
+                    repository.saveCharacterState(updated)
+                    _characterState.value = updated
+                }
+            }
+            pendingRewardRepository?.consumeIds(shownCelebrationIds)
+            shownCelebrationIds = emptyList()
+            _pendingCelebration.value = null
+        }
+    }
+
+    /**
      * Funil único de mutação do personagem. Porte parcial de `useLevelUp.ts`: a cada transição de
      * estado, compara o valor anterior com o novo e enfileira eventos de level up detectados
      * (`LevelUpLogic.detectLevelUps`) -- equivalente ao `useEffect` que a fonte roda a cada

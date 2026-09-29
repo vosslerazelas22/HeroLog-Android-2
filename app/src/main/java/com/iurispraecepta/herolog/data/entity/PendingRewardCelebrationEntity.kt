@@ -30,5 +30,21 @@ data class PendingRewardCelebrationEntity(
     val previousLevel: Int? = null,
     val newLevel: Int? = null,
     val achievementsUnlocked: String = "[]",
-    val consumed: Boolean = false
+    val consumed: Boolean = false,
+    /**
+     * Snapshot pós-sessão para o fluxo completo fullscreen (plano-focus-completion-flow,
+     * decisão 1): o Service já aplicou a sessão quando a celebração aparece, então
+     * `lastStudyDate` já é hoje e a etapa de streak nunca dispararia se calculada na
+     * exibição. Gravados em [FocusUseCase.applyRewards], nunca recalculados.
+     */
+    val streakAfter: Int = 0,
+    val showStreakCelebration: Boolean = false,
+    val pauseCount: Int = 0,
+    /**
+     * Chave de correlação com o `HistoryEntry` gravado (decisão 2): é o
+     * `historyObj.id` gerado em `FocusApplyLogic` (mesmo id já usado como `refId` do
+     * feed). O `onConfirm` do host usa-o para atualizar notas/tag sem casamento frágil
+     * por timestamp.
+     */
+    val historyId: String? = null
 )
