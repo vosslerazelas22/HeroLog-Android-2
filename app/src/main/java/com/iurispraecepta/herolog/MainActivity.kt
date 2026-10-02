@@ -93,6 +93,7 @@ import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.character.CharacterScreen
+import com.iurispraecepta.herolog.ui.character.CharacterSheetHeader
 import com.iurispraecepta.herolog.ui.character.LevelUpOverlay
 import com.iurispraecepta.herolog.ui.daily.DailyReportModal
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
@@ -608,36 +609,14 @@ class MainActivity : ComponentActivity() {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .background(Color(0xFF1C1917).copy(alpha = 0.5f))
-                                            .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(8.dp))
-                                            .padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(QuestPanel)
+                                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                                            .padding(20.dp),
+                                        verticalArrangement = Arrangement.spacedBy(24.dp)
                                     ) {
                                         // Header "FICHA DO HERÓI"
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 10.dp)
-                                                .border(1.dp, Color(0x1AFFFFFF)),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.lucide_ic_shield),
-                                                contentDescription = null,
-                                                tint = Champagne500,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Text(
-                                                text = "FICHA DO HERÓI",
-                                                fontFamily = Cinzel,
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 12.sp,
-                                                color = Champagne400,
-                                                letterSpacing = 1.sp,
-                                                modifier = Modifier.padding(start = 6.dp)
-                                            )
-                                        }
+                                        CharacterSheetHeader()
 
                                         CharacterScreen(
                                             character = state.toSummary(),
