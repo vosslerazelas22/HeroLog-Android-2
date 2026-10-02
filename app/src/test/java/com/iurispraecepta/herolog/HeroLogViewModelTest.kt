@@ -2439,4 +2439,336 @@ class HeroLogViewModelTest {
 
         db.close()
     }
+
+    // ── Spec notificações por modo: abandono pela notificação (FR-10, T5) ────
+
+    private fun dungeonProgressTo(progress: Int, viewModel: HeroLogViewModel) {
+        FocusSessionService.setStateForTests(
+            ServiceState(
+                phase = ServicePhase.COMPLETED,
+                lastSessionDungeonMode = true,
+                lastSessionDungeonSessions = progress - 1
+            )
+        )
+        testDispatcher.scheduler.runCurrent()
+    }
+
+    @Test
+    fun serviceAbandon_whenDungeonMode_resetsProgressAndLogsFailure() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp(),
+            pendingRewardRepository = pendingRepository
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        pendingRepository.queue(
+            PendingRewardCelebrationEntity(
+                id = "d1",
+                sessionCompletedAt = 1_000L,
+                skillName = "Kotlin",
+                durationMinutes = 10,
+                xpGained = 20,
+                goldGained = 30
+            )
+        )
+        dungeonProgressTo(2, viewModel)
+        assertEquals(2, viewModel.dungeonSessionsProgress.value)
+
+        // Sessão de Masmorra em andamento, abandonada pelo botão da notificação.
+        FocusSessionService.setStateForTests(ServiceState())
+        val dungeonConfig = FocusSessionConfig(
+            selectedSkillIdx = 0,
+            isWildernessChecked = false,
+            isDungeonMode = true,
+            dungeonSessions = 2
+        )
+        viewModel.startSession(testContext, dungeonConfig, durationMinutes = 10)
+        testDispatcher.scheduler.runCurrent()
+
+        val logsBefore = viewModel.systemLogs.value.size
+        FocusSessionService.emitAbandonForTests(
+            com.iurispraecepta.herolog.service.AbandonEvent(isDungeonMode = true)
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(0, viewModel.dungeonSessionsProgress.value)
+        assertEquals(logsBefore + 1, viewModel.systemLogs.value.size)
+        assertTrue(viewModel.systemLogs.value.first().text.contains("FRACASSO NA MASMORRA"))
+
+        db.close()
+    }
+
+    @Test
+    fun serviceAbandon_whenStandardMode_appliesNoConsequence() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp(),
+            pendingRewardRepository = pendingRepository
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        pendingRepository.queue(
+            PendingRewardCelebrationEntity(
+                id = "d1",
+                sessionCompletedAt = 1_000L,
+                skillName = "Kotlin",
+                durationMinutes = 10,
+                xpGained = 20,
+                goldGained = 30
+            )
+        )
+        dungeonProgressTo(1, viewModel)
+        assertEquals(1, viewModel.dungeonSessionsProgress.value)
+
+        viewModel.startSession(
+            testContext,
+            FocusSessionConfig(0, isWildernessChecked = false, isDungeonMode = false, dungeonSessions = 0),
+            durationMinutes = 10
+        )
+        testDispatcher.scheduler.runCurrent()
+        val logsBefore = viewModel.systemLogs.value.size
+
+        viewModel.onServiceAbandon(
+            com.iurispraecepta.herolog.service.AbandonEvent(isDungeonMode = false)
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, viewModel.dungeonSessionsProgress.value)
+        assertEquals(logsBefore, viewModel.systemLogs.value.size)
+
+        db.close()
+    }
+
+    @Test
+    fun serviceAbandon_staleEvent_isIgnored() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp()
+        )
+        testDispatcher.scheduler.runCurrent()
+        val logsBefore = viewModel.systemLogs.value.size
+
+        // Evento de outra vida do processo (anterior à criação deste ViewModel).
+        FocusSessionService.emitAbandonForTests(
+            com.iurispraecepta.herolog.service.AbandonEvent(
+                isDungeonMode = true,
+                emittedAtMillis = -1L
+            )
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(logsBefore, viewModel.systemLogs.value.size)
+
+        db.close()
+    }
+
+    @Test
+    fun cancelSession_whenDungeonMode_appliesNoDungeonConsequence() = runTest {
+        // ACTION_STOP segue genérico e sem consequência (FR-10): só o abandono
+        // (in-app ou via ACTION_ABANDON) zera o progresso e registra o fracasso.
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepository = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { testDispatcher.scheduler.currentTime },
+            sfxManager = SfxManager.noOp(),
+            pendingRewardRepository = pendingRepository
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        pendingRepository.queue(
+            PendingRewardCelebrationEntity(
+                id = "d1",
+                sessionCompletedAt = 1_000L,
+                skillName = "Kotlin",
+                durationMinutes = 10,
+                xpGained = 20,
+                goldGained = 30
+            )
+        )
+        dungeonProgressTo(1, viewModel)
+        assertEquals(1, viewModel.dungeonSessionsProgress.value)
+
+        viewModel.startSession(
+            testContext,
+            FocusSessionConfig(0, isWildernessChecked = false, isDungeonMode = true, dungeonSessions = 1),
+            durationMinutes = 10
+        )
+        testDispatcher.scheduler.runCurrent()
+        val logsBefore = viewModel.systemLogs.value.size
+
+        viewModel.cancelSession(testContext)
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals(1, viewModel.dungeonSessionsProgress.value)
+        assertEquals(logsBefore, viewModel.systemLogs.value.size)
+
+        db.close()
+    }
+
+    // ── Spec notificações por modo: Morte Cognitiva pós-fato (FR-9, T15) ──────
+
+    private fun grantPostNotifications() {
+        Shadows.shadowOf(ApplicationProvider.getApplicationContext<Application>())
+            .grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    private fun notificationManager(): android.app.NotificationManager =
+        testContext.getSystemService(android.content.Context.NOTIFICATION_SERVICE)
+            as android.app.NotificationManager
+
+    private fun activeDeathNotifications(): List<android.service.notification.StatusBarNotification> =
+        notificationManager().activeNotifications.filter {
+            it.id == com.iurispraecepta.herolog.service.FocusNotifications.ID_COGNITIVE_DEATH
+        }
+
+    @Test
+    fun cognitiveDeath_postsDeathNotificationOnceAndClearsTimer() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        grantPostNotifications()
+        com.iurispraecepta.herolog.service.FocusNotifications.createChannels(testContext)
+        notificationManager().cancelAll()
+        var fakeTime = 1000000L
+        val viewModel = HeroLogViewModel(
+            repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp()
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.saveCharacterState(
+            createBaseState().copy(charClass = CharClass.Warrior, streak = 10, combo = 5)
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.startSession(
+            testContext,
+            FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0),
+            durationMinutes = 25
+        )
+        testDispatcher.scheduler.runCurrent()
+        viewModel.onAppBackgrounded(testContext)
+        testDispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.focusSessionState.value.isGraceActive)
+
+        fakeTime += 4000L
+        testDispatcher.scheduler.advanceTimeBy(3000L)
+        testDispatcher.scheduler.runCurrent()
+
+        val posted = activeDeathNotifications()
+        assertEquals(1, posted.size)
+        val text = posted.first().notification.extras
+            .getCharSequence(android.app.Notification.EXTRA_TEXT).toString()
+        assertTrue(text.contains("sequência foi zerada"))
+        // A notificação de sessão foi cancelada no mesmo fluxo.
+        assertTrue(
+            notificationManager().activeNotifications.none {
+                it.id == com.iurispraecepta.herolog.service.FocusNotifications.ID_TIMER
+            }
+        )
+
+        // Tempo extra não reposta: uma única vez.
+        fakeTime += 10_000L
+        testDispatcher.scheduler.advanceTimeBy(10_000L)
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(1, activeDeathNotifications().size)
+
+        notificationManager().cancelAll()
+        db.close()
+    }
+
+    @Test
+    fun cognitiveDeath_returningWithinGrace_postsNothing() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        grantPostNotifications()
+        com.iurispraecepta.herolog.service.FocusNotifications.createChannels(testContext)
+        notificationManager().cancelAll()
+        var fakeTime = 1000000L
+        val viewModel = HeroLogViewModel(
+            repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp()
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.startSession(
+            testContext,
+            FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0),
+            durationMinutes = 25
+        )
+        testDispatcher.scheduler.runCurrent()
+        viewModel.onAppBackgrounded(testContext)
+        testDispatcher.scheduler.runCurrent()
+        assertTrue(viewModel.focusSessionState.value.isGraceActive)
+
+        viewModel.onAppForegrounded()
+        testDispatcher.scheduler.runCurrent()
+        fakeTime += 10_000L
+        testDispatcher.scheduler.advanceTimeBy(10_000L)
+        testDispatcher.scheduler.runCurrent()
+
+        assertTrue(activeDeathNotifications().isEmpty())
+
+        viewModel.cancelSession(testContext)
+        testDispatcher.scheduler.runCurrent()
+        notificationManager().cancelAll()
+        db.close()
+    }
+
+    @Test
+    fun cognitiveDeath_withDeathProof_postsNothing() = runTest {
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        grantPostNotifications()
+        com.iurispraecepta.herolog.service.FocusNotifications.createChannels(testContext)
+        notificationManager().cancelAll()
+        val viewModel = HeroLogViewModel(repository, focusRepository, sfxManager = SfxManager.noOp())
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.saveCharacterState(createBaseState().copy(equippedTitle = "DEATH-PROOF"))
+        testDispatcher.scheduler.runCurrent()
+        FocusSessionService.setStateForTests(
+            ServiceState(
+                phase = ServicePhase.RUNNING,
+                sessionConfig = FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0),
+                durationMinutes = 25,
+                endTimeMillis = 1_500_000L
+            )
+        )
+        testDispatcher.scheduler.runCurrent()
+
+        viewModel.onAppBackgrounded(testContext)
+        testDispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.advanceTimeBy(10_000L)
+        testDispatcher.scheduler.runCurrent()
+
+        // DEATH-PROOF converteu a saída em pausa: sem morte, sem notificação.
+        assertTrue(activeDeathNotifications().isEmpty())
+
+        releaseMirrorTicker()
+        notificationManager().cancelAll()
+        db.close()
+    }
 }

@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Small icon da Terra Selvagem (spec notificações por modo): picos de montanha,
+        traço branco sobre transparente, mesmo padrão de ic_focus_small.xml. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M3,19L9,7L13,14L15.5,10.5L21,19Z" />
+</vector>

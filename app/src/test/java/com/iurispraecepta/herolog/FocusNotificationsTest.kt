@@ -46,7 +46,7 @@ class FocusNotificationsTest {
     }
 
     @Test
-    fun timerNotification_running_showsPauseAndStopActions() {
+    fun timerNotification_running_showsPauseAndAbandonActions() {
         val state = ServiceState(
             phase = ServicePhase.RUNNING,
             skillName = "Kotlin",
@@ -57,7 +57,7 @@ class FocusNotificationsTest {
 
         assertTrue(notification.actions.size == 2)
         assertEquals("Pausar", notification.actions[0].title.toString())
-        assertEquals("Parar", notification.actions[1].title.toString())
+        assertEquals("Abandonar", notification.actions[1].title.toString())
     }
 
     @Test
@@ -75,11 +75,15 @@ class FocusNotificationsTest {
 
     @Test
     fun completionNotification_showsXpAndGoldSummary() {
-        val notification = FocusNotifications.completionNotification(context, xp = 60, gold = 75)
+        val notification = FocusNotifications.completionNotification(
+            context, xp = 60, gold = 75,
+            isDungeonMode = false, isWildernessChecked = false
+        )
 
         val text = notification.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString()
         assertTrue(text.contains("60"))
         assertTrue(text.contains("75"))
+        assertTrue(text.contains("GP"))
         assertEquals(2, notification.actions.size)
         assertEquals("Iniciar descanso", notification.actions[0].title.toString())
         assertEquals("Pular descanso", notification.actions[1].title.toString())

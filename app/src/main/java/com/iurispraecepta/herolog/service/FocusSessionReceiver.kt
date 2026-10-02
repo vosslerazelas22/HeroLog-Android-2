@@ -165,7 +165,11 @@ class FocusSessionReceiver : BroadcastReceiver() {
                             context,
                             FocusNotifications.ID_COMPLETED,
                             FocusNotifications.completionNotification(
-                                context, pending.xpGained, pending.goldGained
+                                context,
+                                pending.xpGained,
+                                pending.goldGained,
+                                isDungeonMode = session.config.isDungeonMode,
+                                isWildernessChecked = session.config.isWildernessChecked
                             )
                         )
                     }
