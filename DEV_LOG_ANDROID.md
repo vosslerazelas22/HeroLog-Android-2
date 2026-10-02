@@ -6184,3 +6184,26 @@ base `710a8036`, não contra o parent.)
 **Validação:** docs-only, sem `.kt` tocado — `grep -n "Host fullscreen (29/09" PARIDADE.md`
 → zero ocorrências; `git diff --stat` → só `PARIDADE.md` + `ANDROID_FIRST.md` + este log.
 Sem build/suíte (nenhum código alterado).
+
+---
+
+## [2026-10-02] Bloco: notificações de foco por modo (spec T1–T16, PR #32)
+
+**Escopo:** spec `specs/spec-notificacoes-foco-por-modo.md`, FR-1 a FR-11. T17 (device) fica pendente.
+
+**Status do PR:** merged em 02-10 (`db250e0` → merge `f325b4f` em `origin/main`; main local em `7dce6e8` ainda não avançado).
+
+**Arquivos (commit `db250e0`, +1000/−57 em 12 arquivos, conferido via `git diff --stat main...feat-notificacoes-foco-por-modo`):**
+- `service/FocusNotificationTheme.kt` (NOVO): tema por modo via `raidModeFrom` (`RaidModeSection.kt:72`); ARGB espelhando `ConceptAColors` (`FocusOrb.kt:74/81/88/95`); `withCountDownChronometer()` (cronômetro nativo).
+- `service/FocusNotifications.kt`: `timerNotification` com tema + `n/4` (regra da tela) + botão "Abandonar"→`ACTION_ABANDON`; Wilderness mínima sem ações / pausada só "Retomar"; `breakNotification` esmeralda + texto estático; `completionNotification` com modo + "+X XP · +Y GP"; `CHANNEL_EVENTS` + `ID_COGNITIVE_DEATH=1004` + `cognitiveDeathNotification()` (3 variantes).
+- `service/FocusSessionService.kt`: `ACTION_ABANDON` + `AbandonEvent` (top-level; `SharedFlow` sem replay no companion); `startTick` sem `notify`/s; conclusão passa modo.
+- `service/FocusSessionReceiver.kt`: conclusão do backup passa modo da sessão persistida.
+- `ui/HeroLogViewModel.kt`: `applyDungeonAbandonConsequence()` extraída; `observeAbandonEvents()` com filtro anti-ranço; `triggerCognitiveDeath` posta a notificação + cancela o timer.
+- `res/values/strings.xml` (diff 13 linhas: +12/−1): 11 nomes novos + `focus_completed_text` ouro→GP (T12).
+- `res/drawable/ic_focus_dungeon.xml`, `ic_focus_wilderness.xml` (NOVOS, padrão `ic_focus_small.xml`).
+- Testes (`@Test` conferidos no diff: 6 + 12 + 7): `FocusNotificationThemeTest` (6), `FocusModeNotificationsTest` (12), `FocusNotificationsTest` (ajustes Abandonar/GP), `HeroLogViewModelTest` (+7: abandono dungeon/padrão/ranço/STOP + morte 1x/retorno/DEATH-PROOF).
+
+**T1:** bug confirmado por trace — botão da notificação ia a `ACTION_STOP`→`handleStop`, sem consequência; `abandonSession` só em `MainActivity.kt:1301`.
+**Validação (reportada no commit):** `assembleDebug` BUILD SUCCESSFUL; suíte completa **103 classes / 809 testes / 0 falhas / 0 erros / 0 skipped** (não re-executada neste bloco docs-only; sem XML re-conferido aqui). Nota: `debug.keystore` (gitignored) copiado do worktree main p/ build local; fora do diff.
+**Visual em device/emulador: PENDENTE (T17)** — cores/ícones claro+escuro, cronômetro após kill, `setColorized`.
+**Desvios/clarificações pendentes do spec:** GP na notificação (T12 manda); `n/4` sem +1; evento de abandono não durável + filtro anti-ranço (sem VM vivo, só o log fica de fora); cancel direto do timer na morte; copies novas Android-first ("Permaneça no app…", "Descanso em andamento"); morte com acento/ícone Wilderness; strings antigas sem uso mantidas.
