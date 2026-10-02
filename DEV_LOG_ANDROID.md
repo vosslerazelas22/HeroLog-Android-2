@@ -6134,3 +6134,17 @@ arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.
 
 **Validação:** `./gradlew assembleDebug` BUILD SUCCESSFUL; direcionados 43/43 (XML bruto nominal); suíte completa `--rerun-tasks`: **784 testes, 0 falhas, 0 erros, 0 skipped** (101 arquivos XML). Roborazzi verify verde (shell restaurado byte a byte → pixels do completo inalterados).
 **Visual em device/emulador (375×667, 390×844) + interação (Voltar, IME, gestos): PENDENTE.**
+
+---
+
+## [2026-10-02] Bloco: issue #31 — remover retângulo ao redor dos quick actions (paridade React)
+
+**Causa raiz:** ao portar `border-t border-white/10` do React (`App.tsx:3027`, `<div className="grid grid-cols-4 gap-1 pt-2 border-t border-white/10">`), o Android usou `Modifier.border(1.dp, ...)`, que desenha nos 4 lados — gerando o retângulo. O React tem só a linha superior.
+
+**Arquivos:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/QuickActionsBar.kt` — `Row` com `.border()` trocado por `Column { Box(1dp White@10%) + Row(padding top 8dp, spacedBy 4dp) }` (ordem borda → padding → conteúdo = `border-t` + `pt-2` do CSS; `gap-1` já estava certo); imports `BorderStroke`/`border` removidos; `QuickActionButton` e os 4 call sites em `MainActivity.kt` intocados (espaçamento do PR #28 preservado por construção).
+
+**Validação:** `assembleDebug` BUILD SUCCESSFUL; suíte completa XML bruto **784 testes, 0 falhas, 0 erros, 0 skipped** (101 arquivos). Roborazzi `verify=true` verde nos alvos que renderizam a área (`FocusTimerViewportSmall/Medium/TallScreenTest` 1/1 cada, `FocusModeScreenScreenshotTest` 7/7, `FocusTabBodyDiagnosticTest` 2/2 nominais `focusTabBody_diag_390x844` + `focusTabBody_overflow_scrollsToCTA_390x844`) — **nenhum baseline alterado** (stubs de viewport renderizam só o timer; `git status app/src/test/screenshots/` limpo), nada a regravar.
+**Visual em device/emulador (375×667, 390×844): PENDENTE.**
+
+**Desvios de escopo:** nenhum.

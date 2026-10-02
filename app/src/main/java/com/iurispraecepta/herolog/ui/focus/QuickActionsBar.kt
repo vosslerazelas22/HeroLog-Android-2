@@ -1,8 +1,6 @@
 package com.iurispraecepta.herolog.ui.focus
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -49,13 +47,23 @@ fun QuickActionsBar(
     onEnterFullscreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-            .border(1.dp, Color.White.copy(alpha = 0.1f)),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    // Paridade React (App.tsx:3027): só linha superior (border-t border-white/10),
+    // sem retângulo ao redor — padding pt-2 abaixo da linha, gap-1 entre botões.
+    Column(
+        modifier = modifier.fillMaxWidth()
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.White.copy(alpha = 0.1f))
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
         // 1. Modo
         QuickActionButton(
             label = "Modo",
@@ -117,6 +125,7 @@ fun QuickActionsBar(
             modifier = Modifier.weight(1f)
         ) {
             Icon(painterResource(R.drawable.lucide_ic_maximize), null, tint = Color(0xFFA1A1AA))
+        }
         }
     }
 }
