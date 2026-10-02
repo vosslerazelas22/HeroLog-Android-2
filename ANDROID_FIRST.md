@@ -17,8 +17,8 @@
 | Feature | Módulo | Status | Descrição | Bloco/data |
 |---|---|---|---|---|
 | (exemplo) | Foco | Implementada | — | — |
-| Celebrações pendentes de Foco (fila + agregação) | Foco | Concluído (PR #29) | Sessões concluídas em background enfileiram recompensa (fila Room + agregação 2+ ao reabrir via modal) | Bloco spec-008 núcleo / 26-09 → PR #29 / 27-09 |
+| Celebrações pendentes de Foco (fila + agregação) | Foco | Concluído (PR #29) | Sessões concluídas em background enfileiram recompensa; ao retornar, a fila é apresentada em fluxo fullscreen. Single session reutiliza FocusCompletionFlow; múltiplas sessões usam celebração agregada. A confirmação pode atualizar notas/tag do HistoryEntry via historyId. Estado de streak/pausas necessário à celebração é persistido na fila. | Bloco spec-008 núcleo / 26-09 → PR #29 / 27-09 → 2a23e492 / 29-09 |
 | Notificações de foco + Foreground Service | Foco | Implementada | Timer com app fechado; notificação persistente com Pausar/Retomar/Parar; recompensa aplicada em background; encadeamento sessão→descanso→nova sessão pela notificação; celebração single/agregada ao reabrir | PR #29 (2026-09-27) |
 
 ## Decisões relacionadas
-- (espaço para justificar decisões de produto por trás de cada feature, se não óbvio)
+- Celebração fullscreen é Android-first: PendingCelebrationHost substitui o antigo modal para suportar o fluxo de recuperação de sessões concluídas em background, sem exigir alteração correspondente no React.

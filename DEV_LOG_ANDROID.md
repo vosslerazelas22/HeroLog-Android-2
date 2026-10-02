@@ -6148,3 +6148,39 @@ arquivos); suite em ~44s sem travar. Device/emulador: PENDENTE.
 **Visual em device/emulador (375×667, 390×844): PENDENTE.**
 
 **Desvios de escopo:** nenhum.
+
+---
+
+## [2026-10-02] Bloco: docs — correção PARIDADE × ANDROID_FIRST (celebração fullscreen 2a23e49)
+
+**Motivo:** o commit `2a23e49` registrou detalhes Android-first (PendingCelebrationHost,
+migration 3→4, historyId, notas/tag) dentro da linha de paridade React↔Android do
+`FocusCompletionFlow` no `PARIDADE.md`. Pela regra do próprio `ANDROID_FIRST.md`
+("toda feature aqui não tem seção correspondente no PARIDADE.md"), o detalhe pertence ao
+`ANDROID_FIRST.md`/`DEV_LOG_ANDROID.md`, não à matriz de paridade.
+
+**Arquivos:**
+- `PARIDADE.md` (linha 71, coluna Notas): removido o sufixo `**Host fullscreen
+  (29/09, ...)**` — linha volta ao texto pré-`2a23e49` (conferido via
+  `git show 2a23e49^:PARIDADE.md`); mantida a anotação curta correta
+  (`Step achievement é Android-first (FR-003/US-03)`).
+- `ANDROID_FIRST.md`: linha "Celebrações pendentes de Foco" atualizada in-place
+  (fluxo fullscreen, single→FocusCompletionFlow, multi→agregada, notas/tag via historyId,
+  streak/pausas persistidos; bloco `→ 2a23e492 / 29-09`) + 1 bullet em Decisões relacionadas
+  (fullscreen é Android-first, sem contrapartida no React).
+
+**Verificação da afirmação `git diff 710a8036 -- FocusCompletionFlow.kt vazio`
+(entrada de 29/09, linha 6128): CONFIRMADA como literalmente verdadeira.**
+`git diff --stat 710a8036..2a23e49 -- .../FocusCompletionFlow.kt` → vazio;
+`grep insideModal|imePadding` idêntico nos dois. Histórico explica o vai-e-volta:
+`710a8036` (fullscreen puro, sem `insideModal`, `.imePadding()` incondicional) →
+PR #29 (`d6989f7`) + `b856cdb` adicionaram o param `insideModal` (render dentro do
+`PendingCelebrationModal`, imePadding condicional) → `2a23e49` removeu `insideModal` e
+restaurou o estado `710a8036` byte a byte. Ou seja: **zero mudança de paridade no
+componente em si** — só o host ao redor mudou — o que justifica a remoção do bloco do
+`PARIDADE.md`. (Nota: `git diff 2a23e49^..2a23e49` NÃO é vazio; o "vazio" vale contra a
+base `710a8036`, não contra o parent.)
+
+**Validação:** docs-only, sem `.kt` tocado — `grep -n "Host fullscreen (29/09" PARIDADE.md`
+→ zero ocorrências; `git diff --stat` → só `PARIDADE.md` + `ANDROID_FIRST.md` + este log.
+Sem build/suíte (nenhum código alterado).
