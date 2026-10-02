@@ -22,7 +22,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -41,6 +43,20 @@ import kotlinx.serialization.encodeToString
  * concluiu primeiro (app aberto) e o Service sai do caminho sem aplicar.
  * O lado ViewModel dessa guarda entra no bloco T10.
  */
+/**
+ * Sessão abandonada pelo botão "Abandonar" da notificação (spec notificações
+ * por modo, FR-10). Carrega se a sessão era de Masmorra (verdade do Service no
+ * instante do abandono). Emitido no [SharedFlow] do companion de
+ * [FocusSessionService]; não durável por decisão do spec — sem ViewModel
+ * coletando (app fechado, processo morto), o progresso em memória já se perdeu
+ * junto e só o log de fracasso fica de fora. O ViewModel ainda ignora eventos
+ * mais antigos que sua própria criação.
+ */
+data class AbandonEvent(
+    val isDungeonMode: Boolean,
+    val emittedAtMillis: Long = System.currentTimeMillis()
+)
+
 class FocusSessionService : Service() {
 
     companion object {
@@ -49,6 +65,15 @@ class FocusSessionService : Service() {
         const val ACTION_PAUSE = "com.iurispraecepta.herolog.service.ACTION_PAUSE"
         const val ACTION_RESUME = "com.iurispraecepta.herolog.service.ACTION_RESUME"
         const val ACTION_STOP = "com.iurispraecepta.herolog.service.ACTION_STOP"
+        /**
+         * Abandono pela notificação (spec notificações por modo, FR-10): usado SÓ
+         * pelo botão "Abandonar" da notificação de sessão. Encerra como
+         * `handleStop` e emite [abandonEvents] para o ViewModel aplicar a mesma
+         * consequência do `abandonSession` in-app. `ACTION_STOP` segue genérico
+         * e sem consequência (também usado por `cancelSession`,
+         * `triggerCognitiveDeath` e pelo `deleteIntent` da conclusão).
+         */
+        const val ACTION_ABANDON = "com.iurispraecepta.herolog.service.ACTION_ABANDON"
         const val ACTION_START_BREAK =
             "com.iurispraecepta.herolog.service.ACTION_START_BREAK"
         const val ACTION_SKIP_BREAK = "com.iurispraecepta.herolog.service.ACTION_SKIP_BREAK"
@@ -74,6 +99,9 @@ class FocusSessionService : Service() {
         private val _state = MutableStateFlow(ServiceState())
         val state: StateFlow<ServiceState> = _state
 
+        private val _abandonEvents = MutableSharedFlow<AbandonEvent>(extraBufferCapacity = 16)
+        val abandonEvents: SharedFlow<AbandonEvent> = _abandonEvents
+
         /**
          * Testes apenas: injeta estado no holder (o holder é global ao processo;
          * sem isso os testes precisariam subir o Service real para cada fase).
@@ -82,6 +110,14 @@ class FocusSessionService : Service() {
         internal fun setStateForTests(state: ServiceState) {
             _state.value = state
         }
+
+        /**
+         * Testes apenas: emite um abandono como se o botão da notificação tivesse
+         * sido tocado (o PendingIntent real não é tocável em teste unitário).
+         */
+        @VisibleForTesting
+        internal fun emitAbandonForTests(event: AbandonEvent): Boolean =
+            _abandonEvents.tryEmit(event)
 
         fun actionIntent(context: Context, action: String): android.app.PendingIntent =
             FocusNotifications.servicePendingIntent(
@@ -186,6 +222,7 @@ class FocusSessionService : Service() {
             ACTION_PAUSE -> handlePause()
             ACTION_RESUME -> handleResume()
             ACTION_STOP -> handleStop()
+            ACTION_ABANDON -> handleAbandon()
             ACTION_START_BREAK -> {
                 val minutes = intent.getIntExtra(EXTRA_BREAK_MINUTES, 0)
                 handleStartBreak(minutes.takeIf { it > 0 })
@@ -350,6 +387,24 @@ class FocusSessionService : Service() {
         }
     }
 
+    /**
+     * Abandono pela notificação (FR-10): emite o evento com a verdade do
+     * Service sobre o modo e encerra exatamente como `handleStop`. A
+     * consequência de Masmorra é aplicada pelo ViewModel ao receber o evento —
+     * nunca aqui, para `ACTION_STOP` continuar sem consequência.
+     */
+    private fun handleAbandon() {
+        val wasDungeonMode = _state.value.sessionConfig?.isDungeonMode == true
+        _abandonEvents.tryEmit(AbandonEvent(wasDungeonMode))
+        handleStop()
+    }
+
+    /**
+     * Tick de conclusão (FR-4): só detecta o fim da sessão/descanso. A
+     * republicação da notificação a cada segundo foi removida — o tempo é
+     * desenhado pelo cronômetro nativo do sistema (~60 `notify`/min a menos,
+     * sem risco de limite de taxa e correto se o processo morrer).
+     */
     private fun startTick() {
         tickJob?.cancel()
         tickJob = scope.launch {
@@ -367,11 +422,6 @@ class FocusSessionService : Service() {
                         scope.launch { completeSession() }
                         return@launch
                     }
-                    FocusNotifications.notifyIfAllowed(
-                        this@FocusSessionService,
-                        FocusNotifications.ID_TIMER,
-                        FocusNotifications.timerNotification(this@FocusSessionService, current)
-                    )
                 } else if (current.phase == ServicePhase.BREAK_RUNNING) {
                     if (current.breakRemainingMillis(System.currentTimeMillis()) <= 0L) {
                         // Idem acima: completeBreak() cancela o tickJob na entrada —
@@ -379,11 +429,6 @@ class FocusSessionService : Service() {
                         scope.launch { completeBreak() }
                         return@launch
                     }
-                    FocusNotifications.notifyIfAllowed(
-                        this@FocusSessionService,
-                        FocusNotifications.ID_TIMER,
-                        FocusNotifications.breakNotification(this@FocusSessionService, current)
-                    )
                 } else {
                     return@launch
                 }
@@ -432,7 +477,13 @@ class FocusSessionService : Service() {
         )
         goForeground(
             FocusNotifications.ID_COMPLETED,
-            FocusNotifications.completionNotification(this, xp, gold)
+            FocusNotifications.completionNotification(
+                this,
+                xp,
+                gold,
+                isDungeonMode = config.isDungeonMode,
+                isWildernessChecked = config.isWildernessChecked
+            )
         )
     }
 

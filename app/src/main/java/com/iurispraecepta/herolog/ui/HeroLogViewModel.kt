@@ -56,6 +56,8 @@ import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog
 import com.iurispraecepta.herolog.logic.achievements.AchievementDetection
 import com.iurispraecepta.herolog.logic.quests.getDifficultyRewards
 import com.iurispraecepta.herolog.service.FocusSessionService
+import com.iurispraecepta.herolog.service.AbandonEvent
+import com.iurispraecepta.herolog.service.FocusNotifications
 import com.iurispraecepta.herolog.service.ServicePhase
 import com.iurispraecepta.herolog.service.completeSessionFromBackup
 import com.iurispraecepta.herolog.ui.sfx.SfxManager
@@ -178,6 +180,14 @@ class HeroLogViewModel(
     private var graceTickJob: Job? = null
     private var graceEndTimeMillis: Long = 0L
 
+    /**
+     * Base para o filtro anti-ranço do evento de abandono (FR-10): eventos
+     * emitidos antes da criação deste ViewModel são ignorados — o evento não é
+     * durável e um app recém-aberto nunca deve punir a sessão atual por um
+     * abandono de outra vida do processo.
+     */
+    private val createdAtMillis: Long = clock()
+
     init {
         viewModelScope.launch {
             val existing = repository.getCharacterState()
@@ -250,6 +260,7 @@ class HeroLogViewModel(
 
             recoverFocusSession()
             observeServiceState()
+            observeAbandonEvents()
             refreshPendingCelebration()
         }
     }
@@ -1014,14 +1025,47 @@ class HeroLogViewModel(
         val wasDungeonMode = _focusSessionState.value.config?.isDungeonMode == true
         cancelSession(context)
         if (wasDungeonMode) {
-            _dungeonSessionsProgress.value = 0
-            addSystemLog(
-                "💀 FRACASSO NA MASMORRA: Ao abandonar, sua expedição na Masmorra colapsou " +
-                    "tragicamente e todo o progresso heróico de focos seguidos foi perdido nas cinzas.",
-                highlighted = true
-            )
-            sfxManager.playDeath()
+            applyDungeonAbandonConsequence()
         }
+    }
+
+    /**
+     * Consequência de abandono de Masmorra (FR-10), extraída de `abandonSession`
+     * sem mudar comportamento: progresso zerado + fracasso no log + som de morte.
+     * Reutilizada pelo abandono via notificação (`onServiceAbandon`).
+     */
+    private fun applyDungeonAbandonConsequence() {
+        _dungeonSessionsProgress.value = 0
+        addSystemLog(
+            "💀 FRACASSO NA MASMORRA: Ao abandonar, sua expedição na Masmorra colapsou " +
+                "tragicamente e todo o progresso heróico de focos seguidos foi perdido nas cinzas.",
+            highlighted = true
+        )
+        sfxManager.playDeath()
+    }
+
+    /**
+     * Abandono pela notificação (FR-10): observa o evento emitido pelo Service
+     * em `ACTION_ABANDON` e aplica a mesma consequência do `abandonSession`
+     * in-app quando a sessão abandonada era de Masmorra (verdade do Service no
+     * evento, ou espelho local). Sem consequência no modo Padrão; eventos mais
+     * antigos que este ViewModel são ignorados (evento não durável).
+     */
+    private fun observeAbandonEvents() {
+        viewModelScope.launch {
+            FocusSessionService.abandonEvents.collect { event ->
+                if (event.emittedAtMillis < createdAtMillis) return@collect
+                onServiceAbandon(event)
+            }
+        }
+    }
+
+    @androidx.annotation.VisibleForTesting
+    internal fun onServiceAbandon(event: AbandonEvent) {
+        val vmDungeon = _focusSessionState.value.config?.isDungeonMode == true
+        if (!event.isDungeonMode && !vmDungeon) return
+        cancelAllTimers()
+        applyDungeonAbandonConsequence()
     }
 
     fun onAppBackgrounded(context: Context) {
@@ -1069,7 +1113,10 @@ class HeroLogViewModel(
     /**
      * Morte cognitiva: para o timer no Service (único dono), limpa a sessão e
      * atualiza o espelho. Sem isso o Service concluiria e aplicaria a recompensa
-     * de uma sessão já morta.
+     * de uma sessão já morta. Posta a notificação pós-fato (FR-9) — o app está
+     * sempre fora de foco aqui (a carência só esgota sem retorno) — e cancela
+     * direto a notificação de sessão para nada órfão ficar na bandeja mesmo se
+     * o Service atrasar. Sem permissão, a regra de jogo segue valendo (FR-11).
      */
     private fun triggerCognitiveDeath(context: Context) {
         graceTickJob?.cancel()
@@ -1082,6 +1129,12 @@ class HeroLogViewModel(
                 isPlayerDead = true
             )
         )
+        FocusNotifications.notifyIfAllowed(
+            context,
+            FocusNotifications.ID_COGNITIVE_DEATH,
+            FocusNotifications.cognitiveDeathNotification(context, result, charState.streak)
+        )
+        FocusNotifications.cancel(context, FocusNotifications.ID_TIMER)
         FocusSessionService.sendAction(context, FocusSessionService.ACTION_STOP)
         _focusSessionState.value = _focusSessionState.value.copy(
             isGraceActive = false,
