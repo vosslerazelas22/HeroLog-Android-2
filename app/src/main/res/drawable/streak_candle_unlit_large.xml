@@ -3,14 +3,22 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Vela apagada media (16-23dp): pavio curto + corpo + gota + pratinho (sem fumaca). -->
+    <!-- Vela apagada grande (>= 24dp): fumaca + pavio + corpo + gota + pratinho. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeAlpha="0.6"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12,7.6 C10.7,6.4 13.3,5.2 12,3.9 C11.4,3.2 11.4,2.6 11.8,2" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#000000"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M12,8 L12,9.5" />
+        android:pathData="M12,7.6 L12,9.5" />
     <path
         android:fillColor="#00000000"
         android:strokeColor="#000000"
