@@ -26,9 +26,11 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Diagnóstico Spec A: renderiza a nova barra inferior em 390x844 e 375x667 e confere que os
- * 5 rótulos estão visíveis ao mesmo tempo (critério de aceitação da Spec A). Uso do
- * `HeroLogBottomNav` igual ao da MainActivity: só `fillMaxWidth()`, altura vem do conteúdo.
+ * Spec-bottomnav-minimalista (T11): cobre os 5 estados da BottomNav (Foco, Rituais, Taverna,
+ * Herói, Reino ativos) nos 2 viewports + fonte em escala 1.3 (Taverna ativa e uma lateral
+ * ativa, 390x844). Uso do `HeroLogBottomNav` igual ao da MainActivity: só `fillMaxWidth()`,
+ * altura vem do conteúdo. Critério: exatamente um item dourado por estado (conferência
+ * humana nos PNGs contra o mockup — Roborazzi é baseline, não juiz).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -62,31 +64,77 @@ class BottomNavDiagnosticTest {
         }
     }
 
-    @Test
-    fun bottomNav_tavernaAtiva_390x844() {
-        composeTestRule.setContent { Screen("tavern") }
+    private fun renderAndCapture(activeTab: String, fileName: String) {
+        composeTestRule.setContent { Screen(activeTab) }
         composeTestRule.waitForIdle()
         assertFiveLabels()
-        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/bottomnav_diag_tavern_390x844.png")
-        println("DIAG-NAV 390x844 rotulos=5 OK")
+        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/$fileName")
+    }
+
+    @Test
+    fun bottomNav_focoAtivo_390x844() {
+        renderAndCapture("focus", "bottomnav_diag_focus_390x844.png")
     }
 
     @Test
     fun bottomNav_rituaisAtivo_390x844() {
-        composeTestRule.setContent { Screen("habits") }
-        composeTestRule.waitForIdle()
-        assertFiveLabels()
-        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/bottomnav_diag_habits_390x844.png")
-        println("DIAG-NAV habits 390x844 rotulos=5 OK")
+        renderAndCapture("habits", "bottomnav_diag_habits_390x844.png")
+    }
+
+    @Test
+    fun bottomNav_tavernaAtiva_390x844() {
+        renderAndCapture("tavern", "bottomnav_diag_tavern_390x844.png")
+    }
+
+    @Test
+    fun bottomNav_heroiAtivo_390x844() {
+        renderAndCapture("character", "bottomnav_diag_heroi_390x844.png")
+    }
+
+    @Test
+    fun bottomNav_reinoAtivo_390x844() {
+        renderAndCapture("shop", "bottomnav_diag_reino_390x844.png")
+    }
+
+    @Test
+    @Config(qualifiers = "w375dp-h667dp")
+    fun bottomNav_focoAtivo_375x667() {
+        renderAndCapture("focus", "bottomnav_diag_focus_375x667.png")
+    }
+
+    @Test
+    @Config(qualifiers = "w375dp-h667dp")
+    fun bottomNav_rituaisAtivo_375x667() {
+        renderAndCapture("habits", "bottomnav_diag_habits_375x667.png")
     }
 
     @Test
     @Config(qualifiers = "w375dp-h667dp")
     fun bottomNav_tavernaAtiva_375x667() {
-        composeTestRule.setContent { Screen("tavern") }
-        composeTestRule.waitForIdle()
-        assertFiveLabels()
-        composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/bottomnav_diag_tavern_375x667.png")
-        println("DIAG-NAV 375x667 rotulos=5 OK")
+        renderAndCapture("tavern", "bottomnav_diag_tavern_375x667.png")
+    }
+
+    @Test
+    @Config(qualifiers = "w375dp-h667dp")
+    fun bottomNav_heroiAtivo_375x667() {
+        renderAndCapture("character", "bottomnav_diag_heroi_375x667.png")
+    }
+
+    @Test
+    @Config(qualifiers = "w375dp-h667dp")
+    fun bottomNav_reinoAtivo_375x667() {
+        renderAndCapture("shop", "bottomnav_diag_reino_375x667.png")
+    }
+
+    @Test
+    @Config(fontScale = 1.3f)
+    fun bottomNav_tavernaAtiva_fontScale13_390x844() {
+        renderAndCapture("tavern", "bottomnav_diag_tavern_font13_390x844.png")
+    }
+
+    @Test
+    @Config(fontScale = 1.3f)
+    fun bottomNav_focoAtivo_fontScale13_390x844() {
+        renderAndCapture("focus", "bottomnav_diag_focus_font13_390x844.png")
     }
 }

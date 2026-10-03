@@ -236,7 +236,7 @@ fun HeroLogBottomNav(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(48.dp)
+                                        .sizeIn(minHeight = 48.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .selectable(
                                             selected = isActive,
