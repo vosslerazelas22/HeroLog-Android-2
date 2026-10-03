@@ -6247,4 +6247,75 @@ visual_parity_inset pré-aplicado (não commitado); `opencode.json` modificado e
 untracked (`.hermes/`, `.patches/`, `docs/`, `ANALISE_LACUNAS_AGENTS.md`) já estavam
 sujos antes e ficaram de fora do commit.
 
-**Desvios de escopo:** nenhum.
+**Desvios de escopo:** nenhum (bloco TitleSelectorScreen).
+
+## Bloco spec-bottomnav-minimalista — BottomNav minimalista (02/10, T5–T13)
+
+**Spec:** `specs/spec-bottomnav-minimalista.md` (mudança exclusivamente visual/UX, Android-first;
+React atualiza depois). **Precedência aplicada:** onde o plano revisado (aprovado por Bruno)
+diverge da spec, vale o plano. Commits: `f43df5f` (T5–T10, produção) + `a92f665` (T11–T12,
+testes/baselines).
+
+**Arquivo de produção (único):** `app/.../ui/navigation/HeroLogBottomNav.kt` (+68/−139 no commit
+de produção; +1/−1 no fix fontScale).
+- **T5 (FR-1):** pill removido por inteiro — `rowWidthPx`/`activeIndex`/`itemWidthPx`/`pillTargetX`/
+  `animatedPillOffset(tween 250ms)` + `.onSizeChanged` + Box do pill (`Champagne500@8%` + borda
+  20%). Busca prévia confirmou uso só na BottomNav (sheet não usa); remoção total segura.
+- **T6/T7 (FR-2/3/8/9):** laterais derivam de `selected = (activeModule == item.id)`; ativo
+  `Champagne400` + ícone **22dp**, inativo **`Zinc400` sólido** + ícone **20dp**, mesmo drawable
+  outline; slot fixo de 24dp (só o ícone troca de tamanho dentro, sem animação); label
+  `FontWeight.Normal` nos dois estados (só a cor anima, `animateColorAsState(tween 175ms)`);
+  escalas 1.05 (lateral) e 1.10 (Taverna) removidas.
+- **T8 (FR-4/5/6):** `drawTavernAura` **deletada** (busca: chamada só local, sem uso fora;
+  `TavernScreen.kt` tem `TavernGold` privado próprio — colisão de nome, não compartilhamento).
+  Taverna: fundo chapado **`Stone900`** (ativa e inativa — sem gradiente), anel 2dp + ícone 24dp +
+  label `Champagne400` (ativa) / `Zinc400` (inativa); label Normal nos dois estados; sem glow,
+  sem escala. `shadow(12.dp)` da barra intocado. Estrutura preservada: círculo 48dp, faixa 16dp,
+  overlay `TopCenter`, label `TAVERNA` sempre visível.
+- **T9/T10 (FR-7/10):** `clickable` → `selectable(selected, Role.Tab, indication = null,
+  MutableInteractionSource)` nos 5 itens (ripple padrão removido — reintroduzia flash em forma
+  de pill); laterais `sizeIn(minHeight = 48.dp)`; Taverna `sizeIn(min 48dp)`.
+- **Imports/símbolos removidos:** `animateIntOffsetAsState`, `offset`, `IntOffset`,
+  `onSizeChanged`, `LocalDensity`, `graphicsLayer`, `Brush`, `SolidColor`, `DrawScope`,
+  `mutableFloatStateOf`, `RowScope`, `Amber400`, `Amber500` (os dois últimos já eram órfãos);
+  adicionados `animateColorAsState` (`androidx.compose.animation`, não `core` — erro de import
+  inicial corrigido após `compileDebugKotlin` falhar), `selectable`, `MutableInteractionSource`,
+  `Role`, `sizeIn`. `clickable` mantido (sheet ainda usa). Correção 2 do plano: `strokeWidth 2.0`
+  é baked no XML do vetor (verificado em `lucide_ic_timer.xml`/`lucide_ic_compass.xml`) — sem
+  ajuste de traço, sem improviso.
+
+**Divergências intencionais plano-vs-spec (NÃO corrigir de volta na T13, por ordem do Bruno):**
+1. FR-2/FR-3 "ícone preenchido/contorno" → vale `Champagne400 22dp` vs `Zinc400 20dp`, mesmo
+   drawable (AAR `icons-lucide-android:2.2.1` só tem outline — sem variante filled).
+2. FR-6 "Taverna inativa mais visível que lateral inativo" → vale `Zinc400` sólido igual aos
+   laterais; hub distingue-se só pela estrutura. (Zinc300 descartado: 13.37:1 vs Stone950,
+   superaria o Champagne400 ativo de 11.38:1 — medido no script abaixo.)
+3. FR-8 → sem glow em nenhum estado da Taverna (`drawTavernAura` removida).
+4. Tom da Taverna ativa: `TavernGold #E7C873` → `Champagne400 #E5C158` (tokens, sem hex novo).
+
+**Contraste medido (WCAG, script python, vs `Stone950 #0C0A09` — fundo da barra):**
+`Champagne400` 11.38:1 / `Zinc400` 7.71:1 / (ref. `Zinc300` 13.37:1). Label ≥4.5:1 e ícone ≥3:1
+**passam** nos estados ativo e muted (laterais e Taverna). `Zinc400` confirma a regra do Bruno
+(sólido mais escuro que passa 4.5:1).
+
+**T11/T12:** `BottomNavDiagnosticTest` 3 → 12 testes (5 estados × 2 viewports + fontScale 1.3 em
+Taverna ativa e Foco ativo, 390×844). `git status app/src/test/screenshots/`: só PNGs
+`bottomnav_diag_*` (3 regravados + 9 novos).
+- **Fix fontScale encontrado pelo portão (regressão do slot fixo):** em 1.3 os labels laterais
+  clipavam (slot 24dp + spacer 2dp + label ~16dp + padding 8dp > 48dp fixos). Fix:
+  `.height(48.dp)` → `.sizeIn(minHeight = 48.dp)` (toque ≥48dp preservado; a barra cresce com a
+  fonte, o que é correto). Pós-fix: labels íntegros, alinhamento intacto.
+- **Portão visual (PNGs inspecionados, não só gerados):** exatamente um item dourado por estado;
+  sem pill; Taverna elevada/central/maior; Taverna inativa cinza mas legível como hub (anel +
+  elevação) — **passou, sem alteração de cor por conta própria**. Diferença de tom registrada:
+  Taverna ativa agora `Champagne400` (antes `#E7C873` do mockup) — comparar com o mockup na
+  revisão humana.
+- **Validação:** `./gradlew assembleDebug` BUILD SUCCESSFUL; XML bruto:
+  `BottomNavDiagnosticTest` 12/12 + `NavigationConfigTest` 18/18, 0 falhas/erros/skips.
+  `getActiveModule`/`NAV_ITEMS`/`SUB_TABS`/`MODULE_TITLES`/`onChangeTab`: grep no diff confirma
+  zero toque (só visual). Sem dependência nova.
+- **Pendente (fora deste bloco):** inspeção humana em device/emulador real (375×667, 390×844) +
+  comparação lado a lado com o mockup; validação de interação (Voltar/gestos) em device real.
+
+**`PARIDADE.md`:** linha "Navegação inferior — TavernFeat Spec A (PR #30)" (seção 2) atualizada
+no mesmo bloco (divergência consciente Android→React registrada).
