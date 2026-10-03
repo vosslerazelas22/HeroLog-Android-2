@@ -61,6 +61,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -136,6 +137,7 @@ import com.iurispraecepta.herolog.ui.todos.TodosScreen
 import com.iurispraecepta.herolog.ui.quests.QuestsScreen
 import com.iurispraecepta.herolog.ui.history.HistoryScreen
 import com.iurispraecepta.herolog.ui.navigation.HeroLogBottomNav
+import com.iurispraecepta.herolog.ui.navigation.AppShortcuts
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.navigation.MODULE_TITLES
 import com.iurispraecepta.herolog.ui.navigation.getActiveModule
@@ -189,9 +191,24 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 class MainActivity : ComponentActivity() {
+    /**
+     * Action do último App Shortcut estático recebido (`res/xml/shortcuts.xml`), pendente de
+     * consumo pela composição. Preenchido em [onCreate] (cold start) e [onNewIntent]
+     * (`singleTop` com a Activity já viva). O consumo zera o valor, então intents comuns
+     * (action nula ou desconhecida) são ignorados por [AppShortcuts.destinationFor].
+     */
+    private val pendingShortcutAction = mutableStateOf<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingShortcutAction.value = intent.action
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingShortcutAction.value = intent?.action
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
@@ -205,6 +222,25 @@ class MainActivity : ComponentActivity() {
                 // Estado de navegação em string, fiel ao `activeTab` da fonte React.
                 // TavernFeat (c89af8f): `useState<string>('tavern')` — o app abre na Taverna (NAV-1).
                 var activeTab by remember { mutableStateOf("tavern") }
+                // Contador de pedidos do App Shortcut "Nova Todo": cada incremento recria o
+                // TodosScreen (via key) com o modal de criação aberto. Zerado ao sair da aba
+                // para que voltar pelos Rituais não reabra o modal (ver LaunchedEffect abaixo).
+                var todoCreatorNonce by remember { mutableStateOf(0) }
+
+                // Consome o App Shortcut pendente (cold start ou onNewIntent): navega para o
+                // activeTab do destino; "Nova Todo" ainda bumpa o nonce do modal de criação.
+                LaunchedEffect(pendingShortcutAction.value) {
+                    val action = pendingShortcutAction.value ?: return@LaunchedEffect
+                    pendingShortcutAction.value = null
+                    val tab = AppShortcuts.activeTabFor(action) ?: return@LaunchedEffect
+                    if (AppShortcuts.opensTodoCreator(action)) todoCreatorNonce++
+                    activeTab = tab
+                }
+                // Ao sair da aba de Todos, invalida o pedido do shortcut para o modal não
+                // reabrir num retorno posterior pela navegação normal.
+                LaunchedEffect(activeTab) {
+                    if (activeTab != "todos") todoCreatorNonce = 0
+                }
                 var isFocusMode by remember { mutableStateOf(false) }
                 var isCreateModalOpen by remember { mutableStateOf(false) }
                 // Prestige info popup da aba Skills (fonte: App.tsx isPrestigeInfoOpen).
@@ -738,6 +774,9 @@ class MainActivity : ComponentActivity() {
                                         Text("Carregando missões avulsas...", color = Amber400)
                                     }
                                 } else {
+                                    // key: o App Shortcut "Nova Todo" recria a tela com o modal
+                                    // de criação aberto, sem estado controlado na TodosScreen.
+                                    key(todoCreatorNonce) {
                                     TodosScreen(
                                         todos = state.todos,
                                         onToggleTodo = { todoId -> heroLogViewModel.toggleTodo(todoId) },
@@ -748,8 +787,10 @@ class MainActivity : ComponentActivity() {
                                             heroLogViewModel.addTodo(title, notes, difficulty, tags, checklistTexts)
                                         },
                                         onEditTodo = { todo -> heroLogViewModel.editTodo(todo) },
-                                        onDeleteTodo = { todoId -> heroLogViewModel.deleteTodo(todoId) }
+                                        onDeleteTodo = { todoId -> heroLogViewModel.deleteTodo(todoId) },
+                                        initialIsCreating = todoCreatorNonce > 0
                                     )
+                                    }
                                 }
                             }
                              "focus" -> {

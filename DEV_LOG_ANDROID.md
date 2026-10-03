@@ -6319,3 +6319,45 @@ Taverna ativa e Foco ativo, 390×844). `git status app/src/test/screenshots/`: s
 
 **`PARIDADE.md`:** linha "Navegação inferior — TavernFeat Spec A (PR #30)" (seção 2) atualizada
 no mesmo bloco (divergência consciente Android→React registrada).
+
+## [2026-10-03] Bloco: feature/app-shortcuts — App Shortcuts estáticos do launcher (Android-first)
+
+**Arquivos criados/alterados:**
+- app/src/main/res/xml/shortcuts.xml (novo)
+- app/src/main/java/com/iurispraecepta/herolog/ui/navigation/AppShortcuts.kt (novo)
+- app/src/test/java/com/iurispraecepta/herolog/navigation/AppShortcutsTest.kt (novo)
+- app/src/main/AndroidManifest.xml
+- app/src/main/res/values/strings.xml
+- app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt
+- ANDROID_FIRST.md (linha da feature, mesmo bloco)
+
+**Resumo:**
+- 3 shortcuts estáticos no long-press do ícone: "Iniciar Pomodoro" → aba `focus`;
+  "Nova Todo" → aba `todos` com o modal de criação aberto; "Dailies" → aba `dailies`.
+  Ids de `activeTab` já existentes, sem aba nova (respeito a `SUB_TABS`/`HeroLogBottomNav`).
+- Ícones Lucide vindos do AAR `icons-lucide-android:2.2.1` (`lucide_ic_timer`,
+  `lucide_ic_circle_plus`, `lucide_ic_calendar_days` — presença verificada dentro do AAR),
+  referenciados como `@drawable/` no XML (recursos fundidos no build).
+- Roteamento puro em `ui.navigation.AppShortcuts` (`destinationFor`/`activeTabFor`/
+  `opensTodoCreator`), consumido na `MainActivity` via `pendingShortcutAction` preenchido em
+  `onCreate` (cold start) e `onNewIntent` (`launchMode="singleTop"` adicionado — sem ele,
+  cada toque no shortcut empilhava uma instância nova).
+- "Nova Todo" reaproveita o parâmetro `initialIsCreating` já existente da `TodosScreen`
+  (`key(todoCreatorNonce)` recria a tela; nonce zerado ao sair da aba para retorno normal
+  pelos Rituais não reabrir o modal). Zero alteração em `TodosScreen`, `DailiesScreen`,
+  timer, FocusSessionService e lógica de negócio de quests.
+
+**Validação:**
+- Build: `./gradlew assembleDebug` BUILD SUCCESSFUL; `android.app.shortcuts` confirmado no
+  merged manifest (`processDebugMainManifest`).
+- Testes (XML bruto em `app/build/test-results/testDebugUnitTest/`): `AppShortcutsTest` 6/6
+  PASS + `NavigationConfigTest` 18/18 PASS, 0 failures/errors/skips. Suíte completa não
+  rodada (validação parcial, AGENTS.md §8).
+- Visual/interação: N/A em device — long-press e os 3 fluxos exigem validação em
+  device/emulador real.
+
+**Desvios de escopo aprovados:**
+- Pomodoro NÃO auto-inicia o timer (navega à aba `focus`; iniciar sessão tem side-effects
+  de negócio e a fronteira do bloco proíbe alterar o timer). Decisão consciente.
+- Feature Android-first: registrada em `ANDROID_FIRST.md`, sem seção no `PARIDADE.md`.
+- Mantidos só 3 shortcuts (cota estática prática é 4; 4º slot reservado por decisão do Bruno).

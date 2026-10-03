@@ -32,4 +32,12 @@
     <string name="focus_cognitive_death_text_no_streak">Você saiu do app durante a Terra Selvagem. A recompensa foi perdida. Sua sequência já estava zerada.</string>
     <string name="focus_suggestion_title">Descanso concluído!</string>
     <string name="focus_suggestion_text">Iniciar nova sessão de %1$dmin?</string>
+
+    <!-- App Shortcuts estáticos (res/xml/shortcuts.xml) -->
+    <string name="shortcut_pomodoro_short">Iniciar Pomodoro</string>
+    <string name="shortcut_pomodoro_long">Ir para o cronômetro de Foco</string>
+    <string name="shortcut_new_todo_short">Nova Todo</string>
+    <string name="shortcut_new_todo_long">Criar nova missão avulsa</string>
+    <string name="shortcut_dailies_short">Dailies</string>
+    <string name="shortcut_dailies_long">Abrir tarefas diárias</string>
 </resources>

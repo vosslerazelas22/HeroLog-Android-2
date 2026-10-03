@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App Shortcuts estáticos do HeroLog (long-press no ícone do launcher).
+  Drawables vindos da lib `com.composables:icons-lucide-android` (recursos fundidos no build,
+  por isso referenciáveis como @drawable): timer = Pomodoro, circle_plus = nova Todo,
+  calendar_days = Dailies. As actions são resolvidas em AppShortcuts.kt.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/lucide_ic_timer"
+        android:shortcutId="start_pomodoro"
+        android:shortcutShortLabel="@string/shortcut_pomodoro_short"
+        android:shortcutLongLabel="@string/shortcut_pomodoro_long">
+        <intent
+            android:action="com.iurispraecepta.herolog.action.START_POMODORO"
+            android:targetClass="com.iurispraecepta.herolog.MainActivity"
+            android:targetPackage="com.iurispraecepta.herolog" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/lucide_ic_circle_plus"
+        android:shortcutId="new_todo"
+        android:shortcutShortLabel="@string/shortcut_new_todo_short"
+        android:shortcutLongLabel="@string/shortcut_new_todo_long">
+        <intent
+            android:action="com.iurispraecepta.herolog.action.NEW_TODO"
+            android:targetClass="com.iurispraecepta.herolog.MainActivity"
+            android:targetPackage="com.iurispraecepta.herolog" />
+    </shortcut>
+
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/lucide_ic_calendar_days"
+        android:shortcutId="open_dailies"
+        android:shortcutShortLabel="@string/shortcut_dailies_short"
+        android:shortcutLongLabel="@string/shortcut_dailies_long">
+        <intent
+            android:action="com.iurispraecepta.herolog.action.OPEN_DAILIES"
+            android:targetClass="com.iurispraecepta.herolog.MainActivity"
+            android:targetPackage="com.iurispraecepta.herolog" />
+    </shortcut>
+</shortcuts>
