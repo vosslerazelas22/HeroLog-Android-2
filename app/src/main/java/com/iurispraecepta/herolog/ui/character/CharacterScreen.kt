@@ -74,6 +74,7 @@ import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterSummary
 import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
+import com.iurispraecepta.herolog.ui.components.StreakIcon
 import com.iurispraecepta.herolog.ui.components.ItemInspectAction
 import com.iurispraecepta.herolog.ui.components.ItemInspectModal
 import com.iurispraecepta.herolog.ui.components.ItemInspectVariant
@@ -581,10 +582,15 @@ private fun ProgressionCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             MetricTile(
-                iconRes = LucideR.drawable.lucide_ic_flame,
+                icon = {
+                    StreakIcon(
+                        isLit = streak > 0,
+                        size = 16.dp,
+                        litTint = Orange400
+                    )
+                },
                 iconBgColor = Orange500.copy(alpha = 0.1f), // orange-500/10
                 iconBorderColor = Orange500.copy(alpha = 0.2f), // orange-500/20
-                iconColor = Orange400, // orange-400
                 label = "Sequência Ativa",
                 value = streakLabel,
                 detail = "Recorde: ${bestStreak}d"
@@ -663,6 +669,32 @@ private fun MetricTile(
     value: String,
     detail: String
 ) {
+    MetricTile(
+        icon = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(16.dp)
+            )
+        },
+        iconBgColor = iconBgColor,
+        iconBorderColor = iconBorderColor,
+        label = label,
+        value = value,
+        detail = detail
+    )
+}
+
+@Composable
+private fun MetricTile(
+    icon: @Composable () -> Unit,
+    iconBgColor: Color,
+    iconBorderColor: Color,
+    label: String,
+    value: String,
+    detail: String
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -688,12 +720,7 @@ private fun MetricTile(
                         .border(1.dp, iconBorderColor, RoundedCornerShape(6.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        painter = painterResource(iconRes),
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    icon()
                 }
                 Column {
                     Text(

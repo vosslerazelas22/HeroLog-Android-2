@@ -54,6 +54,7 @@ import com.iurispraecepta.herolog.logic.TavernLogic
 import com.iurispraecepta.herolog.model.ActivityEntry
 import com.iurispraecepta.herolog.model.ActivityType
 import com.iurispraecepta.herolog.model.CharClass
+import com.iurispraecepta.herolog.ui.components.StreakIcon
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
@@ -420,8 +421,13 @@ private fun HeroCard(
                 MetricTile(
                     modifier = Modifier.weight(1f),
                     label = "SEQUÊNCIA",
-                    iconRes = LucideR.drawable.lucide_ic_flame,
-                    iconTint = TavernOrange500,
+                    icon = {
+                        StreakIcon(
+                            isLit = streak > 0,
+                            size = 12.dp, // w-3 h-3
+                            litTint = TavernOrange500
+                        )
+                    },
                     sub = "Recorde: ${bestStreak}d"
                 ) {
                     StreakValue(streak = streak)
@@ -493,6 +499,32 @@ private fun MetricTile(
     sub: String? = null,
     content: (@Composable () -> Unit)? = null
 ) {
+    MetricTile(
+        modifier = modifier,
+        label = label,
+        icon = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(12.dp) // w-3 h-3
+            )
+        },
+        value = value,
+        sub = sub,
+        content = content
+    )
+}
+
+@Composable
+private fun MetricTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    icon: @Composable () -> Unit,
+    value: String? = null,
+    sub: String? = null,
+    content: (@Composable () -> Unit)? = null
+) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
@@ -505,12 +537,7 @@ private fun MetricTile(
             horizontalArrangement = Arrangement.spacedBy(4.dp), // gap-1
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = iconTint,
-                modifier = Modifier.size(12.dp) // w-3 h-3
-            )
+            icon()
             Text(
                 text = label,
                 style = TextStyle(

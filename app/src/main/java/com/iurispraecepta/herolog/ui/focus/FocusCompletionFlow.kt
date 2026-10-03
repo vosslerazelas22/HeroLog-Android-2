@@ -30,11 +30,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -62,6 +59,7 @@ import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
+import com.iurispraecepta.herolog.ui.components.StreakIcon
 import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.Stone950
@@ -185,12 +183,13 @@ fun StreakCelebrationScreen(
                         .background(Color(0xFFF97316).copy(alpha = pulseAlpha), CircleShape)
                 )
             }
-            Icon(
-                imageVector = Icons.Filled.LocalFireDepartment,
-                contentDescription = null,
-                tint = Color(0xFFF97316),
+            // Vela da sequência (StreakIcon centralizado; sempre acesa aqui —
+            // esta etapa só existe quando a sequência incrementou).
+            StreakIcon(
+                isLit = true,
+                size = 80.dp,
+                litTint = Color(0xFFF97316),
                 modifier = Modifier
-                    .size(80.dp)
                     .offset { IntOffset(0, bounceOffset.dp.roundToPx()) }
                     .shadow(25.dp, CircleShape, ambientColor = Color(0xFFF97316).copy(alpha = 0.6f))
             )
@@ -320,13 +319,25 @@ fun SessionSummaryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("SEQUÊNCIA", color = Color(0xFF9F9F9F), fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = Cinzel, letterSpacing = 1.sp)
-                Text(
-                    "🔥 $effectiveStreak ${if (effectiveStreak == 1) "DIA" else "DIAS"}",
-                    color = Color(0xFFF14D2A),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = Cinzel
-                )
+                // Vela da sequência (StreakIcon centralizado) + valor — o React
+                // usa `<Flame/>` + texto aqui (FocusCompletionFlow.tsx:211).
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StreakIcon(
+                        isLit = streak > 0,
+                        size = 14.dp,
+                        litTint = Color(0xFFF14D2A)
+                    )
+                    Text(
+                        "$effectiveStreak ${if (effectiveStreak == 1) "DIA" else "DIAS"}",
+                        color = Color(0xFFF14D2A),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = Cinzel
+                    )
+                }
             }
 
             if (rewardsCalculation.comboBonusPercent > 0) {

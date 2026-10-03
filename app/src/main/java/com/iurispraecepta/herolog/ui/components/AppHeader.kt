@@ -45,7 +45,7 @@ import com.composables.icons.lucide.R
  * AppHeader — porte 1:1 do bloco `{/* HEADER BAR */}` de App.tsx (fonte React).
  *
  * Fiel a: logo animado (⚔️ girando 8s), título "HEROLOG" (Cinzel, champagne-400,
- * uppercase), pill de streak (Flame laranja + "{streak}d"), pill de gold
+ * uppercase), pill de streak (StreakIcon vela acesa/apagada + "{streak}d"), pill de gold
  * (Coins champagne + gold), botão mute/unmute (VolumeX vermelho / Volume2
  * champagne), botão de ajustes (Settings zinc, hover ice-400 — hover N/A em
  * touch).
@@ -194,9 +194,13 @@ fun AppHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             StatusPill(
-                iconRes = R.drawable.lucide_ic_flame,
-                iconTint = Orange500,
-                iconSize = 12.dp, // w-3 h-3
+                icon = {
+                    StreakIcon(
+                        isLit = streak > 0,
+                        size = 12.dp, // w-3 h-3
+                        litTint = Orange500
+                    )
+                },
                 text = "${streak}d",
                 textFontFamily = JetBrainsMonoFamily
             )
@@ -255,6 +259,26 @@ private fun StatusPill(
     text: String,
     textFontFamily: FontFamily
 ) {
+    StatusPill(
+        icon = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(iconSize)
+            )
+        },
+        text = text,
+        textFontFamily = textFontFamily
+    )
+}
+
+@Composable
+private fun StatusPill(
+    icon: @Composable () -> Unit,
+    text: String,
+    textFontFamily: FontFamily
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp), // gap-1
         verticalAlignment = Alignment.CenterVertically,
@@ -263,12 +287,7 @@ private fun StatusPill(
             .border(1.dp, Champagne500.copy(alpha = 0.15f), RoundedCornerShape(4.dp)) // border-champagne-500/15
             .padding(horizontal = 10.dp, vertical = 4.dp) // px-2.5 py-1
     ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = iconTint,
-            modifier = Modifier.size(iconSize)
-        )
+        icon()
         Text(
             text = text,
             fontFamily = textFontFamily,
