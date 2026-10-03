@@ -16,7 +16,7 @@
 
 | Severidade | Qtd | Descrição |
 |---|---|---|
-| **Crítica** | 4 | Funcionalidade quebrada ou ausente (TitleEquipModal scroll, TitleSelector grid crash, GeneralSettings campos críticos; AmbientSound deselect ✅ resolvido spec-007) |
+| **Crítica** | 2 | Funcionalidade quebrada ou ausente (TitleEquipModal scroll, GeneralSettings campos críticos; TitleSelector grid crash + nome sentence case ✅ resolvidos Branch A PR #6; AmbientSound deselect ✅ resolvido spec-007) |
 | **Média** | ~131 | Diferenças perceptíveis com workaround (paleta, font weights, layout, copy, ausência de SFX) |
 | **Baixa** | ~645+ | Cosmético systematic: font families, casing, hover states, animações ausentes |
 
@@ -42,9 +42,9 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 **Críticas (quebram funcionalidade):**
 1. **AmbientSoundModal — track deselect bug** — ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)`; usuário pode desligar o som.
 2. **TitleEquipModal — scroll container ausente** — Lista longa de títulos pode transbordar sem scroll (React tem `max-h-[65vh]`).
-3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — Pode causar crash/medição incorreta em Compose (deveria usar `chunked` pattern).
+3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — ✅ **Resolvido (Branch A, PR #6)** — sem lazy aninhado (`Column` + `verticalScroll`); verificado contra o código em 03/10 (D121).
 4. **GeneralSettingsModal — 3 campos críticos ausentes** — "Nome do dispositivo" (sync multi-device), "Duração do descanso longo", seção "Conta e dados" (reset/logout).
-5. **TitleSelectorScreen — nome do título sentence case** — Bug: nome exibido em sentence case no Android vs UPPERCASE no React.
+5. **TitleSelectorScreen — nome do título sentence case** — ✅ **Resolvido (Branch A, PR #6)** — `title.name.uppercase()` (`TitleSelectorScreen.kt:297`); verificado 03/10 (D120).
 6. **D198: Relatório Diário ausente** — React mostra modal "RELATÓRIO DIÁRIO" ao abrir o app num novo dia (gold reward, streak status, dailies perdidas, HP damage). Android concede gold silenciosamente sem UI.
 
 **Médias (percepção do usuário):**
@@ -260,22 +260,22 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D95 | **Header alignment** | Header centralizado (`flex justify-center`) | Header alinhado à esquerda (Row left-aligned) — tipografia migrada para Cinzel pelo S5, mas alinhamento continua diferente | **Média (parcial S5)** | S5 migrou fonte para Cinzel + sentence case "Crônicas Diárias", mas layout (centralizado vs esquerda) permanece |
-| D96 | **Header border-bottom separator** | `border-b border-amber-500/10 mb-4` abaixo do título | Sem separator line abaixo do header | **Baixa** | Visual separator ausente |
-| D97 | **All-mode card background** | `bg-purple-950/10` (sutil purple tint) | `Stone900` (neutral stone, sem purple) | **Média** | Cor ambiente diferente nos chronicle cards |
-| D98 | **Card shadow** | `shadow-md` (both notes e all-mode cards) | Sem shadow/elevation | **Baixa** | Cards flat no Android |
-| D99 | **Wilderness red corner overlay** | Rotated red square (`bg-red-600/5 rotate-45`) em entries wilderness | Elemento decorativo omitido | **Baixa** | Detalhe visual perdido |
-| D100 | **Chronicle panel gradient direction** | Vertical gradient (`bg-gradient-to-b`) | Horizontal gradient (`Brush.horizontalGradient`) | **Baixa** | Gradiente rotacionado 90° |
-| D101 | **Chronicle panel Sparkles watermark** | `Sparkles` icon 15% opacity no canto superior | Omitido | **Baixa** | Flourish visual ausente |
-| D102 | **Chronicle "📜 Crônica Mística" header** | Android adiciona header textual no painel expandido | React NÃO tem este header — texto renderiza direto | **Baixa** | Android adiciona UI extra não presente no React |
-| D103 | **Chronicle text whitespace-pre-wrap** | `whitespace-pre-wrap` para preservar line breaks | Sem `maxLines` ou whitespace handling — multi-line pode colapsar | **Média** | Potencial diferença de reflow em crônicas multi-line |
-| D104 | **Content max-width** | `max-w-xl mx-auto` (~576px centered) | Preenche largura disponível (sem max-width) | **Baixa** | Em tablets, Android estica conteúdo |
-| D105 | **Empty state general padding** | `py-16` (64dp vertical) | `padding(vertical = 28.dp)` | **Baixa** | Empty state mais compacto |
-| D106 | **Empty state icon size** | `w-12 h-12` (48dp) | `size(36.dp)` | **Baixa** | Ícone menor |
-| D107 | **Empty state dashed border** | Sem dashed border no empty state geral | Desenha dashed border via `PathEffect.dashPathEffect` | **Baixa** | Android adiciona decorative border não presente no React |
-| D108 | **Empty notes state icon** | `FileText` (lucide) | `Icons.Default.Description` (Material) | **Baixa** | Ícone diferente |
-| D109 | **Notes card header divider** | Sem divider entre skill name/date e note body | `Box(height=1.dp)` divider explícito | **Baixa** | Android adiciona separator extra |
-| D110 | **ViewModeButton border radius** | `rounded` (~4dp) | `RoundedCornerShape(6.dp)` | **Baixa** | Levemente mais arredondado |
+| D95 | **Header alignment** | Header centralizado (`flex justify-center`) | ✅ Header centralizado (`Box Center`, `BookOpen` Lucide 16dp, título 12sp Black) — literal de `App.tsx:3360-3363` | **Média (parcial S5)** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:137-164` |
+| D96 | **Header border-bottom separator** | `border-b border-amber-500/10 mb-4` abaixo do título | ✅ `Box` 1dp `amber-500/10%` + `mb-4` (16dp) | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:166-172` |
+| D97 | **All-mode card background** | `bg-purple-950/10` (sutil purple tint) | ✅ `Purple950/10%` | **Média** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:315` |
+| D98 | **Card shadow** | `shadow-md` (both notes e all-mode cards) | ✅ `shadow` 3dp nos cards + 20dp no painel (aproximação — `box-shadow` CSS sem equivalente exato; calibração em device pendente) | **Baixa** | ✅ **Resolvido como aproximação (03/10, `856ce08`)** — `HistoryScreen.kt:307-313`, `:596-602`, `:120-126` |
+| D99 | **Wilderness red corner overlay** | Rotated red square (`bg-red-600/5 rotate-45`) em entries wilderness | ✅ Quadrado 96dp `red-600/5%` girado 45° no canto (`drawBehind`, clip = `overflow-hidden`) | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:317-331` |
+| D100 | **Chronicle panel gradient direction** | Vertical gradient (`bg-gradient-to-b`) | ✅ `Brush.verticalGradient` | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:536` |
+| D101 | **Chronicle panel Sparkles watermark** | `Sparkles` icon 15% opacity no canto superior | ✅ `Sparkles` 40dp `amber-400/15%` no topo do painel | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:558-567` |
+| D102 | **Chronicle "📜 Crônica Mística" header** | Sem header — texto renderiza direto | ✅ Sem header extra — só o botão Revelar/Ocultar (copy literal da fonte) | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — header removido (estava em `HEAD~1:453`) |
+| D103 | **Chronicle text whitespace-pre-wrap** | `whitespace-pre-wrap` para preservar line breaks | ✅ `Text` sem `maxLines` — Compose preserva `\n` por padrão (sem colapso como no HTML) | **Média** | ✅ **Resolvido por plataforma (03/10)** — `HistoryScreen.kt:568-575` |
+| D104 | **Content max-width** | `max-w-xl mx-auto` (~576px centered) | Preenche largura disponível (sem max-width) | **Baixa** | ⚠️ **Aberto** — proposto como divergência consciente (app mobile-only; só afeta tablets). Parágrafo do notes `max-w-xs` → `widthIn(320.dp)` |
+| D105 | **Empty state general padding** | `py-16` (64dp vertical) | ✅ `padding(vertical = 64.dp)` | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:700` |
+| D106 | **Empty state icon size** | `w-12 h-12` (48dp) | ✅ `size(48.dp)` | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:710` |
+| D107 | **Empty state dashed border** | Sem dashed border no empty state geral | ✅ Sem borda/fundo (dashed removido) | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — removido (estava em `HEAD~1:589,644`) |
+| D108 | **Empty notes state icon** | `FileText` (lucide) | ✅ `lucide_ic_file_text` via `painterResource` | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:758` |
+| D109 | **Notes card header divider** | Sem divider entre skill name/date e note body | ✅ Divider 1dp `amber-500/5%` | **Baixa** | ✅ **Resolvido — e o achado era impreciso**: o React TEM `border-b border-amber-500/5` (`HistoryTab.tsx:79`). `HistoryScreen.kt:640-645` |
+| D110 | **ViewModeButton border radius** | `rounded` (~4dp) | ✅ `RoundedCornerShape(4.dp)` | **Baixa** | ✅ **Resolvido (03/10, `856ce08`)** — `HistoryScreen.kt:187` |
 
 ### 4.11 Módulo Reino — Bazar (ShopScreen)
 
@@ -296,13 +296,13 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 | # | Item | React | Android | Severidade | Notas |
 |---|---|---|---|---|---|
-| D116 | **Badge "Ativo" posicionamento** | `absolute -top-2.5 -right-2` (fora do card) | `offset(x=6.dp, y=-6.dp)` com `Alignment.TopEnd` (dentro do card) | **Média** | Badge "vaza" do card no React; fica dentro no Android |
-| D117 | **Glow shadow do título equipado** | `shadow-[0_0_15px_rgba(245,158,11,0.25)]` (amber glow) | `background(Stone900)` + `border(Amber500)` — sem glow | **Média** | Efeito visual de "destaque mágico" ausente |
-| D118 | **Grid hardcoded 2 colunas** | `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` | `LazyVerticalGrid(GridCells.Fixed(2))` | **Média** | Em telas maiores, React mostraria até 3 colunas |
-| D119 | **LazyVerticalGrid height fixa 600.dp** | Grid React flui naturalmente com scroll do container | `Modifier.fillMaxWidth().height(600.dp)` — altura arbitrária | **Média** | Pode truncar com muitos títulos ou sobrar espaço com poucos |
-| D120 | **Nome do título não é uppercase** | `text-[12px] font-serif uppercase tracking-wider` | `Text(text = title.name)` — sem `.uppercase()` | **Crítica** | **Bug real**: nome em sentence case vs UPPERCASE |
-| D121 | **LazyVerticalGrid em verticalScroll** | Container React usa scroll CSS normal | `LazyVerticalGrid` dentro de `verticalScroll(rememberScrollState())` | **Crítica** | **Risco de crash/performance** — deveria usar `chunked` pattern |
-| D122 | **Category badge text case** | `uppercase` via CSS class | `title.category.name.lowercase()` | **Média** | Category em lowercase vs UPPERCASE |
+| D116 | **Badge "Ativo" posicionamento** | `absolute -top-2.5 -right-2` (fora do card) | ✅ `offset(x=8.dp, y=-10.dp)` com `Alignment.TopEnd` — fora do card, literal da fonte | **Média** | ✅ **Resolvido (Branch A, PR #6 — verificado 03/10)** — `TitleSelectorScreen.kt:378` |
+| D117 | **Glow shadow do título equipado** | `shadow-[0_0_15px_rgba(245,158,11,0.25)]` (amber glow) | `background(Stone900)` + `border(Amber500)` — sem glow | **Média** | ❌ **Aberto** — único item visual aberto do módulo |
+| D118 | **Grid hardcoded 2 colunas** | `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` | 1 coluna (`Column`); no mobile (<640dp, breakpoint `sm`) o React também renderiza 1 coluna | **Média** | Parcial — fiel no mobile; tablet divergiria (sem `LazyVerticalGrid` aninhado por crash — decisão consciente) |
+| D119 | **LazyVerticalGrid height fixa 600.dp** | Grid React flui naturalmente com scroll do container | ✅ Sem grid lazy — `Column` + `verticalScroll` rola com a página | **Média** | ✅ **Obsoleto/resolvido (Branch A, PR #6)** |
+| D120 | **Nome do título não é uppercase** | `text-[12px] font-serif uppercase tracking-wider` | ✅ `title.name.uppercase()` | **Crítica** | ✅ **Resolvido (Branch A, PR #6 — verificado 03/10)** — `TitleSelectorScreen.kt:297` |
+| D121 | **LazyVerticalGrid em verticalScroll** | Container React usa scroll CSS normal | ✅ `Column` + `verticalScroll`, sem lazy aninhado | **Crítica** | ✅ **Resolvido (Branch A, PR #6 — verificado 03/10)** |
+| D122 | **Category badge text case** | `uppercase` via CSS class | ✅ `title.category.name.uppercase()` | **Média** | ✅ **Resolvido (Branch A, PR #6 — verificado 03/10)** — `TitleSelectorScreen.kt:314` |
 
 ### 4.14 Módulo Reino — Heatmap (HeatmapScreen)
 
@@ -527,8 +527,8 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 1. **AmbientSoundModal — track deselect bug** — ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)`.
 2. **TitleEquipModal — scroll container ausente** — Lista pode transbordar (D166). Fix: adicionar `Modifier.heightIn(max = screenHeight * 0.65f).verticalScroll(rememberScrollState())`.
-3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — Risco de crash (D121). Fix: migrar para `LazyColumn` com `items(chunked(2))` como `TitleShopScreen` faz.
-4. **TitleSelectorScreen — nome do título sentence case** — Bug visual (D120). Fix: adicionar `.uppercase()` no `Text` do nome.
+3. **TitleSelectorScreen — LazyVerticalGrid em verticalScroll** — ✅ **Resolvido (Branch A, PR #6)** — sem lazy aninhado (`Column` + `verticalScroll`); verificado contra o código em 03/10 (D121).
+4. **TitleSelectorScreen — nome do título sentence case** — ✅ **Resolvido (Branch A, PR #6)** — `title.name.uppercase()` (`TitleSelectorScreen.kt:297`); verificado 03/10 (D120).
 5. **SessionSummary — título 40% menor + rank structure** — Estrutura hierárquica diferente (D173-D174). Fix: alinhar com React (label `★ CLASSIFICAÇÃO X ★` + descrição).
 6. **GeneralSettingsModal — 3 campos críticos ausentes** — "Nome do dispositivo", "Duração do descanso longo", seção "Conta e dados" (D131-D134). Decisão: confirmar se são pendências intencionais.
 
@@ -561,7 +561,7 @@ Estes padrões foram confirmados na varredura profunda e explicam **70%+ de toda
 
 ## 7. Conclusão
 
-O port Android apresenta **fidelidade funcional alta** — todas as 17 telas e 15 modais/overlays existem e funcionam com a mesma informação que o React. **5 divergências críticas** restantes (D153 resolvida na spec-007, PR #14), nenhuma causa crash imediato.
+O port Android apresenta **fidelidade funcional alta** — todas as 17 telas e 15 modais/overlays existem e funcionam com a mesma informação que o React. **4 divergências críticas** restantes (D153 resolvida na spec-007, PR #14; D120/D121 resolvidas na Branch A, PR #6), nenhuma causa crash imediato.
 
 A varredura profunda (linha a linha, **todas as 17 telas e 15 modais analisados**) revelou **~780+ divergências**, mas **~70% são sistemáticas** — os mesmos 10 padrões se repetem em todas as telas:
 
@@ -582,7 +582,7 @@ A varredura profunda (linha a linha, **todas as 17 telas e 15 modais analisados*
 |---|---|---|
 | D153 | AmbientSoundModal track deselect | ✅ **Resolvido (spec-007, PR #14)** — `onSelectTrack(if (isSelected) null else track.id)` |
 | D166 | TitleEquipModal scroll container | Lista pode transbordar |
-| D121 | TitleSelectorScreen LazyVerticalGrid em scroll | Risco de crash |
+| D121 | TitleSelectorScreen LazyVerticalGrid em scroll | ✅ **Resolvido (Branch A, PR #6)** | Sem lazy aninhado (`Column` + `verticalScroll`), verificado 03/10 |
 | D173-D174 | SessionSummary título/rank | Estrutura 40% menor e diferente |
 | D131-D134 | GeneralSettingsModal 3 campos ausentes | Sync multi-device, reset, logout |
 | D198 | Relatório Diário ausente | Usuário não vê recompensa/streak ao abrir app |
@@ -618,7 +618,7 @@ Auditoria cruzada de `PARIDADE.md` e `AGENTS.md` contra o código real (read-onl
 | P3 | Seção 9 (Riscos) | Baixa | "Cooldown de Masmorra" diz que `DungeonCooldownLogic.kt` não foi portado — o arquivo existe com 8 testes |
 | P4 | Seção 9 (Riscos) | Baixa | "Todo tem sistema de decaimento próprio" diz "não auditado" — `TodoDecayLogic.kt` tem 10 testes |
 | P5 | Seção 9 (Riscos) | Baixa | "Sistema de conquistas diferente" diz "investigar antes de portar" — `AchievementCatalog.kt`/`AchievementLogic.kt`/`AchievementsScreen.kt` existem e estão wireados |
-| P6 | Seção 7 (Reino) | Baixa | Nota sobre `TitleSelectorScreen.kt` diz "Grid sem LazyVerticalGrid (linhas via chunked)" — o código real USA `LazyVerticalGrid` (a afirmação é sobre `TitleShopScreen.kt`, não `TitleSelectorScreen.kt`) |
+| P6 | Seção 7 (Reino) | Baixa | Nota sobre `TitleSelectorScreen.kt` diz "Grid sem LazyVerticalGrid (linhas via chunked)" — o código real USA `LazyVerticalGrid` (a afirmação é sobre `TitleShopScreen.kt`, não `TitleSelectorScreen.kt`). **Superada (11/09, Branch A PR #6)**: na auditoria (07/09) o código usava `LazyVerticalGrid`; após o fix usa `Column` + `verticalScroll` — a nota do PARIDADE passou a valer. Verificado 03/10 |
 | P7 | Multiplas seções | Baixa | Vários arquivos significativos não têm linha própria na tabela (`GeneralSettingsModal.kt`, `CognitiveDeathLogic.kt`, `DungeonCooldownLogic.kt`, `FocusModels.kt`) |
 | P8 | Seção 6 (Missões) | Baixa | Contagens agregadas históricas ("315/315", "343/343") estão desatualizadas — `HeroLogViewModelTest` sozinho tem 57 testes |
 
@@ -716,10 +716,20 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 |---|---|---|---|
 | D153 | AmbientSoundModal track deselect | ✅ **Resolvido (spec-007, PR #14)** | `onSelectTrack(if (isSelected) null else track.id)` — usuário pode desligar o som |
 | D166 | TitleEquipModal scroll container | ❌ **Não resolvido** | Sem `verticalScroll` nem `heightIn` |
-| D121 | TitleSelectorScreen LazyVerticalGrid em scroll | ❌ **Não resolvido** | `LazyVerticalGrid` dentro de `verticalScroll` |
-| D120 | TitleSelectorScreen nome sentence case | ❌ **Não resolvido** | `Text(text = title.name)` sem `.uppercase()` |
+| D121 | TitleSelectorScreen LazyVerticalGrid em scroll | ✅ **Resolvido (Branch A, PR #6)** | `Column` + `verticalScroll`, sem lazy aninhado — verificado 03/10 |
+| D120 | TitleSelectorScreen nome sentence case | ✅ **Resolvido (Branch A, PR #6)** | `title.name.uppercase()` (`TitleSelectorScreen.kt:297`) — verificado 03/10 |
 | D173-D174 | SessionSummary título/rank | ❌ **Não resolvido** | `fontSize = 12.sp` (título) + rank como display number |
 | D131-D134 | GeneralSettingsModal campos ausentes | ❌ **Não resolvido** | Campos não existem no código |
+
+### Verificação 03/10 — History D95–D110 + TitleSelector D116–D122 (bloco docs)
+
+| # | Divergência | Status | Evidência |
+|---|---|---|---|
+| D95–D103, D105–D110 | History paridade visual | ✅ **Resolvido (`856ce08`)** | Ver §4.10 anotada — 14/15 itens, refs de linha em `HistoryScreen.kt` |
+| D104 | History `max-w-xl` | ⚠️ **Aberto (consciente)** | Sem max-width no Android; app mobile-only |
+| D116, D119–D122 | TitleSelector grid/casing/badge | ✅ **Resolvido (Branch A, PR #6)** | Ver §4.13 anotada — verificado contra o código em 03/10 |
+| D117 | TitleSelector glow do card equipado | ❌ **Aberto** | Sem glow — único item visual aberto do módulo |
+| D118 | TitleSelector colunas | Parcial | 1 coluna = fiel no mobile (`sm` breakpoint); tablet divergiria |
 
 ### Divergências anteriores (D1-D25)
 
@@ -753,7 +763,9 @@ Verificação se os 4 commits não documentados (`7e0d758`, `d341487`, `5dce9cb`
 
 | Status | Qtd | Divergências |
 |---|---|---|
-| ❌ Não resolvido | 18 | D1, D4-D8, D12, D13, D17, D18, D20-D23 + D120, D121, D131-D134, D166, D173-D174, D198 |
+| ❌ Não resolvido | 16 | D1, D4-D8, D12, D13, D17, D18, D20-D23 + D131-D134, D166, D173-D174, D198 |
+| ✅ Resolvido por `856ce08` (03/10) | 14 | D95–D103, D105–D110 (History paridade visual; D109 era falso positivo) |
+| ✅ Resolvido por Branch A PR #6 (verificado 03/10) | 5 | D116, D119, D120, D121, D122 (TitleSelector) |
 | ✅ Resolvido por Sprint S5 | 1 | D15 (HabitsScreen header casing) |
 | ✅ Resolvido por S5 (labels) | 2 | D57 (Habits labels), D70 (Dailies labels) |
 | ✅ Resolvido por S5 (submit) | 3 | D59 (Habits submit), D80 (Todos submit), S10 parcial |

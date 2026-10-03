@@ -6361,3 +6361,72 @@ no mesmo bloco (divergência consciente Android→React registrada).
   de negócio e a fronteira do bloco proíbe alterar o timer). Decisão consciente.
 - Feature Android-first: registrada em `ANDROID_FIRST.md`, sem seção no `PARIDADE.md`.
 - Mantidos só 3 shortcuts (cota estática prática é 4; 4º slot reservado por decisão do Bruno).
+
+## [2026-10-03] Bloco docs: HistoryScreen (commit 856ce08) + defasagem TitleSelector no RELATORIO
+
+**Escopo:** bloco docs-only (nenhum `.kt` tocado aqui). Registrar o commit `856ce08`
+("paridade visual de Crônicas Diárias com o React (painel, cards, estados vazios,
+sombras)" — só `HistoryScreen.kt`, +406/−298, sem entrada no DEV_LOG até agora) e
+corrigir a defasagem do `RELATORIO_PARIDADE.md` para History (§4.10) e TitleSelector
+(§4.13). Verificação item a item feita neste bloco contra a fonte real
+(`HistoryTab.tsx` 191L + wrapper `App.tsx:3358-3366` + `TitleSelector.tsx` 115L);
+working tree limpo para os dois arquivos (só `opencode.json` modificado, fora do escopo).
+
+**O que o commit 856ce08 fez (código já commitado, aqui só o registro):**
+- Painel (wrapper `App.tsx:3359`): o `LazyColumn` vira o painel — `QuestPanel` + borda
+  `Amber500/15%` + `rounded-lg` (8dp) + `shadow 20dp` preta
+  (`shadow-[0_12px_40px_rgba(0,0,0,0.7)]`, aproximação — calibração em device pendente,
+  declarada no KDoc). `contentPadding` 20/20/20/24dp: 36dp totais = `p-5` (20dp) +
+  `px-4`/`pb-4` (16dp) da fonte, menos 12dp do último card (`space-y-3`).
+- Header centralizado (`Box Center` + `Arrangement.Center`) com `BookOpen` Lucide 16dp
+  `Champagne400` + "CRÔNICAS DIÁRIAS" 12sp Black 0.05em; separator 1dp `Amber500/10%` +
+  `mb-4` (16dp) — literal de `App.tsx:3360-3363`.
+- Cards all: fundo `Purple950/10%` (`bg-purple-950/10`), `shadow 3dp` (`shadow-md`),
+  overlay wilderness (quadrado 96dp `red-600/5%` girado 45° no canto superior direito,
+  recortado pelo clip = `overflow-hidden`), badge "TERRA SELVAGEM", toggle Eye/EyeOff
+  Lucide, painel da crônica com `verticalGradient` (`bg-gradient-to-b`) + `shadow-inner`
+  aproximada (gradiente 6dp no topo) + watermark `Sparkles` 40dp `amber-400/15%`.
+- Removidos: header extra "📜 Crônica Mística" (não existe na fonte; estava em
+  `HEAD~1:453`) e dashed borders dos empty states (`HEAD~1:589,644`).
+- Empty states literais: geral `py-16` (64dp) + `BookOpen` 48dp sem borda/fundo; notes
+  `FileText` Lucide 40dp + container `stone-950/20%` + borda `amber-500/5%` + `py-12`/`p-6`
+  (48/24dp), `max-w-xs` → `widthIn(max = 320.dp)`; bug `text-amber-150` da fonte
+  (classe inexistente) replicado como cor herdada `amber-100/50` — registrado no KDoc.
+- Toggle: `rounded` → 4dp, `.uppercase()` + `tracking-wider`, cores champagne/stone por
+  estado com `animateColorAsState`; notas com `border-l-2` via `drawBehind`.
+- Ícones Material removidos (`MenuBook`/`Description`/`Visibility`/`VisibilityOff`);
+  Lucide via `painterResource` (`book_open`, `eye`, `eye_off`, `sparkles`, `file_text`).
+
+**Verificação D95–D110 (§4.10): 14/15 resolvidos.** Único aberto: D104 (`max-w-xl
+mx-auto` — sem max-width no Android; mobile-only, baixa → proposta como divergência
+consciente). Residuais baixos: R1 empty geral com inset 20dp no Android vs full-bleed
+no React (a fonte retorna o empty fora do painel, `HistoryTab.tsx:18-26`); R2 animação
+de entrada `opacity/y` não portada (S8, declarada no KDoc); R3 hovers (S6); R4
+variantes `md:` desktop (S7). Achado lateral: D109 do relatório era impreciso — o React
+TEM `border-b border-amber-500/5` (`HistoryTab.tsx:79`).
+
+**Defasagem TitleSelector incluída neste bloco (pedido do Bruno):** D116/D119–D122
+(§4.13) constavam "Não resolvido" mas o código já resolveu — D121 (sem
+`LazyVerticalGrid` aninhado; `Column` + `verticalScroll`, 11/09 Branch A PR #6), D120
+(`name.uppercase()`, `TitleSelectorScreen.kt:297`), D122
+(`category.name.uppercase()`, `:314`), D119 (altura fixa 600dp obsoleta), D116 (badge
+`offset(8.dp, -10dp)` = `-top-2.5 -right-2` literal, fora do card — o relatório dizia
+"dentro do card"). Ícones Lucide Award/Shield (`a349aee`; DEV_LOG + PARIDADE já
+registravam). Abertos restantes: D117 (glow `shadow-[0_0_15px_rgba(245,158,11,0.25)]`
+do card equipado, média) e D118 parcial (1 coluna = fiel no mobile `<640dp`, breakpoint
+`sm`; tablet divergiria). P6 (§8.1) superado: na auditoria (07/09) o código usava
+`LazyVerticalGrid`; após 11/09 não usa mais. Observação fora de escopo (não alterada):
+PARIDADE linha 200 diz "`Column` + `chunked(2)`" mas o código atual renderiza 1 coluna
+(`forEach`, sem `chunked`) — checar se o `chunked(2)` do PR #6 foi revertido depois.
+
+**Docs atualizados neste bloco:** `PARIDADE.md` linha "Histórico / Crônicas Diárias"
+(bloco 03/10); `RELATORIO_PARIDADE.md` §4.10 (D95–D110), §4.13 (D116–D122), §1 (itens
+3/5 + contagem críticas 4→2), §6 (itens 3–4), §7 (críticas restantes 5→4), §8.1 (P6),
+§10 (D120/D121 + linhas novas History/Selector + Resumo).
+
+**Validação:** `./gradlew assembleDebug` BUILD SUCCESSFUL; `./gradlew
+testDebugUnitTest` BUILD SUCCESSFUL com XML bruto em
+`app/build/test-results/testDebugUnitTest/`: **104 suítes / 824 testes / 0 falhas /
+0 erros / 0 skipped** (suíte completa, não parcial). Bloco docs-only, sem mudança de
+código; visual segue pendente — print lado a lado com o React + device/emulador,
+incluindo calibração das sombras (aproximações declaradas no KDoc).
