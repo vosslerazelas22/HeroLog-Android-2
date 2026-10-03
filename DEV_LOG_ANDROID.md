@@ -6207,3 +6207,44 @@ Sem build/suíte (nenhum código alterado).
 **Validação (reportada no commit):** `assembleDebug` BUILD SUCCESSFUL; suíte completa **103 classes / 809 testes / 0 falhas / 0 erros / 0 skipped** (não re-executada neste bloco docs-only; sem XML re-conferido aqui). Nota: `debug.keystore` (gitignored) copiado do worktree main p/ build local; fora do diff.
 **Visual em device/emulador: PENDENTE (T17)** — cores/ícones claro+escuro, cronômetro após kill, `setColorized`.
 **Desvios/clarificações pendentes do spec:** GP na notificação (T12 manda); `n/4` sem +1; evento de abandono não durável + filtro anti-ranço (sem VM vivo, só o log fica de fora); cancel direto do timer na morte; copies novas Android-first ("Permaneça no app…", "Descanso em andamento"); morte com acento/ícone Wilderness; strings antigas sem uso mantidas.
+
+---
+
+## [2026-10-03] Bloco: TitleSelectorScreen — Material Icons → Lucide (Award/Shield)
+
+**Escopo:** pedido do Bruno, restrito a `TitleSelectorScreen.kt` (sobre o patch
+`titleselector_visual_parity_inset.patch`, aplicado mas não commitado no worktree):
+trocar os 3 `Icon(imageVector = Icons.Filled.*)` por Lucide (`painterResource` +
+`LucideR.drawable`), padrão `CharacterScreen.kt`, sem mexer em layout/textos/espaçamentos.
+
+**Pré-condição cumprida:** `lucide_ic_award` confirmado no AAR
+`com.composables:icons-lucide-android:2.2.1` (listing via `zipfile`:
+`res/drawable/lucide_ic_award.xml` + `lucide_ic_shield.xml` presentes) antes de
+editar — se não existisse, a troca não seria feita.
+
+**Arquivos (`TitleSelectorScreen.kt`, só ele):**
+- Imports: removidos `Icons`/`filled.Shield`/`filled.WorkspacePremium` (grep confirmou
+  que `Icons.` só ocorria nos 3 call sites); adicionados `painterResource` +
+  `com.composables.icons.lucide.R as LucideR`.
+- Header "TÍTULOS": `WorkspacePremium` → `lucide_ic_award` (tint `Champagne500`, 16dp).
+- Header "SEUS TÍTULOS DESBLOQUEADOS": `Shield` Material → `lucide_ic_shield`
+  (tint `Champagne400`, 16dp).
+- Estado vazio: `WorkspacePremium` → `lucide_ic_award` (tint `Amber500@20%`, 48dp,
+  `.alpha(iconAlpha)` animado intacto).
+- KDoc "Nota sobre ícones" atualizado (aprovação explícita do Bruno): registro da
+  aproximação `WorkspacePremium` removido — `Award` e `Shield` via Lucide, literais
+  do `TitleSelector.tsx`. Restante do KDoc intocado.
+
+**Validação:** `./gradlew assembleDebug` BUILD SUCCESSFUL (2m22s; o build resolve os
+drawables — nome inventado quebraria aqui). Suíte unitária não re-executada: troca
+é só de painter (sem lógica) e `git grep` confirma que nenhum teste referencia
+`TitleSelectorScreen`. Fidelidade visual formal (print lado a lado + device)
+segue PENDENTE, como o resto do módulo Reino.
+**`PARIDADE.md`**: linha "Seletor de Títulos (rota `titles`)" (seção 7) atualizada
+no mesmo bloco.
+**Nota de worktree:** o `git diff` vs HEAD mistura este bloco com o patch
+visual_parity_inset pré-aplicado (não commitado); `opencode.json` modificado e os
+untracked (`.hermes/`, `.patches/`, `docs/`, `ANALISE_LACUNAS_AGENTS.md`) já estavam
+sujos antes e ficaram de fora do commit.
+
+**Desvios de escopo:** nenhum.
