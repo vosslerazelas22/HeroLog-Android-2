@@ -85,7 +85,7 @@ class AbandonConfirmationNotificationTest {
         val notification = FocusNotifications.timerNotification(context, state)
 
         assertEquals("Abandonar a Masmorra?", titleOf(notification))
-        assertEquals("Você perde as sessões seguidas (2/4).", textOf(notification))
+        assertEquals("Você perderá o progresso da masmorra (2/4).", textOf(notification))
         assertEquals(2, notification.actions.size)
         assertEquals("Confirmar abandono", notification.actions[0].title.toString())
         assertEquals("Voltar", notification.actions[1].title.toString())
@@ -116,7 +116,7 @@ class AbandonConfirmationNotificationTest {
         val notification = FocusNotifications.timerNotification(context, state)
 
         assertEquals("Abandonar a Masmorra?", titleOf(notification))
-        assertEquals("Você perde esta expedição.", textOf(notification))
+        assertEquals("Você perderá esta expedição.", textOf(notification))
     }
 
     @Test
@@ -134,7 +134,7 @@ class AbandonConfirmationNotificationTest {
             val notification = FocusNotifications.timerNotification(context, state)
 
             assertEquals(
-                "Você perde as sessões seguidas ($n/4).",
+                "Você perderá o progresso da masmorra ($n/4).",
                 textOf(notification)
             )
         }
