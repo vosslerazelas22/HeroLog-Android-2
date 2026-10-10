@@ -18,6 +18,12 @@
     <string name="focus_timer_text_paused">Pausado · %1$s restantes</string>
     <string name="focus_timer_support_standard">Modo Padrão · %1$d min</string>
     <string name="focus_timer_support_dungeon">Masmorra · %1$d/4</string>
+    <!-- spec NOTIFICACOES_FOCO: confirmação de abandono na Masmorra (FR-C5) -->
+    <string name="focus_abandon_confirm_title">Abandonar a Masmorra?</string>
+    <string name="focus_abandon_confirm_text">Você perde as sessões seguidas (%1$d/4).</string>
+    <string name="focus_abandon_confirm_text_first">Você perde esta expedição.</string>
+    <string name="focus_action_confirm_abandon">Confirmar abandono</string>
+    <string name="focus_action_back">Voltar</string>
     <string name="focus_timer_wilderness_running">Permaneça no app para manter o bônus</string>
     <string name="focus_break_title">Descanso</string>
     <string name="focus_break_text">%1$s restantes</string>

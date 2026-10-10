@@ -21,6 +21,8 @@ data class ServiceState(
     val phase: ServicePhase = ServicePhase.IDLE,
     val sessionConfig: FocusSessionConfig? = null,
     val skillName: String = "Foco",
+    /** Emoji da skill para o título `Foco: <emoji> <nome>` (FR-C3). Vazio = sem emoji. */
+    val skillEmoji: String = "",
     val durationMinutes: Int = 0,
     val endTimeMillis: Long = 0L,
     /** Restante congelado no momento da pausa (ms). Só válido em PAUSED. */
@@ -33,8 +35,18 @@ data class ServiceState(
     val breakTotalSeconds: Int = 0,
     val lastSessionDungeonMode: Boolean = false,
     val lastSessionWildernessMode: Boolean = false,
-    val lastSessionDungeonSessions: Int = 0
-)
+    val lastSessionDungeonSessions: Int = 0,
+    /**
+     * Prazo da confirmação de abandono em Masmorra (ms, wall clock; FR-C5).
+     * `0L` = sem confirmação armada. A decisão é por relógio (`now < deadline`,
+     * NFR-C3), nunca por flag — o job de reversão só restaura a aparência.
+     */
+    val abandonConfirmDeadlineMillis: Long = 0L
+) {
+    /** Confirmação armada se o prazo ainda vigora. */
+    fun isAbandonArmed(now: Long): Boolean =
+        abandonConfirmDeadlineMillis > 0L && now < abandonConfirmDeadlineMillis
+}
 
 /** Restante da sessão em ms (nunca negativo). Em PAUSED retorna o valor congelado. */
 fun ServiceState.sessionRemainingMillis(now: Long): Long =
@@ -47,9 +59,13 @@ fun ServiceState.breakRemainingMillis(now: Long): Long =
 
 fun formatRemaining(millis: Long): String {
     val totalSeconds = (millis / 1000L).toInt().coerceAtLeast(0)
-    val minutes = totalSeconds / 60
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
-    return "%d:%02d".format(minutes, seconds)
+    // Sessões de 60 min ou mais (Q2: preset 90 + custom até 180) usam H:MM:SS,
+    // mesmo padrão do cronômetro nativo; abaixo disso, MM:SS com zero à esquerda.
+    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds)
+    else "%02d:%02d".format(minutes, seconds)
 }
 
 /**

@@ -61,11 +61,21 @@ class ServiceStateTest {
     }
 
     @Test
-    fun formatRemaining_formatsMinutesAndPaddedSeconds() {
+    fun formatRemaining_padsMinutesWithLeadingZero() {
         assertEquals("24:00", formatRemaining(1_440_000L))
-        assertEquals("5:03", formatRemaining(303_000L))
-        assertEquals("0:00", formatRemaining(0L))
-        assertEquals("0:00", formatRemaining(-5_000L))
+        assertEquals("05:03", formatRemaining(303_000L))
+        assertEquals("00:44", formatRemaining(44_000L))
+        assertEquals("00:00", formatRemaining(0L))
+        assertEquals("00:00", formatRemaining(-5_000L))
+    }
+
+    @Test
+    fun formatRemaining_hourPlus_usesHMMSS() {
+        assertEquals("1:00:00", formatRemaining(3_600_000L))
+        assertEquals("1:15:00", formatRemaining(4_500_000L))
+        assertEquals("1:30:00", formatRemaining(5_400_000L))
+        assertEquals("3:00:00", formatRemaining(10_800_000L))
+        assertEquals("59:59", formatRemaining(3_599_000L))
     }
 
     private val testConfig = FocusSessionConfig(
