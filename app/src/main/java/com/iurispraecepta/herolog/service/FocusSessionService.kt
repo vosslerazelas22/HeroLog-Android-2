@@ -417,6 +417,13 @@ class FocusSessionService : Service() {
         val current = _state.value
         val wasDungeonMode = current.sessionConfig?.isDungeonMode == true
         if (wasDungeonMode && !current.isAbandonArmed(System.currentTimeMillis())) return
+        // Consome o prazo sincronamente (revisão CodeRabbit): o `handleStop`
+        // abaixo é assíncrono, então sem isto um segundo ACTION_ABANDON
+        // passaria no guarda e emitiria um 2º evento (consequência duplicada).
+        // Fora da Masmorra o guarda não se aplica, mas o evento duplicado é
+        // no-op no ViewModel (`onServiceAbandon` retorna sem dungeon) — fora
+        // de escopo, sem marcador genérico.
+        _state.value = current.copy(abandonConfirmDeadlineMillis = 0L)
         abandonConfirmJob?.cancel()
         _abandonEvents.tryEmit(AbandonEvent(wasDungeonMode))
         handleStop()
@@ -499,6 +506,12 @@ class FocusSessionService : Service() {
 
     private suspend fun completeSession() {
         if (destroyed) return
+        // Consome o prazo na entrada (revisão CodeRabbit, E1): a fase só muda
+        // para COMPLETED após vários `suspend` (repositório); sem isto um
+        // ACTION_ABANDON no intervalo seria honrado e disputaria a conclusão.
+        // Sem guarda de fase aqui: ela ainda é RUNNING neste ponto, e o
+        // invariante "armado ⟹ RUNNING/PAUSED" torna o deadline suficiente.
+        _state.value = _state.value.copy(abandonConfirmDeadlineMillis = 0L)
         tickJob?.cancel()
         abandonConfirmJob?.cancel()
         val current = _state.value
