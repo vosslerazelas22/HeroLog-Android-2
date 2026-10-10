@@ -50,7 +50,8 @@ class FocusModeNotificationsTest {
 
         val notification = FocusNotifications.timerNotification(context, state)
 
-        assertEquals(FocusNotificationTheme.ACCENT_STANDARD, notification.color)
+        assertEquals(FocusNotificationTheme.BG_STANDARD_RUNNING, notification.color)
+        assertTrue(notification.extras.getBoolean("android.colorized"))
         assertEquals(R.drawable.ic_focus_small, notification.smallIcon.resId)
         assertEquals("Modo Padrão · 25 min", textOf(notification))
         assertEquals(endTime, notification.`when`)
@@ -68,7 +69,8 @@ class FocusModeNotificationsTest {
 
         val notification = FocusNotifications.timerNotification(context, state)
 
-        assertEquals(FocusNotificationTheme.ACCENT_DUNGEON, notification.color)
+        assertEquals(FocusNotificationTheme.BG_DUNGEON_RUNNING, notification.color)
+        assertTrue(notification.extras.getBoolean("android.colorized"))
         assertEquals(R.drawable.ic_focus_dungeon, notification.smallIcon.resId)
         // Mesma regra da tela (`RaidModeInfoBox`): contagem ANTES da sessão atual.
         assertEquals("Masmorra · 2/4", textOf(notification))
@@ -85,7 +87,8 @@ class FocusModeNotificationsTest {
 
         val notification = FocusNotifications.timerNotification(context, state)
 
-        assertEquals(FocusNotificationTheme.ACCENT_WILDERNESS, notification.color)
+        assertEquals(FocusNotificationTheme.BG_WILDERNESS_RUNNING, notification.color)
+        assertTrue(notification.extras.getBoolean("android.colorized"))
         assertEquals(R.drawable.ic_focus_wilderness, notification.smallIcon.resId)
         assertTrue(notification.actions.isNullOrEmpty())
         assertEquals("Permaneça no app para manter o bônus", textOf(notification))
@@ -119,8 +122,10 @@ class FocusModeNotificationsTest {
 
         val notification = FocusNotifications.timerNotification(context, state)
 
-        assertEquals("Pausado · 1:00 restantes", textOf(notification))
+        assertEquals("Pausado · 01:00 restantes", textOf(notification))
         assertTrue(!notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
+        // Pausado não mostra a hora do relógio no cabeçalho.
+        assertTrue(!notification.extras.getBoolean(Notification.EXTRA_SHOW_WHEN, true))
         assertEquals(2, notification.actions.size)
         assertEquals("Retomar", notification.actions[0].title.toString())
         assertEquals("Abandonar", notification.actions[1].title.toString())
@@ -138,7 +143,8 @@ class FocusModeNotificationsTest {
 
         val notification = FocusNotifications.breakNotification(context, state)
 
-        assertEquals(FocusNotificationTheme.ACCENT_BREAK, notification.color)
+        assertEquals(FocusNotificationTheme.BG_BREAK, notification.color)
+        assertTrue(notification.extras.getBoolean("android.colorized"))
         assertEquals("Descanso em andamento", textOf(notification))
         assertTrue(!textOf(notification).contains("ciclo", ignoreCase = true))
         assertEquals(1, notification.actions.size)
@@ -155,6 +161,7 @@ class FocusModeNotificationsTest {
         )
 
         assertEquals(FocusNotificationTheme.ACCENT_DUNGEON, notification.color)
+        assertTrue(!notification.extras.getBoolean("android.colorized"))
         assertEquals(R.drawable.ic_focus_dungeon, notification.smallIcon.resId)
         assertEquals("+60 XP · +75 GP", textOf(notification))
     }
@@ -182,6 +189,7 @@ class FocusModeNotificationsTest {
         assertEquals("Morte Cognitiva", title)
         assertTrue(textOf(notification).contains("sequência foi zerada"))
         assertTrue(textOf(notification).contains("recompensa foi perdida"))
+        assertTrue(!notification.extras.getBoolean("android.colorized"))
         assertTrue(notification.actions.isNullOrEmpty())
         assertNotNull(notification.contentIntent)
     }

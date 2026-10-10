@@ -74,6 +74,15 @@ class FocusSessionService : Service() {
          * `triggerCognitiveDeath` e pelo `deleteIntent` da conclusão).
          */
         const val ACTION_ABANDON = "com.iurispraecepta.herolog.service.ACTION_ABANDON"
+        /**
+         * Confirmação de abandono em Masmorra (spec NOTIFICACOES_FOCO, FR-C5):
+         * o botão "Abandonar" da notificação envia REQUEST (arma 5 s e reposta
+         * em modo confirmação); "Confirmar abandono" envia ACTION_ABANDON
+         * (só honrado com o prazo vigente, Q3); "Voltar" envia CANCEL.
+         * No Padrão e na Selvagem o botão segue `ACTION_ABANDON` direto.
+         */
+        const val ACTION_ABANDON_REQUEST = "com.iurispraecepta.herolog.service.ACTION_ABANDON_REQUEST"
+        const val ACTION_ABANDON_CANCEL = "com.iurispraecepta.herolog.service.ACTION_ABANDON_CANCEL"
         const val ACTION_START_BREAK =
             "com.iurispraecepta.herolog.service.ACTION_START_BREAK"
         const val ACTION_SKIP_BREAK = "com.iurispraecepta.herolog.service.ACTION_SKIP_BREAK"
@@ -172,6 +181,8 @@ class FocusSessionService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var tickJob: Job? = null
+    /** Reversão da confirmação de abandono (FR-C5): só restaura a aparência. */
+    private var abandonConfirmJob: Job? = null
 
     @Volatile
     private var destroyed = false
@@ -197,6 +208,7 @@ class FocusSessionService : Service() {
     override fun onDestroy() {
         destroyed = true
         tickJob?.cancel()
+        abandonConfirmJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }
@@ -223,6 +235,8 @@ class FocusSessionService : Service() {
             ACTION_RESUME -> handleResume()
             ACTION_STOP -> handleStop()
             ACTION_ABANDON -> handleAbandon()
+            ACTION_ABANDON_REQUEST -> handleAbandonRequest()
+            ACTION_ABANDON_CANCEL -> handleAbandonCancel()
             ACTION_START_BREAK -> {
                 val minutes = intent.getIntExtra(EXTRA_BREAK_MINUTES, 0)
                 handleStartBreak(minutes.takeIf { it > 0 })
@@ -301,12 +315,13 @@ class FocusSessionService : Service() {
         scope.launch {
             if (destroyed) return@launch
             val charState = repos().characterRepository.getCharacterState()
-            val skillName = charState?.skills?.getOrNull(config.selectedSkillIdx)?.name
-                ?: FALLBACK_SKILL_NAME
+            val skill = charState?.skills?.getOrNull(config.selectedSkillIdx)
+            val skillName = skill?.name ?: FALLBACK_SKILL_NAME
             _state.value = ServiceState(
                 phase = ServicePhase.RUNNING,
                 sessionConfig = config,
                 skillName = skillName,
+                skillEmoji = skill?.emoji.orEmpty(),
                 durationMinutes = durationMinutes,
                 endTimeMillis = endTime,
                 pauseCount = 0
@@ -376,6 +391,7 @@ class FocusSessionService : Service() {
 
     private fun handleStop() {
         tickJob?.cancel()
+        abandonConfirmJob?.cancel()
         scope.launch {
             repos().focusSessionRepository.clearSession()
             FocusSessionReceiver.cancelBackup(this@FocusSessionService)
@@ -392,11 +408,56 @@ class FocusSessionService : Service() {
      * Service sobre o modo e encerra exatamente como `handleStop`. A
      * consequência de Masmorra é aplicada pelo ViewModel ao receber o evento —
      * nunca aqui, para `ACTION_STOP` continuar sem consequência.
+     *
+     * Em Masmorra o abandono é estrito (Q3): só prossegue com a confirmação
+     * armada (`now < deadline`); fora do prazo é ignorado, para um toque
+     * tardio nunca abandonar sem confirmação.
      */
     private fun handleAbandon() {
-        val wasDungeonMode = _state.value.sessionConfig?.isDungeonMode == true
+        val current = _state.value
+        val wasDungeonMode = current.sessionConfig?.isDungeonMode == true
+        if (wasDungeonMode && !current.isAbandonArmed(System.currentTimeMillis())) return
+        abandonConfirmJob?.cancel()
         _abandonEvents.tryEmit(AbandonEvent(wasDungeonMode))
         handleStop()
+    }
+
+    /**
+     * Primeiro toque em "Abandonar" na Masmorra (FR-C5): arma 5 s, reposta a
+     * notificação em modo confirmação e agenda a reversão. Idempotente (E4):
+     * com a confirmação já armada, um segundo REQUEST é ignorado.
+     */
+    private fun handleAbandonRequest() {
+        val current = _state.value
+        if (current.sessionConfig?.isDungeonMode != true) return
+        if (current.phase != ServicePhase.RUNNING && current.phase != ServicePhase.PAUSED) return
+        val now = System.currentTimeMillis()
+        if (current.isAbandonArmed(now)) return
+        _state.value = current.copy(abandonConfirmDeadlineMillis = now + 5_000L)
+        goForeground(FocusNotifications.ID_TIMER, FocusNotifications.timerNotification(this, _state.value))
+        abandonConfirmJob?.cancel()
+        abandonConfirmJob = scope.launch {
+            delay(5_000L)
+            if (destroyed) return@launch
+            _state.value = _state.value.copy(abandonConfirmDeadlineMillis = 0L)
+            if (_state.value.phase == ServicePhase.RUNNING ||
+                _state.value.phase == ServicePhase.PAUSED
+            ) {
+                goForeground(
+                    FocusNotifications.ID_TIMER,
+                    FocusNotifications.timerNotification(this@FocusSessionService, _state.value)
+                )
+            }
+        }
+    }
+
+    /** "Voltar": limpa o prazo e restaura a notificação normal. */
+    private fun handleAbandonCancel() {
+        abandonConfirmJob?.cancel()
+        val current = _state.value
+        if (!current.isAbandonArmed(System.currentTimeMillis())) return
+        _state.value = current.copy(abandonConfirmDeadlineMillis = 0L)
+        goForeground(FocusNotifications.ID_TIMER, FocusNotifications.timerNotification(this, _state.value))
     }
 
     /**
@@ -439,6 +500,7 @@ class FocusSessionService : Service() {
     private suspend fun completeSession() {
         if (destroyed) return
         tickJob?.cancel()
+        abandonConfirmJob?.cancel()
         val current = _state.value
         val config = current.sessionConfig
         if (config == null) {
@@ -473,7 +535,9 @@ class FocusSessionService : Service() {
             lastCompletedGold = gold,
             lastSessionDungeonMode = config.isDungeonMode,
             lastSessionWildernessMode = config.isWildernessChecked,
-            lastSessionDungeonSessions = config.dungeonSessions
+            lastSessionDungeonSessions = config.dungeonSessions,
+            // A conclusão prevalece sobre a confirmação ativa (E1).
+            abandonConfirmDeadlineMillis = 0L
         )
         goForeground(
             FocusNotifications.ID_COMPLETED,
@@ -511,7 +575,8 @@ class FocusSessionService : Service() {
                 phase = ServicePhase.BREAK_RUNNING,
                 breakEndTimeMillis = endTime,
                 breakDurationMinutes = minutes,
-                breakTotalSeconds = minutes * 60
+                breakTotalSeconds = minutes * 60,
+                abandonConfirmDeadlineMillis = 0L
             )
             FocusSessionReceiver.scheduleBreakBackup(this@FocusSessionService, endTime)
             FocusNotifications.cancel(this@FocusSessionService, FocusNotifications.ID_COMPLETED)
