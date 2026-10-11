@@ -6478,3 +6478,24 @@ incluindo calibração das sombras (aproximações declaradas no KDoc).
 
 **Desvios de escopo aprovados:**
 - Divergência visual intencional vs React (fundo do painel de histórico): documentada como Android-first
+
+---
+
+## [2026-10-11] Bloco: history_align_tab_structure
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt
+
+**Resumo:**
+- Root Column do `HistoryScreen` simplificado para seguir padrão das outras abas (QuestsScreen, ShopScreen, HeatmapScreen): `Column` simples com `.padding(horizontal = 16.dp)` + `Spacer(12.dp)` antes do header fixo
+- Removidos `shadow`/`clip`/`border`/`RoundedCornerShape` card-like desnecessários da raiz (decisão Trello #72: fundo unificado no Scaffold)
+- Header "CRÔNICAS DIÁRIAS" fixo mantido; `LazyColumn` com `weight(1f)` para conteúdo scrollável mantido
+- Alinhamento visual com demais abas: mesmo espaçamento do AppHeader, sem sobreposição
+
+**Validação:**
+- Build: `assembleDebug` → BUILD SUCCESSFUL
+- Testes: `testDebugUnitTest` → 18/18 testes `HistoryScreen` passaram (9×390×844 + 9×375×667), XML bruto sem falhas/erros
+- Visual: PENDENTE — inspeção em device/emulador real (375×667, 390×844)
+
+**Desvios de escopo aprovados:**
+- Nenhum. Alinhamento à decisão consciente Trello #72 / PARIDADE.md (fundo unificado no Scaffold).

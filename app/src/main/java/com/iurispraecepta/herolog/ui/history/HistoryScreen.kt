@@ -95,6 +95,9 @@ private val Red400 = Color(0xFFF87171)
  *  - painel `shadow-[0_12px_40px_rgba(0,0,0,0.7)]` → `Modifier.shadow` com elevação alta, cor preta;
  *  - cards `shadow-md` → `Modifier.shadow` com elevação baixa, cor preta;
  *  - painel da crônica `shadow-inner` (inset 0 2px 4px 5% preto) → gradiente de 6dp no topo.
+ *
+ * Estrutura: `Column` root com header fixo + `LazyColumn` com `weight(1f)` para conteúdo scrollável,
+ * seguindo o padrão das demais abas (ex.: `QuestsScreen`, `SkillsScreen`).
  */
 @Composable
 fun HistoryScreen(
@@ -108,130 +111,127 @@ fun HistoryScreen(
         history.filter { it.notes.isNotBlank() }
     }
 
-    // Wrapper do painel (App.tsx): `bg-quest-panel border border-amber-500/15 rounded-lg p-5`.
-    // Sem fundo próprio (decisão 03/out, Trello #72): o fundo vem do Scaffold (`QuestPanel`), como nas demais telas.
-    // Cards têm `space-y-3` (12dp): cada item leva 12dp embaixo e o `contentPadding` inferior desconta
-    // esses 12dp do total de 36dp (`p-5` 20dp + `pb-4` 16dp do HistoryTab).
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 12.dp, bottom = 12.dp + LocalBottomBarInset.current)
-            // shadow-[0_12px_40px_rgba(0,0,0,0.7)] — antes do clip, senão o recorte come a sombra
-            .shadow(
-                elevation = 20.dp,
-                shape = RoundedCornerShape(8.dp),
-                clip = false,
-                ambientColor = Color.Black,
-                spotColor = Color.Black
-            )
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        // ═══ CABEÇALHO DO PAINEL (vem do wrapper em App.tsx) ═══
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ═══ CABEÇALHO DO PAINEL FIXO (vem do wrapper em App.tsx) ═══
         // `pb-2.5 border-b border-amber-500/10 mb-4 flex justify-center items-center min-h-[35px]`
         // (min-h inclui o padding e a borda: 34dp + 1dp de linha).
-        item(key = "header") {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 34.dp)
-                        .padding(bottom = 10.dp),
-                    contentAlignment = Alignment.Center
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 34.dp)
+                    .padding(bottom = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(LucideR.drawable.lucide_ic_book_open),
-                            contentDescription = null,
-                            tint = Champagne400,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "CRÔNICAS DIÁRIAS",
-                            fontFamily = Cinzel,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp,
-                            letterSpacing = 0.05.em,
-                            color = Champagne400
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(LucideR.drawable.lucide_ic_book_open),
+                        contentDescription = null,
+                        tint = Champagne400,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "CRÔNICAS DIÁRIAS",
+                        fontFamily = Cinzel,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        letterSpacing = 0.05.em,
+                        color = Champagne400
+                    )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Amber500.copy(alpha = 0.10f))
-                )
-                Spacer(modifier = Modifier.height(16.dp))
             }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Amber500.copy(alpha = 0.10f))
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        if (history.isEmpty()) {
-            // HistoryTab: `if (history.length === 0) return <empty>` — sem toggle.
-            item(key = "empty_general") { EmptyHistoryGeneralState() }
-        } else {
-            // ── Seletor de Modo (Crônicas completas / Compilado de Notas) ──
-            item(key = "toggle") {
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Stone950.copy(alpha = 0.4f))
-                        .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    ViewModeButton(
-                        title = "Crônicas completas",
-                        isSelected = viewMode == "all",
-                        onClick = { viewMode = "all" },
-                        modifier = Modifier.weight(1f)
-                    )
-                    ViewModeButton(
-                        title = "Compilado de Notas",
-                        isSelected = viewMode == "notes",
-                        onClick = { viewMode = "notes" },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            if (viewMode == "notes") {
-                // ═══ MODO NOTAS ═══
-                if (notesEntries.isEmpty()) {
-                    item(key = "empty_notes") { EmptyNotesState() }
-                } else {
-                    items(
-                        items = notesEntries,
-                        key = { "note_${it.id}" }
-                    ) { entry ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
-                            NotesHistoryCard(entry = entry)
-                        }
+        // ═══ CONTEÚDO SCROLLÁVEL ═══
+        // Wrapper do painel (App.tsx): `bg-quest-panel border border-amber-500/15 rounded-lg p-5`.
+        // Sem fundo próprio (decisão 03/out, Trello #72): o fundo vem do Scaffold (`QuestPanel`), como nas demais telas.
+        // Cards têm `space-y-3` (12dp): cada item leva 12dp embaixo e o `contentPadding` inferior desconta
+        // esses 12dp do total de 36dp (`p-5` 20dp + `pb-4` 16dp do HistoryTab).
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 12.dp, bottom = 12.dp + LocalBottomBarInset.current),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 0.dp, bottom = 24.dp)
+        ) {
+            if (history.isEmpty()) {
+                // HistoryTab: `if (history.length === 0) return <empty>` — sem toggle.
+                item(key = "empty_general") { EmptyHistoryGeneralState() }
+            } else {
+                // ── Seletor de Modo (Crônicas completas / Compilado de Notas) ──
+                item(key = "toggle") {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Stone950.copy(alpha = 0.4f))
+                            .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        ViewModeButton(
+                            title = "Crônicas completas",
+                            isSelected = viewMode == "all",
+                            onClick = { viewMode = "all" },
+                            modifier = Modifier.weight(1f)
+                        )
+                        ViewModeButton(
+                            title = "Compilado de Notas",
+                            isSelected = viewMode == "notes",
+                            onClick = { viewMode = "notes" },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
-            } else {
-                // ═══ MODO ALL (CRÔNICAS COMPLETAS) ═══
-                items(
-                    items = history,
-                    key = { "all_${it.id}" }
-                ) { entry ->
-                    Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
-                        FullHistoryCard(
-                            entry = entry,
-                            isExpanded = expandedChronicleId == entry.id,
-                            onToggleExpand = {
-                                expandedChronicleId = if (expandedChronicleId == entry.id) null else entry.id
+
+                if (viewMode == "notes") {
+                    // ═══ MODO NOTAS ═══
+                    if (notesEntries.isEmpty()) {
+                        item(key = "empty_notes") { EmptyNotesState() }
+                    } else {
+                        items(
+                            items = notesEntries,
+                            key = { "note_${it.id}" }
+                        ) { entry ->
+                            Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
+                                NotesHistoryCard(entry = entry)
                             }
-                        )
+                        }
+                    }
+                } else {
+                    // ═══ MODO ALL (CRÔNICAS COMPLETAS) ═══
+                    items(
+                        items = history,
+                        key = { "all_${it.id}" }
+                    ) { entry ->
+                        Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)) {
+                            FullHistoryCard(
+                                entry = entry,
+                                isExpanded = expandedChronicleId == entry.id,
+                                onToggleExpand = {
+                                    expandedChronicleId = if (expandedChronicleId == entry.id) null else entry.id
+                                }
+                            )
+                        }
                     }
                 }
             }
