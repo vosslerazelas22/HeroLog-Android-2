@@ -70,6 +70,7 @@ fun PendingCelebrationHost(
                 onConfirm = { notes: String, tag: String ->
                     onConfirmSingle(session.historyId, notes, tag)
                 },
+                dungeonSessionsCompleted = session.dungeonSessionsCompleted,
                 modifier = modifier.fillMaxSize()
             )
         }

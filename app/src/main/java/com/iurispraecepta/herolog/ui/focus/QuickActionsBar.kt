@@ -45,6 +45,7 @@ fun QuickActionsBar(
     isSettingsEnabled: Boolean, // fonte: disabled quando isRunning || isBreakActive
     onOpenSettingsModal: () -> Unit,
     onEnterFullscreen: () -> Unit,
+    modeTheme: ModeTheme = RaidMode.PADRAO.theme(),
     modifier: Modifier = Modifier
 ) {
     // Paridade React (App.tsx:3027): só linha superior (border-t border-white/10),
@@ -64,17 +65,19 @@ fun QuickActionsBar(
                 .padding(top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-        // 1. Modo
+        // 1. Modo — tinta do ícone via ModeTheme.accent (FR-006); os
+        // demais botões não leem o modo. Sempre habilitado: com sessão
+        // rodando abre o modal em readOnly (FR-019).
         QuickActionButton(
             label = "Modo",
-            enabled = !isRunning,
+            enabled = true,
             onClick = onOpenModeModal,
             modifier = Modifier.weight(1f)
         ) {
             when {
-                isDungeonMode -> Icon(painterResource(R.drawable.lucide_ic_shield), null, tint = Color(0xFFC084FC))
-                isWildernessMode -> Icon(painterResource(R.drawable.lucide_ic_shield_alert), null, tint = Color(0xFFF87171))
-                else -> Icon(painterResource(R.drawable.lucide_ic_sparkles), null, tint = Color(0xFFE5C158))
+                isDungeonMode -> Icon(painterResource(R.drawable.lucide_ic_shield), null, tint = modeTheme.accent)
+                isWildernessMode -> Icon(painterResource(R.drawable.lucide_ic_shield_alert), null, tint = modeTheme.accent)
+                else -> Icon(painterResource(R.drawable.lucide_ic_sparkles), null, tint = modeTheme.accent)
             }
         }
         // 2. Som Ambiente

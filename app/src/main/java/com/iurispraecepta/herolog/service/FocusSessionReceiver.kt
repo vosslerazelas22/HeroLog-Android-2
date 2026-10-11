@@ -219,7 +219,14 @@ suspend fun completeSessionFromBackup(
     if (characterRepository.getCharacterState() == null) return false
     val useCase = FocusUseCase(characterRepository, focusSessionRepository, pendingRewardRepository)
     val calc = useCase.calculateRewards(config, durationMinutes) ?: return false
-    useCase.applyRewards(calc, referenceDate = referenceDate) ?: return false
+    // OQ-2: mesma semântica de sessão atual do caminho ao vivo.
+    val dungeonSessionsCompleted =
+        if (config.isDungeonMode) (config.dungeonSessions + 1).coerceAtMost(4) else 0
+    useCase.applyRewards(
+        calc,
+        referenceDate = referenceDate,
+        dungeonSessionsCompleted = dungeonSessionsCompleted
+    ) ?: return false
     focusSessionRepository.clearSession()
     return true
 }

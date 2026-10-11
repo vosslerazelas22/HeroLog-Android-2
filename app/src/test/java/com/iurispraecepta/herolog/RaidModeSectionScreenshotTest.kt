@@ -13,10 +13,12 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.iurispraecepta.herolog.logic.focus.formatDungeonCooldown
+import com.iurispraecepta.herolog.ui.focus.ModeStatus
 import com.iurispraecepta.herolog.ui.focus.RaidMode
-import com.iurispraecepta.herolog.ui.focus.RaidModeInfoBox
 import com.iurispraecepta.herolog.ui.focus.RaidModeSegmentedControl
 import com.iurispraecepta.herolog.ui.focus.lootChancePercentFrom
+import com.iurispraecepta.herolog.ui.focus.theme
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import org.junit.Before
 import org.junit.Rule
@@ -61,18 +63,17 @@ class RaidModeSectionScreenshotTest {
                     onModeSelected = {},
                     onLog = {}
                 )
-                RaidModeInfoBox(
+                ModeStatus(
                     mode = mode,
-                    dungeonSessions = dungeonSessions,
+                    completed = dungeonSessions,
                     dungeonOnCooldown = dungeonCooldownRemainingMs > 0L,
+                    cooldownText = formatDungeonCooldown(dungeonCooldownRemainingMs),
                     lootChancePercent = lootChancePercentFrom(
                         studiedMinutes = 25,
                         isDungeon = mode == RaidMode.MASMORRA,
                         equippedTitleId = null
                     ),
-                    onShowDungeonHelp = {},
-                    onShowWildernessHelp = {},
-                    onShowStandardHelp = {}
+                    theme = mode.theme()
                 )
             }
         }
@@ -114,7 +115,8 @@ class RaidModeSectionScreenshotTest {
     fun raidModeSection_masmorraCooldown() {
         composeTestRule.setContent {
             RaidModePreviewContainer(
-                mode = RaidMode.PADRAO,
+                mode = RaidMode.MASMORRA,
+                dungeonSessions = 4,
                 dungeonCooldownRemainingMs = 3600000L
             )
         }

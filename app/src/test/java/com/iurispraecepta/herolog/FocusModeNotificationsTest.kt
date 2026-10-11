@@ -70,7 +70,7 @@ class FocusModeNotificationsTest {
 
         assertEquals(FocusNotificationTheme.ACCENT_DUNGEON, notification.color)
         assertEquals(R.drawable.ic_focus_dungeon, notification.smallIcon.resId)
-        // Mesma regra da tela (`RaidModeInfoBox`): contagem ANTES da sessão atual.
+        // Mesma regra da tela (`ModeStatus`/notificação): contagem ANTES da sessão atual.
         assertEquals("Masmorra · 2/4", textOf(notification))
         assertEquals(endTime, notification.`when`)
     }

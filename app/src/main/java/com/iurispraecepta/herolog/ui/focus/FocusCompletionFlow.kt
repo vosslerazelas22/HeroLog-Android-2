@@ -231,6 +231,7 @@ fun SessionSummaryScreen(
     rewardsCalculation: FocusRewardsCalculation,
     pauseCount: Int,
     streak: Int,
+    dungeonSessionsCompleted: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val rank = getRank(rewardsCalculation.isWildernessChecked, pauseCount)
@@ -401,6 +402,28 @@ fun SessionSummaryScreen(
                             blurRadius = 6f
                         )
                     )
+                )
+            }
+        }
+
+        // OQ-2: progresso da Masmorra na recompensa (a entidade guarda o índice;
+        // o progresso global já foi zerado após a 4ª — nunca recalculado aqui).
+        if (dungeonSessionsCompleted in 1..4) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = "⚔️ MASMORRA — SESSÃO $dungeonSessionsCompleted DE 4",
+                    color = Color(0xFFC084FC),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = Cinzel,
+                    letterSpacing = 1.sp
+                )
+                DungeonPips(
+                    completed = dungeonSessionsCompleted,
+                    accent = Color(0xFFC084FC)
                 )
             }
         }
@@ -828,6 +851,7 @@ fun FocusCompletionFlow(
     initialNotes: String = "",
     onConfirm: (editedNotes: String, selectedTag: String) -> Unit,
     initialStepIndex: Int = 0,
+    dungeonSessionsCompleted: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val hasLoot = remember(rewardsCalculation) {
@@ -877,7 +901,8 @@ fun FocusCompletionFlow(
             "summary" -> SessionSummaryScreen(
                 rewardsCalculation = rewardsCalculation,
                 pauseCount = pauseCount,
-                streak = streak
+                streak = streak,
+                dungeonSessionsCompleted = dungeonSessionsCompleted
             )
             "loot" -> LootDropScreen(
                 lootedItems = rewardsCalculation.lootedItems,

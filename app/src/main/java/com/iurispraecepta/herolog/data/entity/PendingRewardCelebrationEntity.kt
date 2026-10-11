@@ -46,5 +46,12 @@ data class PendingRewardCelebrationEntity(
      * feed). O `onConfirm` do host usa-o para atualizar notas/tag sem casamento frágil
      * por timestamp.
      */
-    val historyId: String? = null
+    val historyId: String? = null,
+    /**
+     * Índice da sessão de Masmorra concluída (OQ-2, spec-tema-por-modo-foco):
+     * 0 = sessão não-masmorra; 1..4 = qual sessão da jornada foi concluída.
+     * Gravado em [FocusUseCase.applyRewards], nunca recalculado — a tela de
+     * recompensa exibe os pips sem depender do progresso já zerado.
+     */
+    val dungeonSessionsCompleted: Int = 0
 )

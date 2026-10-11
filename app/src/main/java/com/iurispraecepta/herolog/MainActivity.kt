@@ -112,20 +112,21 @@ import com.iurispraecepta.herolog.ui.focus.FocusOrb
 import com.iurispraecepta.herolog.ui.focus.FocusOrbSize
 import com.iurispraecepta.herolog.ui.focus.FocusTabBody
 import com.iurispraecepta.herolog.ui.focus.IncursionModeModal
-import com.iurispraecepta.herolog.ui.focus.ModeDescriptionModal
+import com.iurispraecepta.herolog.ui.focus.ModeStatus
+import com.iurispraecepta.herolog.ui.focus.dungeonStatusCompleted
 import com.iurispraecepta.herolog.ui.focus.QuickActionsBar
 import com.iurispraecepta.herolog.ui.focus.TimerSettingsModal
 import com.iurispraecepta.herolog.ui.focus.AmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.rememberAmbientSoundController
 import com.iurispraecepta.herolog.ui.focus.RaidMode
 import com.iurispraecepta.herolog.ui.focus.RaidModeHelpContent
-import com.iurispraecepta.herolog.ui.focus.RaidModeInfoBox
 import com.iurispraecepta.herolog.ui.focus.RaidModeSegmentedControl
 import com.iurispraecepta.herolog.ui.focus.SkillInlineCarousel
 import com.iurispraecepta.herolog.ui.focus.TitleDisplay
 import com.iurispraecepta.herolog.ui.focus.buildStandardLootHelpBlocks
 import com.iurispraecepta.herolog.ui.focus.lootChancePercentFrom
 import com.iurispraecepta.herolog.ui.focus.raidModeFrom
+import com.iurispraecepta.herolog.ui.focus.theme
 import com.iurispraecepta.herolog.ui.focus.toLegacyFlags
 import com.iurispraecepta.herolog.ui.inventory.InventoryScreen
 import com.iurispraecepta.herolog.ui.skills.SkillSelectorModal
@@ -184,6 +185,7 @@ import com.iurispraecepta.herolog.ui.HeroLogViewModelFactory
 import com.iurispraecepta.herolog.service.FocusNotificationPermission
 import com.iurispraecepta.herolog.service.FocusSessionService
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
+import com.iurispraecepta.herolog.logic.focus.formatDungeonCooldown
 import com.iurispraecepta.herolog.model.CharacterState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.wrapContentSize
@@ -339,7 +341,9 @@ class MainActivity : ComponentActivity() {
                             skillName = skillName,
                             skillEmoji = skillEmoji,
                             isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
-                            dungeonSessions = breakTimerState.lastSessionDungeonSessions,
+                            // FR-015/FR-010: semântica de sessão atual no descanso
+                            // (lastSessionDungeonSessions é a contagem anterior).
+                            dungeonSessions = (breakTimerState.lastSessionDungeonSessions + 1).coerceAtMost(4),
                             isWildernessChecked = breakTimerState.wasLastSessionWildernessMode,
                             timeLeft = breakTimerState.secondsLeft,
                             totalSeconds = breakTimerState.selectedBreakMins * 60,
@@ -362,7 +366,9 @@ class MainActivity : ComponentActivity() {
                             skillName = skillName,
                             skillEmoji = skillEmoji,
                             isDungeonMode = config?.isDungeonMode ?: false,
-                            dungeonSessions = config?.dungeonSessions ?: 0,
+                            // FR-015: semântica de sessão atual (config guarda
+                            // as concluídas antes desta sessão).
+                            dungeonSessions = ((config?.dungeonSessions ?: 0) + 1).coerceAtMost(4),
                             isWildernessChecked = config?.isWildernessChecked ?: false,
                             timeLeft = focusState.timeLeft,
                             totalSeconds = focusState.totalSeconds,
@@ -1038,7 +1044,6 @@ fun FocusOrbPreviewScreen(
 
     var isDungeonModePreview by remember { mutableStateOf(false) }
     var isWildernessPreview by remember { mutableStateOf(false) }
-    var activeHelpMode by remember { mutableStateOf<RaidMode?>(null) }
     var isIncursionModalOpen by remember { mutableStateOf(false) }
     var isSkillSelectorOpen by remember { mutableStateOf(false) }
     var isTimerSettingsOpen by remember { mutableStateOf(false) }
@@ -1067,6 +1072,7 @@ fun FocusOrbPreviewScreen(
     val focusState by viewModel.focusSessionState.collectAsState()
     val dungeonSessionsProgress by viewModel.dungeonSessionsProgress.collectAsState()
     val breakTimerState by viewModel.breakTimerState.collectAsState()
+    val dungeonCooldownRemainingMs by viewModel.dungeonCooldownRemainingMs.collectAsState()
 
     LaunchedEffect(focusState.isRunning, focusState.isPaused, breakTimerState.isBreakActive) {
         ambientController.sync(
@@ -1085,6 +1091,14 @@ fun FocusOrbPreviewScreen(
 
     LaunchedEffect(dungeonSessionsProgress) {
         if (dungeonSessionsProgress == 0 && isDungeonModePreview) {
+            isDungeonModePreview = false
+        }
+    }
+
+    // FR-014a: Masmorra selecionada com cooldown ativo (relógio mudou, app
+    // reaberto, cooldown iniciou) — preview volta a PADRAO.
+    LaunchedEffect(dungeonCooldownRemainingMs) {
+        if (dungeonCooldownRemainingMs > 0L && isDungeonModePreview) {
             isDungeonModePreview = false
         }
     }
@@ -1122,7 +1136,11 @@ fun FocusOrbPreviewScreen(
                     showTooltip = showFocusTooltip,
                     onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
                     onCloseTooltip = { showFocusTooltip = false },
-                    onOpenQuestFab = { isQuestFabOpen = true }
+                    onOpenQuestFab = { isQuestFabOpen = true },
+                    theme = raidModeFrom(
+                        breakTimerState.wasLastSessionDungeonMode,
+                        breakTimerState.wasLastSessionWildernessMode
+                    ).theme()
                 )
                 Column(
                     modifier = Modifier
@@ -1157,6 +1175,31 @@ fun FocusOrbPreviewScreen(
                         onSkipBreak = { viewModel.skipBreak(context) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                    ModeStatus(
+                        mode = raidModeFrom(
+                            breakTimerState.wasLastSessionDungeonMode,
+                            breakTimerState.wasLastSessionWildernessMode
+                        ),
+                        completed = dungeonStatusCompleted(
+                            isRunning = false,
+                            isBreak = true,
+                            dungeonSessionsProgress = dungeonSessionsProgress,
+                            configDungeonSessions = 0,
+                            lastSessionDungeonSessions = breakTimerState.lastSessionDungeonSessions
+                        ),
+                        dungeonOnCooldown = dungeonCooldownRemainingMs > 0L,
+                        cooldownText = formatDungeonCooldown(dungeonCooldownRemainingMs),
+                        lootChancePercent = lootChancePercentFrom(
+                            studiedMinutes = focusDuration,
+                            isDungeon = breakTimerState.wasLastSessionDungeonMode,
+                            equippedTitleId = characterState.equippedTitle
+                        ),
+                        theme = raidModeFrom(
+                            breakTimerState.wasLastSessionDungeonMode,
+                            breakTimerState.wasLastSessionWildernessMode
+                        ).theme()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     QuickActionsBar(
                         isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
                         isWildernessMode = breakTimerState.wasLastSessionWildernessMode,
@@ -1166,7 +1209,11 @@ fun FocusOrbPreviewScreen(
                         onOpenAmbientModal = { isAmbientModalOpen = true },
                         isSettingsEnabled = true,
                         onOpenSettingsModal = { isTimerSettingsOpen = true },
-                        onEnterFullscreen = { }
+                        onEnterFullscreen = { },
+                        modeTheme = raidModeFrom(
+                            breakTimerState.wasLastSessionDungeonMode,
+                            breakTimerState.wasLastSessionWildernessMode
+                        ).theme()
                     )
                 }
             }
@@ -1179,7 +1226,11 @@ fun FocusOrbPreviewScreen(
                     showTooltip = showFocusTooltip,
                     onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
                     onCloseTooltip = { showFocusTooltip = false },
-                    onOpenQuestFab = { isQuestFabOpen = true }
+                    onOpenQuestFab = { isQuestFabOpen = true },
+                    theme = raidModeFrom(
+                        breakTimerState.wasLastSessionDungeonMode,
+                        breakTimerState.wasLastSessionWildernessMode
+                    ).theme()
                 )
                 FocusTabBody(
                     modifier = Modifier.weight(1f),
@@ -1210,21 +1261,29 @@ fun FocusOrbPreviewScreen(
                     bottom = {
                         // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
                         Spacer(modifier = Modifier.height(8.dp))
-                        BreakEndButton(onClick = { viewModel.skipBreak(context) })
-                        Spacer(modifier = Modifier.height(12.dp))
-                        RaidModeInfoBox(
+                        ModeStatus(
                             mode = raidModeFrom(breakTimerState.wasLastSessionDungeonMode, breakTimerState.wasLastSessionWildernessMode),
-                            dungeonSessions = breakTimerState.lastSessionDungeonSessions,
-                            dungeonOnCooldown = false,
+                            completed = dungeonStatusCompleted(
+                                isRunning = false,
+                                isBreak = true,
+                                dungeonSessionsProgress = dungeonSessionsProgress,
+                                configDungeonSessions = 0,
+                                lastSessionDungeonSessions = breakTimerState.lastSessionDungeonSessions
+                            ),
+                            dungeonOnCooldown = dungeonCooldownRemainingMs > 0L,
+                            cooldownText = formatDungeonCooldown(dungeonCooldownRemainingMs),
                             lootChancePercent = lootChancePercentFrom(
                                 studiedMinutes = focusDuration,
                                 isDungeon = breakTimerState.wasLastSessionDungeonMode,
                                 equippedTitleId = characterState.equippedTitle
                             ),
-                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
+                            theme = raidModeFrom(
+                                breakTimerState.wasLastSessionDungeonMode,
+                                breakTimerState.wasLastSessionWildernessMode
+                            ).theme()
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        BreakEndButton(onClick = { viewModel.skipBreak(context) })
                         Spacer(modifier = Modifier.height(8.dp))
                         QuickActionsBar(
                             isDungeonMode = breakTimerState.wasLastSessionDungeonMode,
@@ -1235,7 +1294,11 @@ fun FocusOrbPreviewScreen(
                             onOpenAmbientModal = { isAmbientModalOpen = true },
                             isSettingsEnabled = false,
                             onOpenSettingsModal = {},
-                            onEnterFullscreen = { onEnterFullscreen() }
+                            onEnterFullscreen = { onEnterFullscreen() },
+                            modeTheme = raidModeFrom(
+                                breakTimerState.wasLastSessionDungeonMode,
+                                breakTimerState.wasLastSessionWildernessMode
+                            ).theme()
                         )
                         Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
                     }
@@ -1253,7 +1316,8 @@ fun FocusOrbPreviewScreen(
                     showTooltip = showFocusTooltip,
                     onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
                     onCloseTooltip = { showFocusTooltip = false },
-                    onOpenQuestFab = { isQuestFabOpen = true }
+                    onOpenQuestFab = { isQuestFabOpen = true },
+                    theme = currentRaidModeRunning.theme()
                 )
                 FocusTabBody(
                     modifier = Modifier.weight(1f),
@@ -1283,6 +1347,27 @@ fun FocusOrbPreviewScreen(
                     bottom = {
                         // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
                         Spacer(modifier = Modifier.height(8.dp))
+                        ModeStatus(
+                            mode = currentRaidModeRunning,
+                            completed = dungeonStatusCompleted(
+                                isRunning = true,
+                                isBreak = false,
+                                dungeonSessionsProgress = dungeonSessionsProgress,
+                                configDungeonSessions = config?.dungeonSessions ?: 0,
+                                lastSessionDungeonSessions = 0
+                            ),
+                            dungeonOnCooldown = dungeonCooldownRemainingMs > 0L,
+                            cooldownText = formatDungeonCooldown(dungeonCooldownRemainingMs),
+                            lootChancePercent = lootChancePercentFrom(
+                                studiedMinutes = focusDuration,
+                                isDungeon = config?.isDungeonMode ?: false,
+                                equippedTitleId = characterState.equippedTitle
+                            ),
+                            theme = currentRaidModeRunning.theme()
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1370,34 +1455,19 @@ fun FocusOrbPreviewScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        RaidModeInfoBox(
-                            mode = currentRaidModeRunning,
-                            dungeonSessions = dungeonSessionsProgress,
-                            dungeonOnCooldown = false,
-                            lootChancePercent = lootChancePercentFrom(
-                                studiedMinutes = focusDuration,
-                                isDungeon = config?.isDungeonMode ?: false,
-                                equippedTitleId = characterState.equippedTitle
-                            ),
-                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
-                        )
-
                         Spacer(modifier = Modifier.height(8.dp))
 
                         QuickActionsBar(
                             isDungeonMode = config?.isDungeonMode ?: false,
                             isWildernessMode = config?.isWildernessChecked ?: false,
                             isRunning = true,
-                            onOpenModeModal = { /* Modo não editável com sessão em andamento, fonte já trata via disabled */ },
+                            onOpenModeModal = { isIncursionModalOpen = true },
                             activeAmbientIcon = AMBIENT_SOUNDS.find { it.id == ambientController.selectedTrack }?.icone,
                             onOpenAmbientModal = { isAmbientModalOpen = true },
                             isSettingsEnabled = false,
                             onOpenSettingsModal = {},
-                            onEnterFullscreen = { onEnterFullscreen() }
+                            onEnterFullscreen = { onEnterFullscreen() },
+                            modeTheme = currentRaidModeRunning.theme()
                         )
 
                         Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
@@ -1414,7 +1484,8 @@ fun FocusOrbPreviewScreen(
                     showTooltip = showFocusTooltip,
                     onToggleTooltip = { showFocusTooltip = !showFocusTooltip },
                     onCloseTooltip = { showFocusTooltip = false },
-                    onOpenQuestFab = { isQuestFabOpen = true }
+                    onOpenQuestFab = { isQuestFabOpen = true },
+                    theme = currentRaidMode.theme()
                 )
 
                 // Content — paridade com App.tsx:2383 (flex-1) + timer flex-1 (2477)
@@ -1446,6 +1517,27 @@ fun FocusOrbPreviewScreen(
                     },
                     bottom = {
                         // gap-2 entre timer e TRANSIT CONTROL (App.tsx:2383 / 2750)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ModeStatus(
+                            mode = currentRaidMode,
+                            completed = dungeonStatusCompleted(
+                                isRunning = false,
+                                isBreak = false,
+                                dungeonSessionsProgress = dungeonSessionsProgress,
+                                configDungeonSessions = 0,
+                                lastSessionDungeonSessions = 0
+                            ),
+                            dungeonOnCooldown = dungeonCooldownRemainingMs > 0L,
+                            cooldownText = formatDungeonCooldown(dungeonCooldownRemainingMs),
+                            lootChancePercent = lootChancePercentFrom(
+                                studiedMinutes = focusDuration,
+                                isDungeon = isDungeonModePreview,
+                                equippedTitleId = characterState.equippedTitle
+                            ),
+                            theme = currentRaidMode.theme()
+                        )
+
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Box(
@@ -1489,22 +1581,6 @@ fun FocusOrbPreviewScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        RaidModeInfoBox(
-                            mode = currentRaidMode,
-                            dungeonSessions = dungeonSessionsProgress,
-                            dungeonOnCooldown = false,
-                            lootChancePercent = lootChancePercentFrom(
-                                studiedMinutes = focusDuration,
-                                isDungeon = isDungeonModePreview,
-                                equippedTitleId = characterState.equippedTitle
-                            ),
-                            onShowDungeonHelp = { activeHelpMode = RaidMode.MASMORRA },
-                            onShowWildernessHelp = { activeHelpMode = RaidMode.SELVAGEM },
-                            onShowStandardHelp = { activeHelpMode = RaidMode.PADRAO }
-                        )
-
                         Spacer(modifier = Modifier.height(8.dp))
 
                         QuickActionsBar(
@@ -1516,7 +1592,8 @@ fun FocusOrbPreviewScreen(
                             onOpenAmbientModal = { isAmbientModalOpen = true },
                             isSettingsEnabled = true,
                             onOpenSettingsModal = { isTimerSettingsOpen = true },
-                            onEnterFullscreen = { onEnterFullscreen() }
+                            onEnterFullscreen = { onEnterFullscreen() },
+                            modeTheme = currentRaidMode.theme()
                         )
 
                         Spacer(modifier = Modifier.height(LocalBottomBarInset.current))
@@ -1630,18 +1707,6 @@ fun FocusOrbPreviewScreen(
                 }
             }
 
-            IncursionModeModal(
-                isOpen = isIncursionModalOpen,
-                onClose = { isIncursionModalOpen = false },
-                currentMode = currentRaidMode,
-                dungeonCooldownRemainingMs = 0L,
-                onSelectMode = { newMode ->
-                    val (dungeon, wilderness) = newMode.toLegacyFlags()
-                    isDungeonModePreview = dungeon
-                    isWildernessPreview = wilderness
-                }
-            )
-
             SkillSelectorModal(
                 isOpen = isSkillSelectorOpen,
                 onClose = { isSkillSelectorOpen = false },
@@ -1670,39 +1735,46 @@ fun FocusOrbPreviewScreen(
             )
         }
 
-        val helpBlocks = when (activeHelpMode) {
-            RaidMode.PADRAO -> buildStandardLootHelpBlocks(
-                studiedMinutes = focusDuration,
-                equippedTitleId = characterState.equippedTitle,
-                titleLookup = { id ->
-                    com.iurispraecepta.herolog.data.TITLE_CATALOG.find { it.id == id }?.let {
-                        TitleDisplay(it.emoji, it.name)
-                    }
-                }
+        // FR-019: modal de Modo fora do ramo idle — abre somente leitura
+        // durante a sessão (inclusive pausada); em descanso continua editável.
+        val modalCurrentMode = when {
+            focusState.isRunning -> {
+                val cfg = focusState.config
+                raidModeFrom(cfg?.isDungeonMode ?: false, cfg?.isWildernessChecked ?: false)
+            }
+            breakTimerState.isBreakPrep || breakTimerState.isBreakActive -> raidModeFrom(
+                breakTimerState.wasLastSessionDungeonMode,
+                breakTimerState.wasLastSessionWildernessMode
             )
-            RaidMode.MASMORRA -> RaidModeHelpContent.MASMORRA
-            RaidMode.SELVAGEM -> RaidModeHelpContent.SELVAGEM
-            null -> emptyList()
+            else -> raidModeFrom(isDungeonModePreview, isWildernessPreview)
         }
-        val helpVariant = when (activeHelpMode) {
-            RaidMode.PADRAO -> ModalVariant.Amber
-            RaidMode.MASMORRA -> ModalVariant.Purple
-            RaidMode.SELVAGEM -> ModalVariant.Red
-            null -> ModalVariant.Amber
+        val titleLookup: (String) -> TitleDisplay? = { id ->
+            com.iurispraecepta.herolog.data.TITLE_CATALOG.find { it.id == id }?.let {
+                TitleDisplay(it.emoji, it.name)
+            }
         }
-        val helpTitle = when (activeHelpMode) {
-            RaidMode.PADRAO -> "Modo Padrão & Saques"
-            RaidMode.MASMORRA -> "Incursão por Masmorra"
-            RaidMode.SELVAGEM -> "Terra Selvagem"
-            null -> ""
-        }
-
-        ModeDescriptionModal(
-            isOpen = activeHelpMode != null,
-            onClose = { activeHelpMode = null },
-            title = helpTitle,
-            variant = helpVariant,
-            blocks = helpBlocks
+        IncursionModeModal(
+            isOpen = isIncursionModalOpen,
+            onClose = { isIncursionModalOpen = false },
+            currentMode = modalCurrentMode,
+            dungeonCooldownRemainingMs = dungeonCooldownRemainingMs,
+            onSelectMode = { newMode ->
+                val (dungeon, wilderness) = newMode.toLegacyFlags()
+                isDungeonModePreview = dungeon
+                isWildernessPreview = wilderness
+            },
+            helpBlocksFor = { mode ->
+                when (mode) {
+                    RaidMode.PADRAO -> buildStandardLootHelpBlocks(
+                        studiedMinutes = focusDuration,
+                        equippedTitleId = characterState.equippedTitle,
+                        titleLookup = titleLookup
+                    )
+                    RaidMode.MASMORRA -> RaidModeHelpContent.MASMORRA
+                    RaidMode.SELVAGEM -> RaidModeHelpContent.SELVAGEM
+                }
+            },
+            readOnly = focusState.isRunning
         )
 
         AmbientSoundModal(
@@ -1733,7 +1805,9 @@ private fun FocusHeaderBanner(
     showTooltip: Boolean,
     onToggleTooltip: () -> Unit,
     onCloseTooltip: () -> Unit,
-    onOpenQuestFab: () -> Unit
+    onOpenQuestFab: () -> Unit,
+    theme: com.iurispraecepta.herolog.ui.focus.ModeTheme =
+        com.iurispraecepta.herolog.ui.focus.RaidMode.PADRAO.theme()
 ) {
     // Header container: min-height 35dp, padding top=16 / horizontal=16 / bottom=10,
     // bottom border 1dp 0x1AF59E0B via drawBehind (not 4-sided border)
@@ -1780,7 +1854,7 @@ private fun FocusHeaderBanner(
                 Icon(
                     painter = painterResource(R.drawable.lucide_ic_timer),
                     contentDescription = null,
-                    tint = Champagne500,
+                    tint = theme.accentDim,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
@@ -1788,7 +1862,7 @@ private fun FocusHeaderBanner(
                     fontFamily = Cinzel,
                     fontWeight = FontWeight.Black,
                     fontSize = 12.sp,
-                    color = Champagne400,
+                    color = theme.accent,
                     letterSpacing = 0.6.sp // tracking-wider = 0.05em ≈ 0.6sp at 12sp
                 )
             }
