@@ -5,11 +5,14 @@ import androidx.test.core.app.ApplicationProvider
 import com.iurispraecepta.herolog.data.database.HeroLogDatabase
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
+import com.iurispraecepta.herolog.data.repository.PendingRewardRepository
 import com.iurispraecepta.herolog.logic.focus.FocusSessionConfig
+import com.iurispraecepta.herolog.logic.focus.PersistedFocusSession
 import com.iurispraecepta.herolog.logic.quests.QuestLogic
 import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.PomodoroSettings
+import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.service.FocusSessionService
 import com.iurispraecepta.herolog.service.ServiceState
 import com.iurispraecepta.herolog.ui.HeroLogViewModel
@@ -195,6 +198,79 @@ class DungeonCooldownViewModelTest {
         testDispatcher.scheduler.runCurrent()
         // Assert: teto de 2h (FR-014)
         assertEquals(2 * 60 * 60 * 1000L, viewModel.dungeonCooldownRemainingMs.value)
+        stopCooldownTicker(viewModel)
+        db.close()
+    }
+
+    @Test
+    fun startSession_dungeonImmediatelyAfterSaveDuringCooldown_isRefusedWithoutAdvancingScheduler() = runTest {
+        // Arrange: cooldown ativo
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val viewModel = createViewModel(repository, focusRepository)
+        // Act: save com clear + start imediato, SEM avançar o scheduler
+        // (item 2 do review: publish síncrono — o guard vê o timestamp novo na hora)
+        viewModel.saveCharacterState(createBaseState().copy(lastDungeonClearedTime = nowMs))
+        val config = FocusSessionConfig(
+            selectedSkillIdx = 0,
+            isWildernessChecked = false,
+            isDungeonMode = true,
+            dungeonSessions = 0
+        )
+        viewModel.startSession(testContext, config, durationMinutes = 25)
+        // Assert: recusado com estado intacto + log (falharia com publish assíncrono)
+        assertFalse(viewModel.focusSessionState.value.isRunning)
+        assertTrue(viewModel.systemLogs.value.any { it.text.contains("recarga") })
+        stopCooldownTicker(viewModel)
+        db.close()
+    }
+
+    @Test
+    fun recover_expiredFourthDungeonSession_cooldownActiveImmediately() = runTest {
+        // Arrange: personagem + 4ª sessão de Masmorra expirada, app reaberto
+        // (item 4 do review: recovery aplica e deve recarregar o cooldown)
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val pendingRepo = PendingRewardRepository(db.pendingRewardCelebrationDao())
+        repository.saveCharacterState(
+            createBaseState().copy(
+                skills = listOf(Skill(id = "sk_1", name = "Kotlin", level = 1, xp = 0))
+            )
+        )
+        focusRepository.saveSession(
+            PersistedFocusSession(
+                config = FocusSessionConfig(
+                    selectedSkillIdx = 0,
+                    isWildernessChecked = false,
+                    isDungeonMode = true,
+                    dungeonSessions = 3
+                ),
+                durationMinutes = 25,
+                endTimeMillis = nowMs - 1_000L,
+                pendingCalculation = null
+            )
+        )
+        // Act: cria o VM (init roda o recovery); runCurrent sem avançar o ticker
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            sfxManager = SfxManager.noOp(),
+            clock = { nowMs },
+            pendingRewardRepository = pendingRepo
+        )
+        testDispatcher.scheduler.runCurrent()
+        // Assert: cooldown ativo + guard recusa Masmorra de imediato
+        assertTrue(viewModel.dungeonCooldownRemainingMs.value > 0L)
+        val config = FocusSessionConfig(
+            selectedSkillIdx = 0,
+            isWildernessChecked = false,
+            isDungeonMode = true,
+            dungeonSessions = 0
+        )
+        viewModel.startSession(testContext, config, durationMinutes = 25)
+        assertFalse(viewModel.focusSessionState.value.isRunning)
         stopCooldownTicker(viewModel)
         db.close()
     }

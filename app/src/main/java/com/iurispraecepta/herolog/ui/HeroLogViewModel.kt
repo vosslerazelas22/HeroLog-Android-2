@@ -316,13 +316,20 @@ class HeroLogViewModel(
                 dungeonSessionsCompleted = dungeonSessionsCompleted
             )
             focusSessionRepository.clearSession()
+            // Item 4 do review pré-merge: o apply gravou lastDungeonClearedTime
+            // no Room sem passar pelo funil — recarrega para UI/guard não verem
+            // timestamp velho até a próxima mutação.
+            repository.getCharacterState()?.let {
+                _characterState.value = it
+                refreshDungeonCooldown(it.lastDungeonClearedTime)
+            }
             refreshPendingCelebration()
             return
         }
 
         if (persisted.endTimeMillis - clock() <= 0) {
             val repo = pendingRewardRepository ?: return
-            completeSessionFromBackup(
+            val applied = completeSessionFromBackup(
                 repository,
                 focusSessionRepository,
                 repo,
@@ -330,6 +337,13 @@ class HeroLogViewModel(
                 persisted.durationMinutes,
                 Date(clock())
             )
+            // Item 4 do review pré-merge: mesmo reload do caso 2, só quando aplicou.
+            if (applied) {
+                repository.getCharacterState()?.let {
+                    _characterState.value = it
+                    refreshDungeonCooldown(it.lastDungeonClearedTime)
+                }
+            }
             refreshPendingCelebration()
         } else {
             _pendingServiceResume.value = persisted
@@ -575,6 +589,11 @@ class HeroLogViewModel(
      *   quando o estado inteiro está sendo substituído por uma fonte externa (import de save) e
      *   uma cascata de popups de "level up" comparando contra o personagem anterior seria
      *   espúria/sem sentido pro jogador.
+     *
+     *   Publicação síncrona (item 2 do review pré-merge): `_characterState` é
+     *   atualizado antes do `save` assíncrono para que leitores imediatos (ex.:
+     *   o guard de cooldown em `startSession`) nunca vejam timestamp velho.
+     *   Só o `save` no Room segue em `launch`.
      */
     fun saveCharacterState(state: CharacterState, suppressLevelUpDetection: Boolean = false) {
         val previous = _characterState.value
@@ -587,11 +606,11 @@ class HeroLogViewModel(
                 addSystemLog("🆙 COMBAT LEVEL UP: Nível de combate subiu para ${state.combatLevel}!", true)
             }
         }
+        _characterState.value = state
+        refreshDungeonCooldown(state.lastDungeonClearedTime)
         viewModelScope.launch {
             repository.saveCharacterState(state)
-            _characterState.value = state
         }
-        refreshDungeonCooldown(state.lastDungeonClearedTime)
     }
 
     /**
