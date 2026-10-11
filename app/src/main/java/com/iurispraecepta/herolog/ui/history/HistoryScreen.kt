@@ -67,7 +67,6 @@ import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Purple500
 import com.iurispraecepta.herolog.ui.theme.Purple950
-import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.Red500
 import com.iurispraecepta.herolog.ui.theme.Red600
 import com.iurispraecepta.herolog.ui.theme.Red950
@@ -110,6 +109,7 @@ fun HistoryScreen(
     }
 
     // Wrapper do painel (App.tsx): `bg-quest-panel border border-amber-500/15 rounded-lg p-5`.
+    // Sem fundo próprio (decisão 03/out, Trello #72): o fundo vem do Scaffold (`QuestPanel`), como nas demais telas.
     // Cards têm `space-y-3` (12dp): cada item leva 12dp embaixo e o `contentPadding` inferior desconta
     // esses 12dp do total de 36dp (`p-5` 20dp + `pb-4` 16dp do HistoryTab).
     LazyColumn(
@@ -125,7 +125,6 @@ fun HistoryScreen(
                 spotColor = Color.Black
             )
             .clip(RoundedCornerShape(8.dp))
-            .background(QuestPanel)
             .border(1.dp, Amber500.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 24.dp)
     ) {
