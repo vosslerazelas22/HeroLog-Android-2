@@ -1780,6 +1780,28 @@ removidos/atualizados, não só quais são novos.
 ## [2026-08-15] Correção de hipótese — localização real de `handleAutoClaim`/`onConfirm`
 
 **Não é um Bloco fechado — é correção de registro, feita antes de escrever o prompt de porte da
+
+---
+
+## [2026-10-11] Bloco: spec-tavern-rituais-icone
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/tavern/TavernScreen.kt
+- ANDROID_FIRST.md
+
+**Resumo:**
+- Atalho de Rituais passou a usar `lucide_ic_compass` e o título "RITUAIS"; entradas `ActivityType.Ritual` também usam `lucide_ic_compass`; o cabeçalho dos atalhos usa `lucide_ic_signpost`.
+- Cores, descrição, destino `habits` e demais usos de `sparkles` permaneceram inalterados.
+- Gate 0: `lucide_ic_signpost` confirmado no AAR `icons-lucide-android:2.2.1`.
+- Ajuste Android-first; `PARIDADE.md` e `RELATORIO_PARIDADE.md` não foram alterados.
+
+**Validação:**
+- `compileDebugKotlin` e `assembleDebug`: BUILD SUCCESSFUL. O keystore de debug da main foi copiado temporariamente para o worktree e removido após o build.
+- `testDebugUnitTest`: BUILD SUCCESSFUL; XML bruto: 109 suítes, 859 testes, 0 falhas, 0 erros e 0 skipped. `TavernScreenScreenshotTest`: 6/6.
+- `finalizeTestRoborazziDebug`: SKIPPED. Os testes chamam `captureRoboImage` sem `RoborazziRule`; comparação de baselines não confirmada e nenhum baseline foi alterado.
+- Visual em dispositivo: pendente — print no A05s por Iuris (G5).
+
+**Desvios de escopo aprovados:** nenhum.
 UI de conclusão, a partir do dump literal real de `FocusCompletionFlow.tsx` e de um trecho de
 `FocusModeScreen.tsx` colados por Bruno.**
 
