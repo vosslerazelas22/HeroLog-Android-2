@@ -609,9 +609,9 @@ private val Shortcuts = listOf(
         destination = "focus"
     ),
     Shortcut(
-        iconRes = LucideR.drawable.lucide_ic_sparkles,
+        iconRes = LucideR.drawable.lucide_ic_compass,
         iconTint = Purple400,
-        title = "HÁBITOS",
+        title = "RITUAIS",
         pressedTitleColor = Purple300,
         description = "Capela de hábitos, diárias e missões",
         destination = "habits"
@@ -643,7 +643,7 @@ private fun ShortcutsSection(onNavigate: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(10.dp) // space-y-2.5
     ) {
         SectionHeader(
-            iconRes = LucideR.drawable.lucide_ic_compass,
+            iconRes = LucideR.drawable.lucide_ic_signpost,
             title = "O QUE VOCÊ VAI FAZER HOJE?",
             subtitle = "Escolha seu próximo destino e continue sua jornada."
         )
@@ -858,7 +858,7 @@ private fun RecentItem(entry: ActivityEntry) {
             Purple400
         )
         ActivityType.Ritual -> IconTrio(
-            LucideR.drawable.lucide_ic_sparkles,
+            LucideR.drawable.lucide_ic_compass,
             Emerald400.copy(alpha = 0.10f),
             Emerald400.copy(alpha = 0.30f),
             Emerald400
