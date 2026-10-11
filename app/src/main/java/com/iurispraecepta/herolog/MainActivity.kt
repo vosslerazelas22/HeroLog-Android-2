@@ -1197,7 +1197,8 @@ fun FocusOrbPreviewScreen(
                         theme = raidModeFrom(
                             breakTimerState.wasLastSessionDungeonMode,
                             breakTimerState.wasLastSessionWildernessMode
-                        ).theme()
+                        ).theme(),
+                        inProgress = false
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     QuickActionsBar(
@@ -1280,7 +1281,8 @@ fun FocusOrbPreviewScreen(
                             theme = raidModeFrom(
                                 breakTimerState.wasLastSessionDungeonMode,
                                 breakTimerState.wasLastSessionWildernessMode
-                            ).theme()
+                            ).theme(),
+                            inProgress = false
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         BreakEndButton(onClick = { viewModel.skipBreak(context) })
@@ -1363,7 +1365,8 @@ fun FocusOrbPreviewScreen(
                                 isDungeon = config?.isDungeonMode ?: false,
                                 equippedTitleId = characterState.equippedTitle
                             ),
-                            theme = currentRaidModeRunning.theme()
+                            theme = currentRaidModeRunning.theme(),
+                            inProgress = true
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -1535,7 +1538,8 @@ fun FocusOrbPreviewScreen(
                                 isDungeon = isDungeonModePreview,
                                 equippedTitleId = characterState.equippedTitle
                             ),
-                            theme = currentRaidMode.theme()
+                            theme = currentRaidMode.theme(),
+                            inProgress = false
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))

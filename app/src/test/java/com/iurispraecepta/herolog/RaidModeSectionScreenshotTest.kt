@@ -73,7 +73,8 @@ class RaidModeSectionScreenshotTest {
                         isDungeon = mode == RaidMode.MASMORRA,
                         equippedTitleId = null
                     ),
-                    theme = mode.theme()
+                    theme = mode.theme(),
+                    inProgress = isRunning
                 )
             }
         }

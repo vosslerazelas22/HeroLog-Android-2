@@ -29,6 +29,9 @@ import org.robolectric.annotation.GraphicsMode
  * os pips seguem o progresso da sessão, sem entrada de pausa/urgência.
  * O wiring (MainActivity deriva o tema só de RaidMode, nunca de FocusMode/
  * isPaused/isUrgent — FR-004) é estrutural e validado por inspeção + device.
+ *
+ * FR-109/FR-110 (spec-refino): `inProgress = true` somente rodando/pausada (◎
+ * visível, "em andamento"); descanso e ocioso passam `false` ("concluídas").
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -43,6 +46,7 @@ class ModeStatusCompositionTest {
         completed: Int,
         dungeonOnCooldown: Boolean = false,
         cooldownText: String = "00:00:00",
+        inProgress: Boolean = false,
     ) {
         composeTestRule.setContent {
             HeroLogTheme(darkTheme = true) {
@@ -57,7 +61,8 @@ class ModeStatusCompositionTest {
                         dungeonOnCooldown = dungeonOnCooldown,
                         cooldownText = cooldownText,
                         lootChancePercent = 25,
-                        theme = mode.theme()
+                        theme = mode.theme(),
+                        inProgress = inProgress
                     )
                 }
             }
@@ -68,20 +73,65 @@ class ModeStatusCompositionTest {
     fun modeStatus_pausedSession_showsModeTitle_notPauseState() {
         // Arrange: sessão de Masmorra pausada (completed vem do config — FR-010)
         // Act
-        setStatus(mode = RaidMode.MASMORRA, completed = 1)
+        setStatus(mode = RaidMode.MASMORRA, completed = 1, inProgress = true)
         // Assert: título do modo + pips da sessão atual, nada de estado de pausa
         composeTestRule.onNodeWithTag("modeStatusMain").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Sessão 2 de 4").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Explorando Masmorra").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Sessão 2 de 4 em andamento").assertIsDisplayed()
     }
 
     @Test
     fun modeStatus_urgentSession_showsModeTitle_notUrgentState() {
         // Arrange: mesma sessão com timeLeft ≤ 60s — as entradas do status não mudam
         // Act
-        setStatus(mode = RaidMode.MASMORRA, completed = 1)
+        setStatus(mode = RaidMode.MASMORRA, completed = 1, inProgress = true)
         // Assert: idêntico ao caso pausado (SC-004)
         composeTestRule.onNodeWithTag("modeStatusMain").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Sessão 2 de 4").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Sessão 2 de 4 em andamento").assertIsDisplayed()
+    }
+
+    @Test
+    fun modeStatus_idleDungeon_showsCompletedWithoutCurrent() {
+        // Arrange: ocioso com Masmorra selecionada — sem ◎ (FR-109, E2)
+        // Act
+        setStatus(mode = RaidMode.MASMORRA, completed = 1, inProgress = false)
+        // Assert: concluídas, sem "em andamento"
+        composeTestRule.onNodeWithContentDescription("1 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Sessão 2 de 4 em andamento").assertDoesNotExist()
+    }
+
+    @Test
+    fun modeStatus_breakDungeon_showsCompletedWithoutCurrent() {
+        // Arrange: descanso — sem ◎ (FR-109)
+        // Act
+        setStatus(mode = RaidMode.MASMORRA, completed = 2, inProgress = false)
+        // Assert
+        composeTestRule.onNodeWithContentDescription("2 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Sessão 3 de 4 em andamento").assertDoesNotExist()
+    }
+
+    @Test
+    fun modeStatus_title_padrao_hasNoEmoji() {
+        // Arrange/Act (FR-102: sem emoji — SC-101)
+        setStatus(mode = RaidMode.PADRAO, completed = 0)
+        // Assert
+        composeTestRule.onNodeWithText("Modo Padrão").assertIsDisplayed()
+    }
+
+    @Test
+    fun modeStatus_title_masmorra_hasNoEmoji() {
+        // Arrange/Act (FR-102: sem emoji — SC-101)
+        setStatus(mode = RaidMode.MASMORRA, completed = 0)
+        // Assert
+        composeTestRule.onNodeWithText("Explorando Masmorra").assertIsDisplayed()
+    }
+
+    @Test
+    fun modeStatus_title_selvagem_hasNoEmoji() {
+        // Arrange/Act (FR-102: sem emoji — SC-101)
+        setStatus(mode = RaidMode.SELVAGEM, completed = 0)
+        // Assert
+        composeTestRule.onNodeWithText("Terra Selvagem Ativa").assertIsDisplayed()
     }
 
     @Test
@@ -94,9 +144,10 @@ class ModeStatusCompositionTest {
             dungeonOnCooldown = true,
             cooldownText = "01:59:59"
         )
-        // Assert: ⏳ no lugar dos pips
+        // Assert: HH:MM:SS no lugar dos pips
         composeTestRule.onNodeWithText("01:59:59", substring = true).assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Sessão 4 de 4").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Sessão 4 de 4 em andamento").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("4 de 4 concluídas").assertDoesNotExist()
     }
 
     @Test
@@ -105,6 +156,6 @@ class ModeStatusCompositionTest {
         // Act
         setStatus(mode = RaidMode.MASMORRA, completed = 4, dungeonOnCooldown = false)
         // Assert: ●●●●
-        composeTestRule.onNodeWithContentDescription("Sessão 4 de 4").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("4 de 4 concluídas").assertIsDisplayed()
     }
 }

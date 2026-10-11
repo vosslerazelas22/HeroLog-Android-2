@@ -23,6 +23,8 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * OQ-2 (spec-tema-por-modo-foco): a tela de recompensa exibe os pips da
  * Masmorra a partir do índice gravado na celebração.
+ * FR-111/FR-112 (spec-refino, P8/P10/P11): só sessões concluídas (sem ◎);
+ * label MASMORRA (1..3) / MASMORRA CONCLUÍDA (4), sem "SESSÃO n DE 4".
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -71,12 +73,43 @@ class DungeonRewardPipsTest {
     }
 
     @Test
+    fun summary_firstDungeonSession_showsOneDoneWithoutCurrent() {
+        // Arrange/Act: 1ª sessão concluída → ●○○○ (FR-112)
+        setSummary(dungeonSessionsCompleted = 1)
+        // Assert: label + pips sem ◎
+        composeTestRule.onNodeWithText("MASMORRA").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("1 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DE 4", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun summary_secondDungeonSession_showsTwoDoneWithoutCurrent() {
+        // Arrange/Act: 2ª sessão concluída → ●●○○ (FR-112)
+        setSummary(dungeonSessionsCompleted = 2)
+        // Assert
+        composeTestRule.onNodeWithText("MASMORRA").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("2 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DE 4", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun summary_thirdDungeonSession_showsThreeDoneWithoutCurrent() {
+        // Arrange/Act: 3ª sessão concluída → ●●●○ (FR-112)
+        setSummary(dungeonSessionsCompleted = 3)
+        // Assert
+        composeTestRule.onNodeWithText("MASMORRA").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("3 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DE 4", substring = true).assertDoesNotExist()
+    }
+
+    @Test
     fun summary_fourthDungeonSession_showsFullPips() {
-        // Arrange/Act: 4ª sessão concluída
+        // Arrange/Act: 4ª sessão concluída → ●●●● + MASMORRA CONCLUÍDA (P11)
         setSummary(dungeonSessionsCompleted = 4)
         // Assert: ●●●● + rótulo
-        composeTestRule.onNodeWithContentDescription("Sessão 4 de 4").assertIsDisplayed()
-        composeTestRule.onNodeWithText("SESSÃO 4 DE 4", substring = true).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("4 de 4 concluídas").assertIsDisplayed()
+        composeTestRule.onNodeWithText("MASMORRA CONCLUÍDA").assertIsDisplayed()
+        composeTestRule.onNodeWithText("DE 4", substring = true).assertDoesNotExist()
     }
 
     @Test
@@ -84,7 +117,7 @@ class DungeonRewardPipsTest {
         // Arrange/Act: sessão não-masmorra (0)
         setSummary(dungeonSessionsCompleted = 0)
         // Assert: nenhum pip
-        composeTestRule.onNodeWithContentDescription("Sessão 1 de 4").assertDoesNotExist()
-        composeTestRule.onNodeWithContentDescription("Sessão 4 de 4").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("1 de 4 concluídas").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("4 de 4 concluídas").assertDoesNotExist()
     }
 }

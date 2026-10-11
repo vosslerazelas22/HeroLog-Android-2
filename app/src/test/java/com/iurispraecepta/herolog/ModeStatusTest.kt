@@ -9,9 +9,9 @@ import org.junit.Test
 class ModeStatusTest {
 
     @Test
-    fun dungeonPipStates_completed0_firstIsCurrent_restPending() {
+    fun dungeonPipStates_showCurrent_completed0_firstIsCurrent_restPending() {
         // Arrange/Act
-        val states = dungeonPipStates(completed = 0)
+        val states = dungeonPipStates(completed = 0, showCurrent = true)
         // Assert: campo a campo
         assertEquals(
             listOf(PipState.CURRENT, PipState.PENDING, PipState.PENDING, PipState.PENDING),
@@ -20,9 +20,9 @@ class ModeStatusTest {
     }
 
     @Test
-    fun dungeonPipStates_completed1_oneDoneOneCurrent() {
+    fun dungeonPipStates_showCurrent_completed1_oneDoneOneCurrent() {
         // Arrange/Act
-        val states = dungeonPipStates(completed = 1)
+        val states = dungeonPipStates(completed = 1, showCurrent = true)
         // Assert: campo a campo
         assertEquals(
             listOf(PipState.DONE, PipState.CURRENT, PipState.PENDING, PipState.PENDING),
@@ -31,9 +31,9 @@ class ModeStatusTest {
     }
 
     @Test
-    fun dungeonPipStates_completed2_twoDoneOneCurrent() {
+    fun dungeonPipStates_showCurrent_completed2_twoDoneOneCurrent() {
         // Arrange/Act
-        val states = dungeonPipStates(completed = 2)
+        val states = dungeonPipStates(completed = 2, showCurrent = true)
         // Assert: campo a campo
         assertEquals(
             listOf(PipState.DONE, PipState.DONE, PipState.CURRENT, PipState.PENDING),
@@ -42,9 +42,9 @@ class ModeStatusTest {
     }
 
     @Test
-    fun dungeonPipStates_completed3_threeDoneOneCurrent() {
+    fun dungeonPipStates_showCurrent_completed3_threeDoneOneCurrent() {
         // Arrange/Act
-        val states = dungeonPipStates(completed = 3)
+        val states = dungeonPipStates(completed = 3, showCurrent = true)
         // Assert: campo a campo
         assertEquals(
             listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.CURRENT),
@@ -53,9 +53,108 @@ class ModeStatusTest {
     }
 
     @Test
-    fun dungeonPipStates_completed4_allDone() {
+    fun dungeonPipStates_showCurrent_completed4_allDone() {
         // Arrange/Act
-        val states = dungeonPipStates(completed = 4)
+        val states = dungeonPipStates(completed = 4, showCurrent = true)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.DONE),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_completed0_allPending() {
+        // Arrange/Act (FR-108: showCurrent = false nunca tem CURRENT — E2)
+        val states = dungeonPipStates(completed = 0, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.PENDING, PipState.PENDING, PipState.PENDING, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_completed1_oneDone() {
+        // Arrange/Act
+        val states = dungeonPipStates(completed = 1, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.PENDING, PipState.PENDING, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_completed2_twoDone() {
+        // Arrange/Act
+        val states = dungeonPipStates(completed = 2, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.DONE, PipState.PENDING, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_completed3_threeDone() {
+        // Arrange/Act
+        val states = dungeonPipStates(completed = 3, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_completed4_allDone() {
+        // Arrange/Act
+        val states = dungeonPipStates(completed = 4, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.DONE),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_showCurrent_negative_clampsToZero() {
+        // Arrange/Act (E1: fora de 0..4 nunca lança)
+        val states = dungeonPipStates(completed = -2, showCurrent = true)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.CURRENT, PipState.PENDING, PipState.PENDING, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_negative_clampsToZero() {
+        // Arrange/Act (E1)
+        val states = dungeonPipStates(completed = -2, showCurrent = false)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.PENDING, PipState.PENDING, PipState.PENDING, PipState.PENDING),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_showCurrent_aboveFour_capsAtFour() {
+        // Arrange/Act (E1)
+        val states = dungeonPipStates(completed = 9, showCurrent = true)
+        // Assert: campo a campo
+        assertEquals(
+            listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.DONE),
+            states
+        )
+    }
+
+    @Test
+    fun dungeonPipStates_noCurrent_aboveFour_capsAtFour() {
+        // Arrange/Act (E1)
+        val states = dungeonPipStates(completed = 9, showCurrent = false)
         // Assert: campo a campo
         assertEquals(
             listOf(PipState.DONE, PipState.DONE, PipState.DONE, PipState.DONE),
