@@ -6436,3 +6436,23 @@ incluindo calibração das sombras (aproximações declaradas no KDoc).
 ## [2026-10-10] Revisão CodeRabbit no PR #33 (sem commit): duplo ABANDON emitia 2 eventos (handleStop async) e ABANDON durante completeSession disputava a conclusão (fase muda só em L532 após suspends). Fixes mínimos em FocusSessionService.kt: prazo consumido sync após o guarda em handleAbandon; prazo zerado na 1ª linha de completeSession. Sem guarda de fase (fase ainda RUNNING na entrada; invariante armado ⟹ RUNNING/PAUSED). Testes: dungeon_doubleAbandon (RED 2 eventos → GREEN 1) + abandonDuringCompletion reescrito (poll 100ms perdia a janela 4/5 → coletor Unconfined + CopyOnWriteArrayList com asserção de histórico; RED por revert local → GREEN). 5/5 rodadas --rerun 13/13; suíte 145/145; assembleDebug verde; screenshots/ limpo. Incidente de processo: revert aplicado na linha errada (job de reversão) — detectado por você, restaurado, diff conferido. Fora de escopo registrado: duplicado fora da Masmorra é no-op (onServiceAbandon:1066); ABANDON durante conclusão no Padrão/Selvagem é race pré-existente. Visual: PENDENTE (device).
 
 ## [2026-10-10] Bloco: copy de confirmação de abandono (futuro + objeto claro). Arquivos: strings.xml (focus_abandon_confirm_text → "Você perderá o progresso da masmorra (%1$d/4).", focus_abandon_confirm_text_first → "Você perderá esta expedição."), AbandonConfirmationNotificationTest.kt (3 asserts atualizados). Título "Abandonar a Masmorra?" e botões inalterados. Validação: AbandonConfirmationNotificationTest 6/6 + AbandonConfirmationTest 4/4 (XML bruto), assembleDebug verde, screenshots/ limpo. Visual: PENDENTE (device, entra no roteiro TAREFA 4).
+
+---
+
+## [2026-10-11] Bloco: history_remove_quest_panel_bg
+
+**Arquivos criados/alterados:**
+- app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt
+
+**Resumo:**
+- Removido `.background(QuestPanel)` do `LazyColumn` da tela de Histórico
+- Fundo agora vem exclusivamente do `Scaffold` (`containerColor = QuestPanel`), alinhando com as demais telas (Habits, Dailies, Todos, Quests, etc.)
+- Decisão consciente (Trello #72, 03/out): React mantém o painel interno com `bg-quest-panel`; Android unifica no Scaffold — **Android-first**, não é bug de paridade
+
+**Validação:**
+- Build: `assembleDebug` → BUILD SUCCESSFUL
+- Testes: N/A (mudança puramente visual, sem lógica)
+- Visual: Pendente — inspeção em device real (375×667, 390×844)
+
+**Desvios de escopo aprovados:**
+- Divergência visual intencional vs React (fundo do painel de histórico): documentada como Android-first
