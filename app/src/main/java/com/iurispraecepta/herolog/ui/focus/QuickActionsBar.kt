@@ -77,7 +77,7 @@ fun QuickActionsBar(
             when {
                 isDungeonMode -> Icon(painterResource(R.drawable.lucide_ic_shield), null, tint = modeTheme.accent)
                 isWildernessMode -> Icon(painterResource(R.drawable.lucide_ic_shield_alert), null, tint = modeTheme.accent)
-                else -> Icon(painterResource(R.drawable.lucide_ic_sparkles), null, tint = modeTheme.accent)
+                else -> Icon(painterResource(R.drawable.lucide_ic_target), null, tint = modeTheme.accent)
             }
         }
         // 2. Som Ambiente

@@ -121,7 +121,7 @@ fun IncursionModeModal(
             IncursionModeCard(
                 title = "🎯 Padrão",
                 description = "Chance de saque baseada na duração da sessão.",
-                iconRes = LucideR.drawable.lucide_ic_sparkles,
+                iconRes = LucideR.drawable.lucide_ic_target,
                 iconTint = Champagne400,
                 isActive = isPadraoActive,
                 // "ATIVO" hardcoded: o React tem string "Ativo" + classe CSS
