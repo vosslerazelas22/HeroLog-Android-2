@@ -6863,3 +6863,55 @@ linha 2 com a barra em altura total.
 - Nenhum. `ANDROID_FIRST.md` (linha do redesign → "Bloco A implementado 12/10; blocos
   B–F pendentes") e `PARIDADE.md` (§6, linha nova "Aba Rituais — Bloco A") atualizados
   no mesmo bloco.
+
+## [2026-10-12] Bloco A (SPEC-Rebranding Hábitos/Diárias/Missões Avulsas — itens 1 e 2, copy)
+
+**Pré-condições reportadas e decididas antes de editar:**
+- Base `spec-rituais-cards` (Blocos A–F) estava **inteira sem commit** neste worktree
+  (10 novos, 6 modificados, 33 PNGs, docs). Decisão do Iuris: commit prévio da base
+  (`af79d10`) para separar escopos; os blocos desta spec saem em commits próprios.
+- Spec e relatório de investigação desta spec não estão no repo (só existe
+  `specs/spec-rituais-cards.md`, a spec anterior, cujos itens D2/§5-Bloco-C/§5-Bloco-F
+  são justamente o "antes" deste trabalho). Prompt tratado como supersessor.
+- Docs (`PARIDADE`/`DEV_LOG`/`ANDROID_FIRST`): AGENTS §7 proíbe editá-los em branch
+  secundária; decisão do Iuris — editar aqui (precedente dos Blocos A–F).
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualTabChrome.kt`
+  (`RitualNewButton`: `"+ NOVO"` → `"NOVO"`; comentários do bloco atualizados)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (estado vazio)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (estado vazio)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (estado vazio com
+  `when (filter)` sobre `TodoFilter`)
+- Testes: `RitualTabChromeTest.kt` (4 asserts `+ NOVO` → `NOVO`; mensagem do teste de
+  `RitualEmptyState`), `RitualTodoFilterTest.kt` (2 asserts `+ NOVO`; `empty_showsEmptyState`
+  → `empty_pendingFilter_showsPendingMessage` + 2 novos: `empty_completedFilter_…`,
+  `empty_allFilter_…`)
+- Baselines: 23 PNGs regravados (Habits/Dailies/Todos/ScoreColor)
+
+**Resumo:**
+- Item 1: botão novo com texto `NOVO`; o `+` continua sendo o ícone `lucide_ic_plus`.
+  `contentDescription` intocado ("Novo hábito"/"Nova diária"/"Novo afazer").
+- Item 2 (textos exatos da spec):
+  - Hábitos: "Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP."
+  - Diárias: "Nenhuma tarefa diária ainda. O que você quer fazer todo dia?"
+  - Missões Avulsas: Pending "Nenhuma missão pendente. Crie uma." / Completed
+    "Nenhuma missão concluída ainda." / All "Nenhuma missão ainda. Crie a primeira."
+- Grep de requisito antes de editar: `grep -rn "heráldica\|voto de prática\|afazer místico"
+  app/src` → 6 ocorrências (3 main + 3 teste), todas substituídas; grep final → **0**.
+  `grep -rn '+ NOVO' app/src` → **0**.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Unitários (XML bruto): `RitualTabChromeTest` **4/4**, `RitualTodoFilterTest` **5/5** (0 falhas).
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado
+  **127 suítes / 974 testes / 0 falhas / 0 erros / 0 skipped** (972 + 2 novos).
+- Screenshots: verify (`-Proborazzi.test.verify=true`) antes de regravar em
+  `HabitsScreenScreenshotTest`/`DailiesScreenScreenshotTest`/`TodosScreenScreenshotTest`/
+  `ScoreColorHabitsScreenshotTest` → **23 falhas**, `_compare.png` inspecionado (só o texto
+  do botão e a mensagem do vazio; sem deformação); `-Proborazzi.test.record=true` regrava
+  os mesmos 23 PNGs (`git status` confirma só esses); verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.

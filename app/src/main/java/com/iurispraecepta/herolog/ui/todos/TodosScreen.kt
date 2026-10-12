@@ -339,7 +339,11 @@ fun TodosScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 RitualEmptyState(
-                    message = "Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!"
+                    message = when (filter) {
+                        TodoFilter.Pending -> "Nenhuma missão pendente. Crie uma."
+                        TodoFilter.Completed -> "Nenhuma missão concluída ainda."
+                        TodoFilter.All -> "Nenhuma missão ainda. Crie a primeira."
+                    }
                 )
             }
         } else {

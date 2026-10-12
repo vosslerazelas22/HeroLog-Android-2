@@ -77,7 +77,7 @@ class RitualTodoFilterTest {
         )
         composeTestRule.onNodeWithText("MISSÕES AVULSAS").assertIsDisplayed()
         composeTestRule.onNodeWithText("1 missão").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ NOVO").assertIsDisplayed()
+        composeTestRule.onNodeWithText("NOVO").assertIsDisplayed()
         composeTestRule.onNodeWithText("Varrer o sótão").assertIsDisplayed()
         composeTestRule.onNodeWithText("Encerar o corrimão").assertDoesNotExist()
     }
@@ -108,14 +108,54 @@ class RitualTodoFilterTest {
     }
 
     @Test
-    fun empty_showsEmptyState() {
-        // Arrange/Act: sem tarefas
-        // Assert: contador zerado + mensagem do React
+    fun empty_pendingFilter_showsPendingMessage() {
+        // Arrange/Act: sem tarefas, filtro padrão Pendentes
+        // Assert: contador zerado + mensagem do filtro (spec-rebranding item 2)
         setScreen(emptyList())
         composeTestRule.onNodeWithText("0 missões").assertIsDisplayed()
         composeTestRule
-            .onNodeWithText("Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!")
+            .onNodeWithText("Nenhuma missão pendente. Crie uma.")
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ NOVO").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão concluída ainda.")
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão ainda. Crie a primeira.")
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithText("NOVO").assertIsDisplayed()
+    }
+
+    @Test
+    fun empty_completedFilter_showsCompletedMessage() {
+        // Arrange/Act: sem tarefas, filtro Concluídos
+        // Assert: mensagem própria do filtro
+        setScreen(emptyList())
+        composeTestRule.onNodeWithText("Concluídos").performClick()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão concluída ainda.")
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão pendente. Crie uma.")
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão ainda. Crie a primeira.")
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun empty_allFilter_showsAllMessage() {
+        // Arrange/Act: sem tarefas, filtro Todos
+        // Assert: mensagem própria do filtro
+        setScreen(emptyList())
+        composeTestRule.onNodeWithText("Todos").performClick()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão ainda. Crie a primeira.")
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão pendente. Crie uma.")
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText("Nenhuma missão concluída ainda.")
+            .assertDoesNotExist()
     }
 }

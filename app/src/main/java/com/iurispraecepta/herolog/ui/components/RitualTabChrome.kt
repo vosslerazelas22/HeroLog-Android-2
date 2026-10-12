@@ -42,7 +42,8 @@ import com.iurispraecepta.herolog.ui.theme.RitualTextSecondary
 //
 // Referência: `specs/rituais-ai-studio/{Habits,Dailies,Todos}Tab.tsx` (cabeçalho
 // `:99-119`/`:129-...`/`:123-141`, vazio `:279-281`, filtros de Todos `:144-187`).
-// D2: botão "Novo" em uppercase (`+ NOVO` — no AI Studio só inicial maiúscula).
+// D2: botão "Novo" em uppercase (`NOVO`, só o texto — o `+` vem do ícone
+// `lucide_ic_plus`, que permanece; spec-rebranding item 1).
 // D7: sem `#0D0A17` (fundo segue o global do Android).
 // Lista: `px 16` (via `contentPadding` nas telas) e 10dp entre cards; o `pr-1` do
 // React divide o elemento com `px-4` (efeito real incerto) — mantido `px 16`
@@ -129,8 +130,9 @@ fun RitualTabHeader(
 }
 
 /**
- * Botão `+ NOVO`: mono SemiBold 12sp gold, fundo `#1A1725`, borda 1dp `#2A2535`,
+ * Botão `NOVO`: mono SemiBold 12sp gold, fundo `#1A1725`, borda 1dp `#2A2535`,
  * raio 8dp, `px 12 / py 6`, ícone `+` 14dp, gap 6, escala 0,95 ao pressionar.
+ * O `+` é o ícone; o texto não repete o sinal (spec-rebranding item 1).
  */
 @Composable
 fun RitualNewButton(
@@ -162,7 +164,7 @@ fun RitualNewButton(
                 modifier = Modifier.size(14.dp)
             )
             Text(
-                text = "+ NOVO",
+                text = "NOVO",
                 fontFamily = JetBrainsMono,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,

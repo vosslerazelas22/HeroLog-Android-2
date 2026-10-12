@@ -261,7 +261,7 @@ fun DailiesScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 RitualEmptyState(
-                    message = "Nenhum voto de prática diária estabelecido neste plano. Adicione tarefas para forjar hábitos duradouros todos os dias!"
+                    message = "Nenhuma tarefa diária ainda. O que você quer fazer todo dia?"
                 )
             }
         } else {

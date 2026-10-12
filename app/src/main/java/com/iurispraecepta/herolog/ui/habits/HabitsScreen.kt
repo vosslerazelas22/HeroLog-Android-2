@@ -208,7 +208,7 @@ fun HabitsScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 RitualEmptyState(
-                    message = "A heráldica de seus hábitos está em branco. Comece definindo comportamentos diários positivos ou rituais de quebra de vícios!"
+                    message = "Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP."
                 )
             }
         } else {

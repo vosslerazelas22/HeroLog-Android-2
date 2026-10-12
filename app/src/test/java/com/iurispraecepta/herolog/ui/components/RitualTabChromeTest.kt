@@ -64,8 +64,8 @@ class RitualTabChromeTest {
         }
         composeTestRule.onNodeWithText("CAPELA DE HÁBITOS").assertIsDisplayed()
         composeTestRule.onNodeWithText("3 hábitos").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ NOVO").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ NOVO").performClick()
+        composeTestRule.onNodeWithText("NOVO").assertIsDisplayed()
+        composeTestRule.onNodeWithText("NOVO").performClick()
         composeTestRule.runOnIdle { assertEquals(1, news) }
     }
 
@@ -85,19 +85,19 @@ class RitualTabChromeTest {
         }
         composeTestRule.onNodeWithText("TAREFAS DIÁRIAS").assertIsDisplayed()
         composeTestRule.onNodeWithText("1 tarefa").assertIsDisplayed()
-        composeTestRule.onNodeWithText("+ NOVO").assertDoesNotExist()
+        composeTestRule.onNodeWithText("NOVO").assertDoesNotExist()
     }
 
     @Test
     fun empty_showsMessage() {
-        // Arrange/Act/Assert: texto literal do React, Inter itálico centralizado
+        // Arrange/Act/Assert: texto da spec-rebranding (item 2), Inter itálico centralizado
         setChrome {
             RitualEmptyState(
-                message = "Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!"
+                message = "Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP."
             )
         }
         composeTestRule
-            .onNodeWithText("Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!")
+            .onNodeWithText("Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP.")
             .assertIsDisplayed()
     }
 
@@ -109,6 +109,6 @@ class RitualTabChromeTest {
             Box(modifier = Modifier.ritualBottomBorder())
         }
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("+ NOVO").assertIsNotDisplayed()
+        composeTestRule.onNodeWithText("NOVO").assertIsNotDisplayed()
     }
 }
