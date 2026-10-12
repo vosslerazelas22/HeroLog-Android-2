@@ -6499,3 +6499,34 @@ incluindo calibração das sombras (aproximações declaradas no KDoc).
 
 **Desvios de escopo aprovados:**
 - Nenhum. Alinhamento à decisão consciente Trello #72 / PARIDADE.md (fundo unificado no Scaffold).
+
+---
+
+## [2026-10-11] Bloco: tema por modo da Câmara de Foco + pips + cooldown (spec-tema-por-modo-foco, PR #36)
+
+**Escopo:** `specs/spec-tema-por-modo-foco.md` (revisão 2, 06/10). Decisões D1–D11 fechadas com o Bruno (04–06/10); OQ-1 fechada (D10: accent Selvagem `FB7185`); OQ-2 resolvida dentro do escopo (pips na recompensa via migration 4→5); OQ-3 (caixa do `ModeStatus`) fica para inspeção dos baselines. FR-015 (tag da tela cheia) NÃO aplicado — ficou como opcional.
+
+**Commit:** `c08d054` (38 arquivos, +2078/−574, conferido via `git show c08d054 --stat`).
+
+**Arquivos:**
+- `ui/focus/ModeTheme.kt` (NOVO): `ModeTheme(accent/accentDim/statusMain)` + `RaidMode.theme()`; tokens reaproveitados, sem hex novo (FR-001/FR-002). Selvagem usa `Rose400`/`Rose500` (D10).
+- `ui/focus/ModeStatus.kt` (NOVO): substitui `RaidModeInfoBox`; `DungeonPips` + `dungeonPipStates` pura (semântica de *sessão atual*, D6); `dungeonStatusCompleted` (FR-010, corrige defasagem do descanso: `lastSession + 1`); ⏳ no descanso pós-4ª com cooldown (FR-011). Posicionado entre timer e CTA (FR-007), sem "?" e sem caixa (OQ-3).
+- `ui/focus/ModeHelpBlocks.kt` (NOVO): blocos de ajuda extraídos do `ModeDescriptionModal`; `ModeDescriptionModal.kt` deletado (FR-020).
+- `ui/focus/IncursionModeModal.kt`: acordeão inline por card (um aberto por vez, FR-016/17, `helpBlocksFor`), `readOnly` durante sessão (FR-019, sem dimming 50%), ícone Selvagem `Red400`→`accent` (FR-016a).
+- `ui/focus/RaidModeSection.kt`: `RaidModeInfoBox` removido (só `SegmentedControl`).
+- `ui/focus/QuickActionsBar.kt`: tinta do ícone do Modo via `theme.accent`; botão Modo habilitado com sessão rodando (abre modal `readOnly`).
+- `MainActivity.kt`: `FocusHeaderBanner(theme)` + `ModeStatus` nos 4 estados; cooldown ligado nos 4 pontos (modal + 3 status/pips); preview volta a PADRÃO com cooldown; `activeHelpMode`/`ModeDescriptionModal` removidos.
+- `logic/focus/DungeonCooldownLogic.kt`: clamp do restante a 2h (FR-014, relógio retrocedido).
+- `ui/HeroLogViewModel.kt`: `dungeonCooldownRemainingMs: StateFlow` (ticker 1s só com restante > 0) + guarda em `startSession` recusando Masmorra em cooldown (FR-013/014b).
+- `FocusCompletionFlow.kt` (+27): bloco de pips na recompensa quando `dungeonSessionsCompleted in 1..4` (OQ-2).
+- `data/entity/PendingRewardCelebrationEntity.kt` + `HeroLogDatabase.kt` + `app/schemas/.../5.json`: **migration 4→5** com coluna `dungeonSessionsCompleted` (índice da sessão gravado na celebração; progresso global já zerado após a 4ª nunca é recalculado).
+- `FocusUseCase.kt`, `FocusSessionService.kt`, `FocusSessionReceiver.kt`, `FocusNotifications.kt`, `PendingCelebrationHost.kt`, `HeroLogApplication.kt`: wiring do cooldown/modo nos fluxos de sessão e backup.
+- Testes novos/ajustados: `ModeThemeTest`, `ModeStatusTest` (`dungeonPipStates` 0–4), `ModeStatusCompositionTest` (SC-004), `DungeonCooldownLogicTest` (+retrocesso), `DungeonCooldownViewModelTest`, `IncursionModeModalTest` (acordeão/readOnly), `ModeHelpBlocksScreenshotTest` (substitui `ModeDescriptionModalScreenshotTest`, PNGs deletados), `DungeonRewardPipsTest`, `DungeonCelebrationUseCaseTest`, `CelebrationDungeonMigrationTest`, `RaidModeSectionScreenshotTest`, `HeroLogViewModelTest` (+guard), `FocusModeNotificationsTest` (+2).
+- Sem mudança de schema além da migration 4→5; `fallbackToDestructiveMigration` continua removido.
+
+**Bug real corrigido (D7):** cooldown de 2h da Masmorra não funcionava — `lastDungeonClearedTime` gravado mas nunca lido, `resolveDungeonCooldownRemainingMs` só chamada em teste, `0L`/`false` fixos nos 4 pontos. Agora ligado de verdade (UI + ViewModel + guarda). Lacuna de fiação fechada (ver `PARIDADE.md`).
+
+**Validação (reportada no commit):** `assembleDebug` BUILD SUCCESSFUL; **855 testes, 0 falhas** (XML bruto em `app/build/test-results/testDebugUnitTest/`). SC-001 (PADRAO idêntico), SC-002 (grep: nenhum `RaidMode`/`ModeTheme` em BottomNav/AppHeader/carrossel/botões), SC-003 (contraste ≥ 4.5:1 nos 3 modos), SC-005–SC-009 cobertos.
+**Visual e interação em device/emulador: PENDENTE** — acordeão + modal `readOnly` + ticker do cooldown + baselines lado a lado com o React (375×667, 390×844). Sem isso, validação parcial.
+
+**Desvios de escopo:** nenhum. OQ-3 segue aberto (decisão da caixa na inspeção dos baselines).
