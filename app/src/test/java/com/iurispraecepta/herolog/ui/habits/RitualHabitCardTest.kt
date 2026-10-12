@@ -99,21 +99,25 @@ class RitualHabitCardTest {
     }
 
     @Test
-    fun recorded_showsDoneStatus_andStreak() {
+    fun recorded_showsDoneStatus_butNeverStreak() {
         // Arrange/Act: registrado hoje + streak 5
-        // Assert: campo a campo
+        // Assert: status presente; segmento de streak fora do card (item 3)
         setCard(habit(lastTriggeredDate = "2026-10-12", streak = 5))
         composeTestRule.onNodeWithText("Concluído hoje").assertIsDisplayed()
         composeTestRule.onNodeWithText("Pendente hoje").assertIsNotDisplayed()
-        composeTestRule.onNodeWithText("5d streak").assertIsDisplayed()
+        composeTestRule.onNodeWithText("5d streak").assertDoesNotExist()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
     }
 
     @Test
-    fun noStreak_hidesStreakSegment() {
-        // Arrange/Act: streak 0
-        // Assert: sem segmento de streak
-        setCard(habit(streak = 0))
-        composeTestRule.onNodeWithText("0d streak").assertDoesNotExist()
+    fun streak_isNotDisplayed_evenWithHighValue() {
+        // Arrange/Act: streak alto (alimenta a conquista habit_streak_7, não a UI)
+        // Assert: nenhum texto de streak no card
+        setCard(habit(streak = 12))
+        composeTestRule.onNodeWithText("12d streak").assertDoesNotExist()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithText("+12 XP").assertIsDisplayed()
+        composeTestRule.onNodeWithText("(+3 | -1)").assertIsDisplayed()
     }
 
     @Test
@@ -183,11 +187,11 @@ class RitualHabitCardTest {
     }
 
     @Test
-    fun narrowCard_wrapsStatusLine_keepingCounterVisible() {
+    fun narrowCard_keepsStatusLineItemsVisible() {
         // Regressão (Bloco F): height(IntrinsicSize.Min) travava o FlowRow em 1 linha
-        // e as quebradas eram descartadas. Em 280dp o contador precisa quebrar linha.
-        // Arrange/Act: dados longos (streak + contador) em largura estreita
-        // Assert: contador visível (quebrado, não descartado)
+        // e as quebradas eram descartadas. Em 280dp os itens da linha precisam aparecer.
+        // Arrange/Act: dados longos (streak alto + contador) em largura estreita
+        // Assert: status, XP e contador visíveis; nenhum texto de streak
         composeTestRule.setContent {
             HeroLogTheme(darkTheme = true) {
                 Box(
@@ -211,8 +215,9 @@ class RitualHabitCardTest {
             }
         }
         composeTestRule.onNodeWithText("Concluído hoje").assertIsDisplayed()
-        composeTestRule.onNodeWithText("12d streak").assertIsDisplayed()
+        composeTestRule.onNodeWithText("+12 XP").assertIsDisplayed()
         composeTestRule.onNodeWithText("(+3 | -1)").assertIsDisplayed()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
     }
 
     @Test

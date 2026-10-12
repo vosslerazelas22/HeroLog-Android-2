@@ -6915,3 +6915,41 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-12] Bloco B (SPEC-Rebranding — item 3, streak fora do card de hábito)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt`
+  (`HabitStatusLine`: parâmetro `streak` removido; bloco `if (streak > 0) { StatusDot();
+  "${streak}d streak" }` removido; import `RitualAmber` removido por ficar sem uso)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCardTest.kt`
+  (`recorded_showsDoneStatus_andStreak` → `recorded_showsDoneStatus_butNeverStreak`;
+  `noStreak_hidesStreakSegment` → `streak_isNotDisplayed_evenWithHighValue`;
+  `narrowCard_wrapsStatusLine_keepingCounterVisible` → `narrowCard_keepsStatusLineItemsVisible`)
+- Baselines: 5 PNGs (`habits_screen_up_down`, `only_up`, `edit_modal`, `confirm_delete`,
+  `confirm_cancel`)
+
+**Resumo:**
+- Linha de status do Hábito agora é `Concluído hoje/Pendente hoje · +XP · (+up | -down)`
+  (sem segmento de streak e sem `·` órfão: o `StatusDot` entre XP e contador permanece).
+- `git grep -n "\.streak" app/src/main` no fechamento: `HabitLogic.kt:85` (`streak + 1`) e
+  `:111` (`max(0, streak - 1)`), `AchievementCatalog.kt:321` (`it.streak >= 7`, conquista
+  `habit_streak_7`), `CharacterModels.kt:134` (`Habit.streak`), `DailyLogic.kt:54/92`
+  (`Daily.streak`), `CharacterState.streak`/`bestStreak` — **todos intactos**.
+- `Habit.streak`, `Daily.streak`, `CharacterState.streak`, `bestStreak` e a conquista
+  `habit_streak_7` não foram tocados; só a exibição no card saiu.
+- Fixtures de `HabitsScreenScreenshotTest` mantêm `streak = …` (o campo continua real);
+  só os PNGs mudaram. `ScoreColorHabitsScreenshotTest` não mudou (fixtures com `streak = 0`).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `RitualHabitCardTest` → **10/10** (XML bruto, 0 falhas).
+- Suíte COMPLETA → BUILD SUCCESSFUL; XML agregado **127 suítes / 974 testes / 0 falhas /
+  0 erros / 0 skipped**.
+- Screenshots: verify antes de regravar → 5 falhas (exatamente os 5 com `streak > 0`);
+  `_compare.png` inspecionado (só o segmento `5d streak` removido e o contador subindo
+  para a 1ª linha; sem deformação); record regrava os mesmos 5; verify verde em seguida.
+- Visual em device: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.

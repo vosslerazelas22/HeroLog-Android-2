@@ -48,7 +48,6 @@ import com.iurispraecepta.herolog.ui.components.ritualDifficultyEdge
 import com.iurispraecepta.herolog.ui.components.ritualGlow
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.RitualAmber
 import com.iurispraecepta.herolog.ui.theme.RitualBorder
 import com.iurispraecepta.herolog.ui.theme.RitualGreen
 import com.iurispraecepta.herolog.ui.theme.RitualSurface
@@ -183,7 +182,6 @@ fun RitualHabitCard(
                     HabitStatusLine(
                         isRecordedToday = isRecordedToday,
                         xp = xp,
-                        streak = habit.streak,
                         upCount = habit.upCount,
                         downCount = habit.downCount
                     )
@@ -296,13 +294,16 @@ private fun HabitPlusButton(
 /**
  * Linha de status (mono 11sp, gap 8, quebra permitida — `MissionCard.tsx:117-142`
  * + D10): "Concluído hoje" verde / "Pendente hoje" cinza (Regular, sem ícone),
- * `·`, `+XP`, [`·`, `Nd streak` âmbar], `·`, `(+up | -down)`.
+ * `·`, `+XP`, `·`, `(+up | -down)`.
+ *
+ * SPEC-Rebranding item 3: o segmento `{n}d streak` foi removido daqui — o streak
+ * de hábito continua calculado (`HabitLogic`) e continua alimentando a conquista
+ * `habit_streak_7`, mas **não é exibido** (decisão de produto).
  */
 @Composable
 private fun HabitStatusLine(
     isRecordedToday: Boolean,
     xp: Int,
-    streak: Int,
     upCount: Int,
     downCount: Int
 ) {
@@ -326,17 +327,6 @@ private fun HabitStatusLine(
             fontWeight = FontWeight.Normal,
             fontFamily = JetBrainsMono
         )
-        if (streak > 0) {
-            StatusDot()
-            Text(
-                text = "${streak}d streak",
-                color = RitualAmber,
-                fontSize = 11.sp,
-                lineHeight = 11.sp,
-                fontWeight = FontWeight.Normal,
-                fontFamily = JetBrainsMono
-            )
-        }
         StatusDot()
         Text(
             text = "(+$upCount | -$downCount)",
