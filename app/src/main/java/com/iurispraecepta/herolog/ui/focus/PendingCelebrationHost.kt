@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.iurispraecepta.herolog.data.JsonConfig
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.data.entity.PendingRewardCelebrationEntity
 import com.iurispraecepta.herolog.logic.achievements.AchievementCatalog.ACHIEVEMENTS_LIST
 import com.iurispraecepta.herolog.logic.focus.AggregatedCelebrationSummary
@@ -37,7 +38,8 @@ fun PendingCelebrationHost(
     onConfirmSingle: (historyId: String?, notes: String, tag: String) -> Unit,
     onDismissAggregated: () -> Unit,
     modifier: Modifier = Modifier,
-    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList(),
+    bottomInset: androidx.compose.ui.unit.Dp = LocalBottomBarInset.current
 ) {
     when (selectCelebrationMode(summary.sessionCount)) {
         CelebrationMode.SINGLE -> {
@@ -71,14 +73,16 @@ fun PendingCelebrationHost(
                     onConfirmSingle(session.historyId, notes, tag)
                 },
                 dungeonSessionsCompleted = session.dungeonSessionsCompleted,
-                modifier = modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize(),
+                bottomInset = bottomInset
             )
         }
         CelebrationMode.AGGREGATED -> {
             CompletionShell(
                 onNext = onDismissAggregated,
                 isLastStep = true,
-                modifier = modifier.fillMaxSize()
+                modifier = modifier.fillMaxSize(),
+                bottomInset = bottomInset
             ) {
                 MultipleSessionCelebrationContent(
                     summary = summary,
