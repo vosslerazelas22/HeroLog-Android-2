@@ -535,7 +535,15 @@ class FocusSessionService : Service() {
         }
         val calc = useCase().calculateRewards(config, current.durationMinutes)
             ?: return handleStop()
-        useCase().applyRewards(calc, pauseCount = current.pauseCount) ?: return handleStop()
+        // OQ-2: índice da sessão de Masmorra concluída (semântica de sessão
+        // atual) gravado na fila para os pips da recompensa.
+        val dungeonSessionsCompleted =
+            if (config.isDungeonMode) (config.dungeonSessions + 1).coerceAtMost(4) else 0
+        useCase().applyRewards(
+            calc,
+            pauseCount = current.pauseCount,
+            dungeonSessionsCompleted = dungeonSessionsCompleted
+        ) ?: return handleStop()
         repos().focusSessionRepository.clearSession()
         FocusSessionReceiver.cancelBackup(this)
         FocusNotifications.cancel(this, FocusNotifications.ID_TIMER)

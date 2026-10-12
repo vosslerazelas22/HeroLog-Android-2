@@ -187,8 +187,8 @@ object FocusNotifications {
                 val support = when (theme.mode) {
                     RaidMode.MASMORRA -> context.getString(
                         R.string.focus_timer_support_dungeon,
-                        // Mesma regra da tela de foco (`RaidModeInfoBox`: `($dungeonSessions/4)`
-                        // com a contagem ANTES da sessão atual).
+                        // Mesma regra da tela de foco (`ModeStatus`: pips com a
+                        // contagem ANTES da sessão atual; aqui em texto "n/4").
                         config?.dungeonSessions ?: 0
                     )
                     else -> context.getString(

@@ -41,6 +41,7 @@ import com.iurispraecepta.herolog.logic.focus.FocusUseCase
 import com.iurispraecepta.herolog.logic.focus.PersistedFocusSession
 import com.iurispraecepta.herolog.logic.focus.AggregatedCelebrationSummary
 import com.iurispraecepta.herolog.logic.focus.WILDERNESS_GRACE_PERIOD_SECONDS
+import com.iurispraecepta.herolog.logic.focus.resolveDungeonCooldownRemainingMs
 import com.iurispraecepta.herolog.logic.focus.WildernessInfractionOutcome
 import com.iurispraecepta.herolog.logic.focus.resolveWildernessInfraction
 import com.iurispraecepta.herolog.logic.focus.resolveCognitiveDeath
@@ -104,6 +105,14 @@ class HeroLogViewModel(
 
     private val _dungeonSessionsProgress = MutableStateFlow(0)
     val dungeonSessionsProgress: StateFlow<Int> = _dungeonSessionsProgress.asStateFlow()
+
+    // FR-013: restante do cooldown de 2h da Masmorra, derivado de
+    // characterState.lastDungeonClearedTime + clock() injetável. Ticker de 1s
+    // só enquanto > 0 (encerra em 0). Porte do checkCooldown/setInterval de
+    // App.tsx:308-325 (fonte real); sem equivalente de UI no React além do badge.
+    private val _dungeonCooldownRemainingMs = MutableStateFlow(0L)
+    val dungeonCooldownRemainingMs: StateFlow<Long> = _dungeonCooldownRemainingMs.asStateFlow()
+    private var cooldownTickJob: Job? = null
 
     private val _breakTimerState = MutableStateFlow(BreakTimerState())
     val breakTimerState: StateFlow<BreakTimerState> = _breakTimerState.asStateFlow()
@@ -248,6 +257,7 @@ class HeroLogViewModel(
                 repository.saveCharacterState(finalState)
             }
             _characterState.value = finalState
+            refreshDungeonCooldown(finalState.lastDungeonClearedTime)
 
             if (rolloverResult.died) {
                 viewModelScope.launch {
@@ -295,15 +305,31 @@ class HeroLogViewModel(
         val stored = persisted.pendingCalculation
         if (stored != null) {
             val useCase = buildUseCase() ?: return
-            useCase.applyRewards(stored, referenceDate = Date(clock()))
+            // OQ-2: o cálculo guardado é reaproveitado (anti-reroll); o índice
+            // da sessão vem do config persistido, nunca recalculado.
+            val persistedConfig = persisted.config
+            val dungeonSessionsCompleted =
+                if (persistedConfig.isDungeonMode) (persistedConfig.dungeonSessions + 1).coerceAtMost(4) else 0
+            useCase.applyRewards(
+                stored,
+                referenceDate = Date(clock()),
+                dungeonSessionsCompleted = dungeonSessionsCompleted
+            )
             focusSessionRepository.clearSession()
+            // Item 4 do review pré-merge: o apply gravou lastDungeonClearedTime
+            // no Room sem passar pelo funil — recarrega para UI/guard não verem
+            // timestamp velho até a próxima mutação.
+            repository.getCharacterState()?.let {
+                _characterState.value = it
+                refreshDungeonCooldown(it.lastDungeonClearedTime)
+            }
             refreshPendingCelebration()
             return
         }
 
         if (persisted.endTimeMillis - clock() <= 0) {
             val repo = pendingRewardRepository ?: return
-            completeSessionFromBackup(
+            val applied = completeSessionFromBackup(
                 repository,
                 focusSessionRepository,
                 repo,
@@ -311,6 +337,13 @@ class HeroLogViewModel(
                 persisted.durationMinutes,
                 Date(clock())
             )
+            // Item 4 do review pré-merge: mesmo reload do caso 2, só quando aplicou.
+            if (applied) {
+                repository.getCharacterState()?.let {
+                    _characterState.value = it
+                    refreshDungeonCooldown(it.lastDungeonClearedTime)
+                }
+            }
             refreshPendingCelebration()
         } else {
             _pendingServiceResume.value = persisted
@@ -436,6 +469,7 @@ class HeroLogViewModel(
         // reiniciar o app. A detecção de level-up abaixo não depende do valor
         // antigo: usa latest.leveledUp, já calculado pelo FocusUseCase.
         repository.getCharacterState()?.let { _characterState.value = it }
+        _characterState.value?.let { refreshDungeonCooldown(it.lastDungeonClearedTime) }
         val latest = repo.getPending().lastOrNull()
         val holder = FocusSessionService.state.value
         if (latest != null) {
@@ -555,6 +589,11 @@ class HeroLogViewModel(
      *   quando o estado inteiro está sendo substituído por uma fonte externa (import de save) e
      *   uma cascata de popups de "level up" comparando contra o personagem anterior seria
      *   espúria/sem sentido pro jogador.
+     *
+     *   Publicação síncrona (item 2 do review pré-merge): `_characterState` é
+     *   atualizado antes do `save` assíncrono para que leitores imediatos (ex.:
+     *   o guard de cooldown em `startSession`) nunca vejam timestamp velho.
+     *   Só o `save` no Room segue em `launch`.
      */
     fun saveCharacterState(state: CharacterState, suppressLevelUpDetection: Boolean = false) {
         val previous = _characterState.value
@@ -567,9 +606,32 @@ class HeroLogViewModel(
                 addSystemLog("🆙 COMBAT LEVEL UP: Nível de combate subiu para ${state.combatLevel}!", true)
             }
         }
+        _characterState.value = state
+        refreshDungeonCooldown(state.lastDungeonClearedTime)
         viewModelScope.launch {
             repository.saveCharacterState(state)
-            _characterState.value = state
+        }
+    }
+
+    /**
+     * Recalcula o restante do cooldown da Masmorra e mantém o ticker de 1s
+     * vivo só enquanto o restante > 0 (FR-013). Chamado a cada transição de
+     * estado que pode mudar lastDungeonClearedTime (init, saveCharacterState,
+     * handleServiceCompleted).
+     */
+    private fun refreshDungeonCooldown(lastClearedAtMs: Long) {
+        cooldownTickJob?.cancel()
+        val remaining = resolveDungeonCooldownRemainingMs(lastClearedAtMs, clock())
+        _dungeonCooldownRemainingMs.value = remaining
+        if (remaining > 0L) {
+            cooldownTickJob = viewModelScope.launch {
+                while (isActive) {
+                    delay(1000L)
+                    val updated = resolveDungeonCooldownRemainingMs(lastClearedAtMs, clock())
+                    _dungeonCooldownRemainingMs.value = updated
+                    if (updated <= 0L) break
+                }
+            }
         }
     }
 
@@ -967,6 +1029,18 @@ class HeroLogViewModel(
      */
     fun startSession(context: Context, config: FocusSessionConfig, durationMinutes: Int) {
         if (_focusSessionState.value.isRunning) return
+        // FR-014b: guarda no ViewModel (não só na UI) — Masmorra em cooldown recusa
+        // com estado intacto + log de sistema. Sem equivalente no React (Android-first).
+        if (config.isDungeonMode) {
+            val remaining = resolveDungeonCooldownRemainingMs(
+                _characterState.value?.lastDungeonClearedTime ?: 0L,
+                clock()
+            )
+            if (remaining > 0L) {
+                addSystemLog("⏳ Masmorra em recarga: aguarde o cooldown terminar para nova incursão.", true)
+                return
+            }
+        }
         cancelAllTimers()
         _breakTimerState.value = BreakTimerState()
         _pendingFocusAchievements.value = emptyList()
@@ -1014,6 +1088,7 @@ class HeroLogViewModel(
         super.onCleared()
         graceTickJob?.cancel()
         mirrorTickJob?.cancel()
+        cooldownTickJob?.cancel()
     }
 
     fun cancelSession(context: Context) {

@@ -72,13 +72,16 @@ class FocusUseCase(
      * @param pauseCount pausas da sessão (espelhado do `ServiceState.pauseCount` no
      *   caminho do Service; `0` nos caminhos de backup/recovery sem essa informação).
      *   Gravado na fila para o fluxo completo — nunca recalculado na exibição.
+     * @param dungeonSessionsCompleted índice da sessão de Masmorra concluída
+     *   (1..4; 0 = não-masmorra). Gravado na fila para os pips da recompensa (OQ-2).
      */
     suspend fun applyRewards(
         calc: FocusRewardsCalculation,
         editedNotes: String = "",
         selectedTag: String? = null,
         referenceDate: Date = Date(),
-        pauseCount: Int = 0
+        pauseCount: Int = 0,
+        dungeonSessionsCompleted: Int = 0
     ): CharacterState? {
         val previous = characterRepository.getCharacterState() ?: return null
         val candidate = FocusApplyLogic.apply(
@@ -104,7 +107,8 @@ class FocusUseCase(
             streakAfter = streakAfter,
             showStreakCelebration = showStreakCelebration,
             pauseCount = pauseCount,
-            historyId = historyId
+            historyId = historyId,
+            dungeonSessionsCompleted = dungeonSessionsCompleted
         )
         return finalState
     }
@@ -122,7 +126,8 @@ class FocusUseCase(
         streakAfter: Int = 0,
         showStreakCelebration: Boolean = false,
         pauseCount: Int = 0,
-        historyId: String? = null
+        historyId: String? = null,
+        dungeonSessionsCompleted: Int = 0
     ) {
         val previousLevel = previous.skills.getOrNull(calc.skillIdx)?.level
         val newLevel = newState.skills.getOrNull(calc.skillIdx)?.level
@@ -142,7 +147,8 @@ class FocusUseCase(
                 streakAfter = streakAfter,
                 showStreakCelebration = showStreakCelebration,
                 pauseCount = pauseCount,
-                historyId = historyId
+                historyId = historyId,
+                dungeonSessionsCompleted = dungeonSessionsCompleted
             )
         )
     }

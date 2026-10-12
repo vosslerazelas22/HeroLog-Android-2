@@ -31,7 +31,8 @@ fun resolveDungeonCooldownRemainingMs(
 ): Long {
     val elapsed = nowMs - lastClearedAtMs
     return if (elapsed < DUNGEON_COOLDOWN_TOTAL_MS) {
-        DUNGEON_COOLDOWN_TOTAL_MS - elapsed
+        // FR-014: relógio retrocedido daria elapsed negativo e restante > 2h — limita a 2h.
+        minOf(DUNGEON_COOLDOWN_TOTAL_MS, DUNGEON_COOLDOWN_TOTAL_MS - elapsed)
     } else {
         0L
     }

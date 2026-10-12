@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
@@ -69,6 +71,7 @@ import com.iurispraecepta.herolog.ui.theme.Champagne300
 import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
+import com.composables.icons.lucide.R as LucideR
 
 fun getRank(isWildernessChecked: Boolean, pauseCount: Int): String = when {
     isWildernessChecked && pauseCount == 0 -> "S+"
@@ -231,6 +234,7 @@ fun SessionSummaryScreen(
     rewardsCalculation: FocusRewardsCalculation,
     pauseCount: Int,
     streak: Int,
+    dungeonSessionsCompleted: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val rank = getRank(rewardsCalculation.isWildernessChecked, pauseCount)
@@ -401,6 +405,43 @@ fun SessionSummaryScreen(
                             blurRadius = 6f
                         )
                     )
+                )
+            }
+        }
+
+        // OQ-2: progresso da Masmorra na recompensa (a entidade guarda o índice;
+        // o progresso global já foi zerado após a 4ª — nunca recalculado aqui).
+        // FR-111/FR-112 (P8/P10/P11): só sessões concluídas (sem ◎); label
+        // MASMORRA (1..3) / MASMORRA CONCLUÍDA (4) com ícone swords; cor via tema.
+        if (dungeonSessionsCompleted in 1..4) {
+            val dungeonAccent = RaidMode.MASMORRA.theme().accent
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = painterResource(LucideR.drawable.lucide_ic_swords),
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = dungeonAccent
+                    )
+                    Text(
+                        text = if (dungeonSessionsCompleted == 4) "MASMORRA CONCLUÍDA" else "MASMORRA",
+                        color = dungeonAccent,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = Cinzel,
+                        letterSpacing = 1.sp
+                    )
+                }
+                DungeonPips(
+                    completed = dungeonSessionsCompleted,
+                    accent = dungeonAccent,
+                    showCurrent = false
                 )
             }
         }
@@ -828,6 +869,7 @@ fun FocusCompletionFlow(
     initialNotes: String = "",
     onConfirm: (editedNotes: String, selectedTag: String) -> Unit,
     initialStepIndex: Int = 0,
+    dungeonSessionsCompleted: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val hasLoot = remember(rewardsCalculation) {
@@ -877,7 +919,8 @@ fun FocusCompletionFlow(
             "summary" -> SessionSummaryScreen(
                 rewardsCalculation = rewardsCalculation,
                 pauseCount = pauseCount,
-                streak = streak
+                streak = streak,
+                dungeonSessionsCompleted = dungeonSessionsCompleted
             )
             "loot" -> LootDropScreen(
                 lootedItems = rewardsCalculation.lootedItems,

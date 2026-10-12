@@ -6,6 +6,7 @@ import com.iurispraecepta.herolog.data.database.HeroLogDatabase
 import com.iurispraecepta.herolog.data.database.MIGRATION_1_2
 import com.iurispraecepta.herolog.data.database.MIGRATION_2_3
 import com.iurispraecepta.herolog.data.database.MIGRATION_3_4
+import com.iurispraecepta.herolog.data.database.MIGRATION_4_5
 import com.iurispraecepta.herolog.data.repository.CharacterRepository
 import com.iurispraecepta.herolog.data.repository.FocusSessionRepository
 import com.iurispraecepta.herolog.data.repository.PendingRewardRepository
@@ -16,7 +17,7 @@ class HeroLogApplication : Application() {
             applicationContext,
             HeroLogDatabase::class.java,
             "herolog.db"
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
     }
 
     val characterRepository: CharacterRepository by lazy {

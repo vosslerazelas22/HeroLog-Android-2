@@ -62,4 +62,15 @@ class DungeonCooldownLogicTest {
     fun formatDungeonCooldown_negativeMs_returnsZerosWithoutException() {
         assertEquals("00:00:00", formatDungeonCooldown(-5000L))
     }
+
+    @Test
+    fun resolveDungeonCooldownRemainingMs_clockMovedBackwards_clampedToTwoHours() {
+        // Arrange: relógio retrocedido — lastClearedAtMs no futuro em relação a nowMs
+        val nowMs = 10_000_000_000L
+        val clearedOneHourInFutureMs = nowMs + (1 * 60 * 60 * 1000L)
+        // Act: restante sem clamp seria 3h; FR-014 exige teto de 2h
+        val remaining = resolveDungeonCooldownRemainingMs(lastClearedAtMs = clearedOneHourInFutureMs, nowMs = nowMs)
+        // Assert: nunca excede 2h
+        assertEquals(2 * 60 * 60 * 1000L, remaining)
+    }
 }

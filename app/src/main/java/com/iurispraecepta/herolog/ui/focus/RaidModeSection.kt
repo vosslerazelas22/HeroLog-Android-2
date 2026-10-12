@@ -57,9 +57,7 @@ import com.iurispraecepta.herolog.logic.focus.formatDungeonCooldown
  * NÃO INCLUÍDO NESTE ARQUIVO (dependências externas não auditadas):
  * - Wiring com `LootConfig.calculateLootChance` real (assinatura exata não confirmada nesta
  *   sessão) — `lootChancePercent` é recebido pronto de fora, quem chama este composable calcula.
- * - `ModeDescriptionModal` (componente de modal de ajuda) — os 3 callbacks `onShow*Help` só
- *   disparam a intenção de abrir; o modal em si (React: `ModeDescriptionModal.tsx`, mencionado
- *   em Sprint 6 do v1.1.0) precisa ter seu status de port em Android confirmado à parte.
+ * - Ajuda por modo (`RaidModeHelpContent` + `ModeHelpBlocks`, acordeão no `IncursionModeModal`).
  */
 
 enum class RaidMode {
@@ -102,27 +100,6 @@ private object RaidColors {
     val StoneBg = Color(0xFF0C0A09).copy(alpha = 0.60f)            // stone-950/60
     val StoneBorder = Color(0xFFF59E0B).copy(alpha = 0.15f)        // amber-500/15
     val StoneTextInactive = Color(0xFFA8A29E)                      // stone-400
-
-    val InfoBoxBg = Color(0xFF0C0A09).copy(alpha = 0.40f)          // stone-950/40
-    val InfoBoxBorder = Color(0xFFF59E0B).copy(alpha = 0.05f)      // amber-500/5
-
-    // InfoBox contextual (RaidModeInfoBox) — paridade literal com App.tsx:2791–2862.
-    // Tokens separados dos botões do segmented control de propósito: os botões usam
-    // amber/purple/red aproximados, o InfoBox usa champagne/zinc + purple/red sólidos.
-    // Fundo do "?" mapeado para transparente (sem bg), mesmo precedente do "?" do
-    // tooltip do timer pomodoro (MainActivity, banner "CÂMARA DE FOCO": só borda +
-    // texto, sem bg) — o `bg-champagne-950/10` do React não existe no @theme.
-    val InfoMainStandard = Color(0xFFE5C158)                          // champagne-400
-    val InfoBonus = Color(0xFFA1A1AA)                                  // zinc-400
-    val InfoMainDungeon = Color(0xFFD8B4FE)                            // purple-300
-    val InfoCooldown = Color(0xFFC084FC)                               // purple-400 sólido
-    val InfoMainWild = Color(0xFFF87171)                               // red-400 sólido
-    val InfoHelpStandardBorder = Color(0xFFD4AF37).copy(alpha = 0.20f) // champagne-500/20
-    val InfoHelpStandardText = Color(0xFFE5C158)                       // champagne-400
-    val InfoHelpDungeonBorder = Color(0xFFA855F7).copy(alpha = 0.20f)  // purple-500/20
-    val InfoHelpDungeonText = Color(0xFFC084FC)                        // purple-400
-    val InfoHelpWildBorder = Color(0xFFEF4444).copy(alpha = 0.20f)     // red-500/20
-    val InfoHelpWildText = Color(0xFFF87171)                           // red-400
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -272,108 +249,6 @@ private fun RaidModeButton(
  * valor pronto e formata com `formatDungeonCooldown` (mesmo arquivo), fonte real confirmada.
  */
 
-// ---------------------------------------------------------------------------------------------
-// Info box contextual (texto abaixo do segmented control)
-// ---------------------------------------------------------------------------------------------
-
-/**
- * Port de "Mode Context Information / Help Button" — a caixa que muda de conteúdo conforme o
- * modo selecionado. Textos literais copiados do JSX real (não parafraseados — é copy do próprio
- * produto de Bruno, não conteúdo de terceiros).
- *
- * `lootChancePercent` é recebido já calculado de fora (não fabricamos aqui a chamada a
- * `LootConfig.calculateLootChance` — assinatura exata não confirmada nesta sessão, precisa ser
- * conferida contra o arquivo real antes de wiring).
- */
-@Composable
-fun RaidModeInfoBox(
-    mode: RaidMode,
-    dungeonSessions: Int,
-    dungeonOnCooldown: Boolean,
-    lootChancePercent: Int,
-    onShowDungeonHelp: () -> Unit,
-    onShowWildernessHelp: () -> Unit,
-    onShowStandardHelp: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(4.dp))
-            .background(RaidColors.InfoBoxBg)
-            .border(1.dp, RaidColors.InfoBoxBorder, RoundedCornerShape(4.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-    ) {
-        when (mode) {
-            RaidMode.MASMORRA -> InfoRow(
-                mainText = "⚔️ Explorando Masmorra ($dungeonSessions/4)",
-                mainColor = RaidColors.InfoMainDungeon,
-                bonusText = if (dungeonOnCooldown) "⏳ Cooldown" else "Bônus +2.500 GP & Quad Loot",
-                bonusColor = if (dungeonOnCooldown) RaidColors.InfoCooldown else RaidColors.InfoBonus,
-                helpBorderColor = RaidColors.InfoHelpDungeonBorder,
-                helpTextColor = RaidColors.InfoHelpDungeonText,
-                onHelpClick = onShowDungeonHelp,
-            )
-
-            RaidMode.SELVAGEM -> InfoRow(
-                mainText = "💀 Terra Selvagem Ativa",
-                mainColor = RaidColors.InfoMainWild,
-                bonusText = "Bônus +25% XP & GP",
-                bonusColor = RaidColors.InfoBonus,
-                helpBorderColor = RaidColors.InfoHelpWildBorder,
-                helpTextColor = RaidColors.InfoHelpWildText,
-                onHelpClick = onShowWildernessHelp,
-            )
-
-            RaidMode.PADRAO -> InfoRow(
-                mainText = "🎯 Modo Padrão",
-                mainColor = RaidColors.InfoMainStandard,
-                bonusText = "• Chance de Saque: $lootChancePercent%",
-                bonusColor = RaidColors.InfoBonus,
-                helpBorderColor = RaidColors.InfoHelpStandardBorder,
-                helpTextColor = RaidColors.InfoHelpStandardText,
-                onHelpClick = onShowStandardHelp,
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoRow(
-    mainText: String,
-    mainColor: Color,
-    bonusText: String,
-    bonusColor: Color,
-    helpBorderColor: Color,
-    helpTextColor: Color,
-    onHelpClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = mainText, fontSize = 10.sp, color = mainColor)
-            Text(
-                text = bonusText,
-                fontSize = 9.sp,
-                color = bonusColor,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-        }
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(3.dp))
-                .border(1.dp, helpBorderColor, RoundedCornerShape(3.dp))
-                .clickable(onClick = onHelpClick)
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-        ) {
-            Text(text = "?", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = helpTextColor)
-        }
-    }
-}
-
 @Composable
 private fun Text10Uppercase(text: String, color: Color) {
     Text(
@@ -385,8 +260,8 @@ private fun Text10Uppercase(text: String, color: Color) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Conteúdo literal dos 3 modais de ajuda (texto copiado do JSX real, para wiring futuro com o
-// componente ModeDescriptionModal — status de port em Android ainda não confirmado)
+// Conteúdo literal dos 3 modais de ajuda (texto copiado do JSX real; renderizado
+// pelo acordeão inline do IncursionModeModal via ModeHelpBlocks — FR-016/FR-017)
 // ---------------------------------------------------------------------------------------------
 
 data class RaidModeHelpBlock(val label: String, val text: String)
@@ -437,7 +312,7 @@ object RaidModeHelpContent {
  * assinatura exata não foi confirmada nesta sessão — evita presumir nomes de campo). */
 data class TitleDisplay(val emoji: String, val name: String)
 
-/** Chance de loot já arredondada para porcentagem inteira, para RaidModeInfoBox. */
+/** Chance de loot já arredondada para porcentagem inteira, para o ModeStatus. */
 fun lootChancePercentFrom(studiedMinutes: Int, isDungeon: Boolean, equippedTitleId: String?): Int {
     val result = LootConfig.calculateLootChance(studiedMinutes, isDungeon, equippedTitleId)
     return Math.round(result.finalChance * 100).toInt()

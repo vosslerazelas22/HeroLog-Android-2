@@ -400,7 +400,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(streak = 5, combo = 10)
@@ -466,7 +466,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = false, isDungeonMode = false, dungeonSessions = 0)
@@ -490,7 +490,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val baseState = createBaseState().copy(
@@ -537,7 +537,7 @@ class HeroLogViewModelTest {
         val repository = CharacterRepository(db.characterStateDao())
         val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
         var fakeTime = 1000000L
-        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp())
+        val viewModel = HeroLogViewModel(repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp())
         testDispatcher.scheduler.runCurrent()
 
         val config = com.iurispraecepta.herolog.logic.focus.FocusSessionConfig(0, isWildernessChecked = true, isDungeonMode = false, dungeonSessions = 0)
@@ -2653,7 +2653,7 @@ class HeroLogViewModelTest {
         notificationManager().cancelAll()
         var fakeTime = 1000000L
         val viewModel = HeroLogViewModel(
-            repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp()
+            repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 
@@ -2708,7 +2708,7 @@ class HeroLogViewModelTest {
         notificationManager().cancelAll()
         var fakeTime = 1000000L
         val viewModel = HeroLogViewModel(
-            repository, focusRepository, clock = { fakeTime }, sfxManager = SfxManager.noOp()
+            repository, focusRepository, clock = { fakeTime + testDispatcher.scheduler.currentTime }, sfxManager = SfxManager.noOp()
         )
         testDispatcher.scheduler.runCurrent()
 

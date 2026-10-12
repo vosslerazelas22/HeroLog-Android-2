@@ -40,12 +40,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.composables.icons.lucide.R
 import com.iurispraecepta.herolog.logic.SkillCarouselLogic
 import com.iurispraecepta.herolog.model.Skill
 import com.iurispraecepta.herolog.ui.sfx.LocalSfxManager
+import com.iurispraecepta.herolog.ui.theme.Cinzel
 
 /**
  * Port fiel de `src/components/SkillInlineCarousel.tsx` (React).
@@ -182,6 +184,10 @@ fun SkillInlineCarousel(
                         color = Color(0xFFF4F4F5),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
+                        fontFamily = Cinzel,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                     Box(
                         modifier = Modifier
