@@ -197,7 +197,7 @@ fun HabitsScreen(
             .padding(vertical = 12.dp)
     ) {
         RitualTabHeader(
-            iconRes = LucideR.drawable.lucide_ic_zap,
+            iconRes = LucideR.drawable.lucide_ic_repeat,
             title = "Capela de Hábitos",
             counterText = if (habits.size == 1) "1 hábito" else "${habits.size} hábitos",
             showNewButton = !isCreating && editingHabit == null,
