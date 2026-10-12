@@ -8,11 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,19 +19,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -48,42 +41,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.iurispraecepta.herolog.logic.quests.TodoDecayLogic
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Todo
-import com.iurispraecepta.herolog.ui.components.DifficultyBadge
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.components.difficultyColor
 import com.iurispraecepta.herolog.ui.components.difficultyLabel
+import com.iurispraecepta.herolog.ui.components.RitualEmptyState
+import com.iurispraecepta.herolog.ui.components.RitualTabHeader
+import com.iurispraecepta.herolog.ui.components.ritualBottomBorder
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
-import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.ScoreColor
+import com.iurispraecepta.herolog.ui.theme.RitualBorder
+import com.iurispraecepta.herolog.ui.theme.RitualGold
+import com.iurispraecepta.herolog.ui.theme.RitualGreen
+import com.iurispraecepta.herolog.ui.theme.RitualSurfaceElevated
+import com.iurispraecepta.herolog.ui.theme.RitualTextPrimary
+import com.iurispraecepta.herolog.ui.theme.RitualTextSecondary
+import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
-import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Zinc300
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.derivedStateOf
@@ -93,22 +82,96 @@ import com.iurispraecepta.herolog.ui.form.QuestFormShell
 import com.iurispraecepta.herolog.ui.form.isEqualTo
 import com.iurispraecepta.herolog.ui.form.mergePendingChecklistInput
 import com.iurispraecepta.herolog.ui.form.parseTags
-import java.util.Date
 
-private val Champagne400 = Color(0xFFE5C158)
-private val Champagne300 = Color(0xFFF5DFA0)
-private val Stone700 = Color(0xFF44403C)
-private val Stone600 = Color(0xFF57534E)
 private val Stone500 = Color(0xFF78716C)
 private val Amber300 = Color(0xFFFCD34D)
-private val Amber200 = Color(0xFFFDE68A)
-private val Purple400 = Color(0xFFC084FC)
-private val Emerald400 = Color(0xFF34D399)
 
 enum class TodoFilter {
     Pending,
     Completed,
     All
+}
+
+/**
+ * Filtros de Tarefas (spec Bloco F, `TodosTab.tsx:144-187`): linha mono 12sp,
+ * gap 8, `px 16 / pb 8`, borda inferior; chip `px 12 / py 4`, raio 8dp, borda 1dp.
+ * Ativo: fundo/borda/texto por filtro (ouro/verde/elevado), SemiBold. Inativo:
+ * borda transparente, texto `#928C9A`. Lógica `isDisabled` mantida como estava
+ * (spec §6 — só o visual muda; o `disabled` do React durante edição é §2).
+ */
+@Composable
+private fun RitualTodoFilterRow(
+    filter: TodoFilter,
+    isDisabled: Boolean,
+    onSelect: (TodoFilter) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .ritualBottomBorder()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RitualFilterChip(TodoFilter.Pending, "Pendentes", filter, isDisabled, onSelect,
+                RitualGold)
+            RitualFilterChip(TodoFilter.Completed, "Concluídos", filter, isDisabled, onSelect,
+                RitualGreen)
+            RitualFilterChip(TodoFilter.All, "Todos", filter, isDisabled, onSelect, null)
+        }
+    }
+}
+
+@Composable
+private fun RitualFilterChip(
+    value: TodoFilter,
+    label: String,
+    current: TodoFilter,
+    isDisabled: Boolean,
+    onSelect: (TodoFilter) -> Unit,
+    accent: Color?
+) {
+    val isSelected = current == value
+    val bg = when {
+        isDisabled || !isSelected -> Color.Transparent
+        accent != null -> accent.copy(alpha = 0.15f)
+        else -> RitualSurfaceElevated
+    }
+    val border = when {
+        isDisabled || !isSelected -> Color.Transparent
+        accent != null -> accent
+        else -> RitualBorder
+    }
+    val textColor = when {
+        isDisabled -> Color(0x8052525B)
+        isSelected && accent != null -> accent
+        isSelected -> RitualTextPrimary
+        else -> RitualTextSecondary
+    }
+    Box(
+        modifier = Modifier
+            .alpha(if (isDisabled) 0.5f else 1.0f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(bg)
+            .border(1.dp, border, RoundedCornerShape(8.dp))
+            .clickable(enabled = !isDisabled) { onSelect(value) }
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontFamily = JetBrainsMono,
+            fontSize = 12.sp,
+            lineHeight = 12.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = textColor
+        )
+    }
 }
 
 @Composable
@@ -126,7 +189,6 @@ fun TodosScreen(
     onEditTodo: (Todo) -> Unit,
     onDeleteTodo: (String) -> Unit,
     modifier: Modifier = Modifier,
-    currentDate: Date = Date(),
     initialFilter: TodoFilter = TodoFilter.Pending,
     initialIsCreating: Boolean = false,
     initialEditingTodo: Todo? = null,
@@ -247,151 +309,53 @@ fun TodosScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(vertical = 12.dp)
     ) {
-        // Header: "🗒️ Missões Avulsas" + Botão Novo
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "🗒️ Missões Avulsas",
-                fontFamily = Cinzel,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Champagne400,
-                letterSpacing = 1.sp
-            )
+        RitualTabHeader(
+            iconRes = LucideR.drawable.lucide_ic_clipboard_list,
+            title = "Missões Avulsas",
+            counterText = if (filteredTodos.size == 1) "1 missão" else "${filteredTodos.size} missões",
+            showNewButton = !isCreating && editingTodo == null,
+            newContentDescription = "Novo afazer",
+            onNewClick = { openCreateModal() }
+        )
 
-            if (!isCreating && editingTodo == null) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x0DD4AF37))
-                        .border(1.dp, Color(0x4DD4AF37), RoundedCornerShape(6.dp))
-                        .clickable { openCreateModal() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddCircle,
-                        contentDescription = "Novo Afazer",
-                        tint = Champagne400,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Novo",
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = Champagne400
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Filtro de 3 vias (Pendentes / Concluídos / Todos)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val filters = listOf(
-                TodoFilter.Pending to "Pendentes",
-                TodoFilter.Completed to "Concluídos",
-                TodoFilter.All to "Todos"
-            )
+        RitualTodoFilterRow(
+            filter = filter,
+            isDisabled = isModalOpen,
+            onSelect = { filter = it }
+        )
 
-            filters.forEach { (f, label) ->
-                val isSelected = filter == f
-                val isDisabled = isModalOpen
-
-                Box(
-                    modifier = Modifier
-                        .alpha(if (isDisabled) 0.5f else 1.0f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            when {
-                                isSelected -> Color(0x26D4AF37)
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            1.dp,
-                            when {
-                                isSelected -> Champagne400
-                                else -> Color.Transparent
-                            },
-                            RoundedCornerShape(6.dp)
-                        )
-                        .clickable(enabled = !isDisabled) {
-                            filter = f
-                        }
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = label,
-                        fontFamily = Inter,
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = when {
-                            isDisabled -> Color(0x8052525B)
-                            isSelected -> Champagne300
-                            else -> Color(0xFF71717A)
-                        }
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Todos List or Empty State
         if (filteredTodos.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-                    .drawBehind {
-                        drawRoundRect(
-                            color = Color(0x1AF59E0B),
-                            style = Stroke(
-                                width = 1.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                            ),
-                            cornerRadius = CornerRadius(8.dp.toPx())
-                        )
-                    }
-                    .background(Color(0x330C0A09), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 20.dp, vertical = 32.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp)
             ) {
-                Text(
-                    text = "Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!",
-                    style = TextStyle(
-                        fontStyle = FontStyle.Italic,
-                        fontFamily = Cinzel,
-                        color = Amber100.copy(alpha = 0.4f),
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
+                RitualEmptyState(
+                    message = "Nenhum afazer místico sob este filtro. Adicione novas aventuras e complete-as!"
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 0.dp,
+                    bottom = LocalBottomBarInset.current
+                )
             ) {
                 items(filteredTodos, key = { it.id }) { todo ->
-                    TodoCardItem(
+                    RitualTodoCard(
                         todo = todo,
-                        currentDate = currentDate,
                         isExpanded = expandedTodoId == todo.id,
                         onToggleExpand = {
                             expandedTodoId = if (expandedTodoId == todo.id) null else todo.id
@@ -763,237 +727,4 @@ private fun FormFieldLabel(text: String) {
         color = Zinc300,
         letterSpacing = 0.5.sp
     )
-}
-
-@Composable
-private fun TodoCardItem(
-    todo: Todo,
-    currentDate: Date,
-    isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onToggleTodo: () -> Unit,
-    onToggleChecklistItem: (String) -> Unit,
-    onOpenEdit: () -> Unit
-) {
-    val score = TodoDecayLogic.getTodoDecayValue(todo, currentDate)
-    val tokens = ScoreColor.forScore(score)
-    val hasChecklist = todo.checklist.isNotEmpty()
-    val showChecklist = hasChecklist && isExpanded
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .then(
-                if (todo.completed) {
-                    Modifier
-                        .background(Color(0x08022C22)) // emerald-950/[0.03], fiel à fonte React
-                        .border(1.dp, Color(0x4D10B981), RoundedCornerShape(8.dp))
-                } else {
-                    Modifier
-                        .background(Brush.horizontalGradient(listOf(tokens.start, tokens.end)))
-                        .border(1.dp, tokens.border, RoundedCornerShape(8.dp))
-                }
-            )
-    ) {
-        // Linha Primária
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Banda Esquerda (Toggle Completo)
-            Box(
-                modifier = Modifier
-                    .width(48.dp)
-                    .fillMaxHeight()
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 8.dp,
-                            bottomStart = if (showChecklist) 0.dp else 8.dp
-                        )
-                    )
-                    .background(if (todo.completed) Color(0x3310B981) else Stone900)
-                    .clickable { onToggleTodo() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (todo.completed) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Desmarcar Tarefa",
-                        tint = Emerald400,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Color(0x73F59E0B), CircleShape)
-                    )
-                }
-            }
-
-            // Corpo Central (Clicável para abrir edição)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onOpenEdit() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Título + Dificuldade
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = todo.title,
-                        fontFamily = Cinzel,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = if (todo.completed) Stone500 else Amber100,
-                        textDecoration = if (todo.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    DifficultyBadge(difficulty = todo.difficulty)
-                }
-
-                // Notas se houver
-                if (todo.notes.isNotBlank()) {
-                    Text(
-                        text = todo.notes,
-                        fontFamily = Inter,
-                        color = Amber100.copy(alpha = 0.65f),
-                        fontSize = 12.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                // Linha de Meta: "🛡️ Tarefa Única" + Checklist se houver
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "🛡️ Tarefa Única",
-                        color = Amber100.copy(alpha = 0.4f),
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono
-                    )
-
-                    if (hasChecklist) {
-                        val completedCount = todo.checklist.count { it.completed }
-                        Text(
-                            text = "•",
-                            color = Color(0x33F59E0B),
-                            fontSize = 11.sp
-                        )
-                        Text(
-                            text = "📋 $completedCount de ${todo.checklist.size} critérios",
-                            color = Purple400,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = JetBrainsMono
-                        )
-                    }
-                }
-            }
-
-            // Banda Direita (Chevron expandir/colapsar só se tiver checklist)
-            if (hasChecklist) {
-                Box(
-                    modifier = Modifier
-                        .width(44.dp)
-                        .fillMaxHeight()
-                        .drawBehind {
-                            drawLine(
-                                color = Color(0x1AF59E0B),
-                                start = Offset(0f, 0f),
-                                end = Offset(0f, size.height),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        }
-                        .clickable { onToggleExpand() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Colapsar critérios" else "Expandir critérios",
-                        tint = Amber300,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        // Painel de Checklist Expandido (apenas se showChecklist = hasChecklist && isExpanded)
-        if (showChecklist) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x661C1917))
-                    .drawBehind {
-                        drawLine(
-                            color = Color(0x0DF59E0B),
-                            start = Offset(0f, 0f),
-                            end = Offset(size.width, 0f),
-                            strokeWidth = 1.dp.toPx()
-                        )
-                    }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                todo.checklist.forEach { item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Checkbox quadrado roxo corrigido (14dp)
-                        Box(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (item.completed) Color(0x33A855F7) else Stone950)
-                                .border(
-                                    1.dp,
-                                    if (item.completed) Purple400 else Stone700,
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .clickable { onToggleChecklistItem(item.id) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (item.completed) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(RoundedCornerShape(1.dp))
-                                        .background(Purple400)
-                                )
-                            }
-                        }
-
-                        // Texto do item
-                        Text(
-                            text = item.text,
-                            color = if (item.completed) Stone500 else Amber100.copy(alpha = 0.7f),
-                            textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
-                            fontSize = 13.sp,
-                            fontWeight = if (item.completed) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { onToggleChecklistItem(item.id) }
-                        )
-                    }
-                }
-            }
-        }
-    }
 }

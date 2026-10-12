@@ -8,11 +8,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,12 +25,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -47,16 +41,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,24 +53,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.model.Daily
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.RepeatInterval
-import com.iurispraecepta.herolog.ui.components.DifficultyBadge
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.components.difficultyColor
 import com.iurispraecepta.herolog.ui.components.difficultyLabel
+import com.iurispraecepta.herolog.ui.components.RitualEmptyState
+import com.iurispraecepta.herolog.ui.components.RitualTabHeader
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
-import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
-import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Zinc300
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.derivedStateOf
@@ -94,30 +80,13 @@ import com.iurispraecepta.herolog.ui.form.isEqualTo
 import com.iurispraecepta.herolog.ui.form.mergePendingChecklistInput
 import com.iurispraecepta.herolog.ui.form.parseTags
 
-private val Champagne400 = Color(0xFFE5C158)
-private val Stone700 = Color(0xFF44403C)
-private val Stone600 = Color(0xFF57534E)
 private val Stone500 = Color(0xFF78716C)
 private val Amber300 = Color(0xFFFCD34D)
-private val Amber200 = Color(0xFFFDE68A)
-private val Purple400 = Color(0xFFC084FC)
-private val Purple500 = Color(0xFFA855F7)
-private val Sky400 = Color(0xFF38BDF8)
 
 fun repeatIntervalLabel(interval: RepeatInterval): String = when (interval) {
     RepeatInterval.Daily -> "Diário"
     RepeatInterval.Weekly -> "Semanal"
     RepeatInterval.Monthly -> "Mensal"
-}
-
-fun getFrequencyText(repeats: RepeatInterval, every: Int): String {
-    val base = when (repeats) {
-        RepeatInterval.Daily -> "diariamente"
-        RepeatInterval.Weekly -> "semanalmente"
-        RepeatInterval.Monthly -> "mensalmente"
-    }
-    val noun = repeatIntervalLabel(repeats)
-    return if (every == 1) "Repete $base" else "Repete: $noun (a cada ${every}x)"
 }
 
 @Composable
@@ -271,93 +240,43 @@ fun DailiesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(vertical = 12.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "📅 Tarefas Diárias",
-                fontFamily = Cinzel,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Champagne400,
-                letterSpacing = 1.sp
-            )
+        RitualTabHeader(
+            iconRes = LucideR.drawable.lucide_ic_calendar_days,
+            title = "Tarefas Diárias",
+            counterText = if (dailies.size == 1) "1 tarefa" else "${dailies.size} tarefas",
+            showNewButton = !isCreating && editingDaily == null,
+            newContentDescription = "Nova diária",
+            onNewClick = { openCreateModal() }
+        )
 
-            if (!isCreating && editingDaily == null) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x0DD4AF37))
-                        .border(1.dp, Color(0x4DD4AF37), RoundedCornerShape(6.dp))
-                        .clickable { openCreateModal() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddCircle,
-                        contentDescription = "Novo Diário",
-                        tint = Champagne400,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Novo",
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = Champagne400
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Dailies List or Empty State
         if (dailies.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-                    .drawBehind {
-                        drawRoundRect(
-                            color = Color(0x1AF59E0B),
-                            style = Stroke(
-                                width = 1.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                            ),
-                            cornerRadius = CornerRadius(8.dp.toPx())
-                        )
-                    }
-                    .background(Color(0x330C0A09), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 20.dp, vertical = 32.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp)
             ) {
-                Text(
-                    text = "Nenhum voto de prática diária estabelecido neste plano. Adicione tarefas para forjar hábitos duradouros todos os dias!",
-                    style = TextStyle(
-                        fontStyle = FontStyle.Italic,
-                        fontFamily = Cinzel,
-                        color = Amber100.copy(alpha = 0.4f),
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
+                RitualEmptyState(
+                    message = "Nenhum voto de prática diária estabelecido neste plano. Adicione tarefas para forjar hábitos duradouros todos os dias!"
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 0.dp,
+                    bottom = LocalBottomBarInset.current
+                )
             ) {
                 items(dailies, key = { it.id }) { d ->
-                    DailyCardItem(
+                    RitualDailyCard(
                         daily = d,
                         isExpanded = expandedDailyId == d.id,
                         onToggleExpand = {
@@ -895,237 +814,4 @@ private fun FormFieldLabel(text: String) {
         color = Zinc300,
         letterSpacing = 0.5.sp
     )
-}
-
-@Composable
-private fun DailyCardItem(
-    daily: Daily,
-    isExpanded: Boolean,
-    onToggleExpand: () -> Unit,
-    onToggleDaily: () -> Unit,
-    onToggleChecklistItem: (String) -> Unit,
-    onOpenEdit: () -> Unit
-) {
-    val score = daily.value ?: 0
-    val tokens = ScoreColor.forScore(score)
-    val hasChecklist = daily.checklist.isNotEmpty()
-    val showChecklist = hasChecklist && (isExpanded || daily.completed)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Brush.horizontalGradient(listOf(tokens.start, tokens.end)))
-            .border(1.dp, tokens.border, RoundedCornerShape(8.dp))
-            .alpha(if (daily.completed) 0.7f else 1.0f)
-    ) {
-        // Linha Primária
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Banda Esquerda (Toggle Daily)
-            Box(
-                modifier = Modifier
-                    .width(48.dp)
-                    .fillMaxHeight()
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 8.dp,
-                            bottomStart = if (showChecklist) 0.dp else 8.dp
-                        )
-                    )
-                    .background(if (daily.completed) Color(0x330284C7) else Stone900)
-                    .clickable { onToggleDaily() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (daily.completed) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Desmarcar Diário",
-                        tint = Sky400,
-                        modifier = Modifier.size(22.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color(0x33F59E0B))
-                            .border(1.dp, Amber500, RoundedCornerShape(2.dp))
-                    )
-                }
-            }
-
-            // Corpo Central (Clicável para abrir edição)
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onOpenEdit() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Título + Dificuldade
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = daily.title,
-                        fontFamily = Cinzel,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = if (daily.completed) Color(0xFF7DD3FC) else Amber100,
-                        textDecoration = if (daily.completed) TextDecoration.LineThrough else TextDecoration.None,
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    DifficultyBadge(difficulty = daily.difficulty)
-                }
-
-                // Notas se houver
-                if (daily.notes.isNotBlank()) {
-                    Text(
-                        text = daily.notes,
-                        fontFamily = Inter,
-                        color = Amber100.copy(alpha = 0.65f),
-                        fontSize = 12.sp,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                // Linha de Status (Streak + Frequência + Checklist se houver)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "🏅 ${daily.streak}",
-                        color = Amber300,
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = "•",
-                        color = Amber500.copy(alpha = 0.2f),
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono
-                    )
-
-                    Text(
-                        text = getFrequencyText(daily.repeats, daily.every),
-                        color = Amber100.copy(alpha = 0.4f),
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono
-                    )
-
-                    if (hasChecklist) {
-                        val completedCount = daily.checklist.count { it.completed }
-                        Text(
-                            text = "•",
-                            color = Amber500.copy(alpha = 0.2f),
-                            fontSize = 11.sp,
-                            fontFamily = JetBrainsMono
-                        )
-                        Text(
-                            text = "📋 $completedCount de ${daily.checklist.size} critérios",
-                            color = Purple400,
-                            fontSize = 11.sp,
-                            fontFamily = JetBrainsMono,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            // Banda Direita (Chevron expandir/colapsar só se tiver checklist)
-            if (hasChecklist) {
-                Box(
-                    modifier = Modifier
-                        .width(44.dp)
-                        .fillMaxHeight()
-                        .drawBehind {
-                            drawLine(
-                                color = Color(0x1AF59E0B),
-                                start = Offset(0f, 0f),
-                                end = Offset(0f, size.height),
-                                strokeWidth = 1.dp.toPx()
-                            )
-                        }
-                        .clickable { onToggleExpand() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Colapsar critérios" else "Expandir critérios",
-                        tint = Amber300,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        // Painel de Checklist Expandido
-        if (showChecklist) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x801C1917))
-                    .border(width = 1.dp, color = Color(0x1AF59E0B))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                daily.checklist.forEach { item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Checkbox quadrado roxo
-                        Box(
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(if (item.completed) Color(0x33A855F7) else Stone950)
-                                .border(
-                                    1.dp,
-                                    if (item.completed) Purple400 else Stone700,
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .clickable { onToggleChecklistItem(item.id) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (item.completed) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(RoundedCornerShape(1.dp))
-                                        .background(Purple400)
-                                )
-                            }
-                        }
-
-                        // Texto do item
-                        Text(
-                            text = item.text,
-                            color = if (item.completed) Stone500 else Amber100.copy(alpha = 0.7f),
-                            textDecoration = if (item.completed) TextDecoration.LineThrough else TextDecoration.None,
-                            fontSize = 11.sp,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { onToggleChecklistItem(item.id) }
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
