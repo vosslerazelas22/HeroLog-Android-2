@@ -1,0 +1,287 @@
+package com.iurispraecepta.herolog.ui.habits
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasStateDescription
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.Habit
+import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+/**
+ * Bloco C (spec-rituais-cards): card de Hábito.
+ * "Hoje" é string injetada (vem de `rememberTodayDateString(habits)` na tela).
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [36])
+class RitualHabitCardTest {
+
+    @get:Rule
+    val composeTestRule = createComposeRule()
+
+    private fun habit(
+        up: Boolean = true,
+        down: Boolean = true,
+        lastUpDate: String? = null,
+        lastDownDate: String? = null,
+        streak: Int = 0,
+        notes: String = "ler 10 páginas",
+        difficulty: Difficulty = Difficulty.Easy
+    ) = Habit(
+        id = "h1",
+        title = "Ler",
+        notes = notes,
+        up = up,
+        down = down,
+        difficulty = difficulty,
+        upCount = 3,
+        downCount = 1,
+        streak = streak,
+        tags = emptyList(),
+        lastUpDate = lastUpDate,
+        lastDownDate = lastDownDate
+    )
+
+    /**
+     * Marcador `+`/`−`: o estado de hoje é anunciado por `stateDescription`
+     * (a11y, item 4), não por texto no card. A consulta usa o matcher combinado
+     * para diferenciar o botão `+` do `−`.
+     */
+    private fun assertMarker(contentDescription: String, expectedState: String) {
+        composeTestRule
+            .onNode(hasContentDescription(contentDescription).and(hasStateDescription(expectedState)))
+            .assertIsDisplayed()
+    }
+
+    private fun refuteMarker(contentDescription: String, unexpectedState: String) {
+        composeTestRule
+            .onNode(hasContentDescription(contentDescription).and(hasStateDescription(unexpectedState)))
+            .assertDoesNotExist()
+    }
+
+    private fun setCard(
+        habit: Habit,
+        today: String = "2026-10-12",
+        onTrigger: (String, Boolean) -> Unit = { _, _ -> },
+        onEdit: () -> Unit = {}
+    ) {
+        composeTestRule.setContent {
+            HeroLogTheme(darkTheme = true) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(QuestPanel)
+                ) {
+                    RitualHabitCard(
+                        habit = habit,
+                        todayDateStr = today,
+                        onTriggerHabit = onTrigger,
+                        onOpenEdit = onEdit
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun unregistered_neverShowsTodayStatusText_andMarkersAreUnmarked() {
+        // Arrange/Act: hábito Easy (12 XP) sem registro de hoje
+        // Assert: textos "Pendente/Concluído hoje" saíram (item 4); marcadores neutros
+        setCard(habit())
+        composeTestRule.onNodeWithText("Pendente hoje").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Concluído hoje").assertDoesNotExist()
+        composeTestRule.onNodeWithText("+12 XP").assertIsDisplayed()
+        composeTestRule.onNodeWithText("(+3 | -1)").assertIsDisplayed()
+        composeTestRule.onNodeWithText("FÁCIL").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ler 10 páginas").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Ler").assertIsDisplayed()
+        assertMarker("Registrar hábito Ler", "não registrado hoje")
+        assertMarker("Registrar desvio negativo de Ler", "não registrado hoje")
+    }
+
+    @Test
+    fun registeredUp_marksOnlyPlus_neverStreak() {
+        // Arrange/Act: `+` registrado hoje + streak 5 (alimenta conquista, não a UI)
+        // Assert: só o `+` aceso; segmento de streak fora do card (item 3)
+        setCard(habit(lastUpDate = "2026-10-12", streak = 5))
+        assertMarker("Registrar hábito Ler", "registrado hoje")
+        refuteMarker("Registrar desvio negativo de Ler", "registrado hoje")
+        assertMarker("Registrar desvio negativo de Ler", "não registrado hoje")
+        composeTestRule.onNodeWithText("5d streak").assertDoesNotExist()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun registeredDown_marksOnlyMinus() {
+        // Arrange/Act: só o `−` registrado hoje
+        // Assert: `−` aceso e `+` neutro (botões independentes)
+        setCard(habit(lastDownDate = "2026-10-12"))
+        assertMarker("Registrar desvio negativo de Ler", "registrado hoje")
+        refuteMarker("Registrar hábito Ler", "registrado hoje")
+        assertMarker("Registrar hábito Ler", "não registrado hoje")
+    }
+
+    @Test
+    fun registeredSameDay_marksBothButtons() {
+        // Arrange/Act: `+` e `−` no mesmo dia
+        // Assert: os dois marcadores acesos, sem texto de status
+        setCard(habit(lastUpDate = "2026-10-12", lastDownDate = "2026-10-12"))
+        assertMarker("Registrar hábito Ler", "registrado hoje")
+        assertMarker("Registrar desvio negativo de Ler", "registrado hoje")
+        composeTestRule.onNodeWithText("Concluído hoje").assertDoesNotExist()
+    }
+
+    @Test
+    fun markerFromPreviousDay_isNotLitToday() {
+        // Arrange/Act: marcação de ontem, hoje = 2026-10-12
+        // Assert: nenhum marcador aceso (comparação de data, não de flag persistente)
+        setCard(habit(lastUpDate = "2026-10-11", lastDownDate = "2026-10-11"))
+        refuteMarker("Registrar hábito Ler", "registrado hoje")
+        refuteMarker("Registrar desvio negativo de Ler", "registrado hoje")
+        assertMarker("Registrar hábito Ler", "não registrado hoje")
+        assertMarker("Registrar desvio negativo de Ler", "não registrado hoje")
+    }
+
+    @Test
+    fun streak_isNotDisplayed_evenWithHighValue() {
+        // Arrange/Act: streak alto (alimenta a conquista habit_streak_7, não a UI)
+        // Assert: nenhum texto de streak no card
+        setCard(habit(streak = 12))
+        composeTestRule.onNodeWithText("12d streak").assertDoesNotExist()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithText("+12 XP").assertIsDisplayed()
+        composeTestRule.onNodeWithText("(+3 | -1)").assertIsDisplayed()
+    }
+
+    @Test
+    fun noNotes_hidesNotesLine() {
+        // Arrange/Act: sem notas
+        // Assert: título presente, linha de notas ausente
+        setCard(habit(notes = ""))
+        composeTestRule.onNodeWithText("Ler").assertIsDisplayed()
+        composeTestRule.onNodeWithText("ler 10 páginas").assertDoesNotExist()
+    }
+
+    @Test
+    fun plusButton_triggersUp_withoutOpeningEdit() {
+        // Arrange/Act: toque no +
+        // Assert: trigger(true) e edição NÃO abre (sem propagação)
+        var triggered: Pair<String, Boolean>? = null
+        var edits = 0
+        setCard(
+            habit(),
+            onTrigger = { id, isUp -> triggered = id to isUp },
+            onEdit = { edits++ }
+        )
+        composeTestRule.onNodeWithContentDescription("Registrar hábito Ler").performClick()
+        composeTestRule.runOnIdle {
+            assertEquals("h1" to true, triggered)
+            assertEquals(0, edits)
+        }
+    }
+
+    @Test
+    fun minusButton_triggersDown_withoutOpeningEdit() {
+        // Arrange/Act: toque no −
+        // Assert: trigger(false) e edição NÃO abre
+        var triggered: Pair<String, Boolean>? = null
+        var edits = 0
+        setCard(
+            habit(),
+            onTrigger = { id, isUp -> triggered = id to isUp },
+            onEdit = { edits++ }
+        )
+        composeTestRule.onNodeWithContentDescription("Registrar desvio negativo de Ler").performClick()
+        composeTestRule.runOnIdle {
+            assertEquals("h1" to false, triggered)
+            assertEquals(0, edits)
+        }
+    }
+
+    @Test
+    fun noUp_showsDot_insteadOfPlusButton() {
+        // Arrange/Act: hábito só negativo
+        // Assert: sem botão +, com slot do ponto (layout não colapsa)
+        var triggered: Pair<String, Boolean>? = null
+        setCard(habit(up = false), onTrigger = { id, isUp -> triggered = id to isUp })
+        composeTestRule.onNodeWithContentDescription("Registrar hábito Ler").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("habitDot", useUnmergedTree = true).assertIsDisplayed()
+        assertNull(triggered)
+    }
+
+    @Test
+    fun noDown_hidesMinusButton() {
+        // Arrange/Act: hábito só positivo
+        // Assert: sem botão −
+        setCard(habit(down = false))
+        composeTestRule
+            .onNodeWithContentDescription("Registrar desvio negativo de Ler")
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun narrowCard_keepsStatusLineItemsVisible() {
+        // Regressão (Bloco F): height(IntrinsicSize.Min) travava o FlowRow em 1 linha
+        // e as quebradas eram descartadas. Em 280dp os itens da linha precisam aparecer.
+        // Arrange/Act: dados longos (streak alto + contador) em largura estreita
+        // Assert: status, XP e contador visíveis; nenhum texto de streak
+        composeTestRule.setContent {
+            HeroLogTheme(darkTheme = true) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(QuestPanel)
+                ) {
+                    Box(modifier = Modifier.width(280.dp)) {
+                        RitualHabitCard(
+                            habit = habit(
+                                lastUpDate = "2026-10-12",
+                                streak = 12,
+                                difficulty = Difficulty.Easy
+                            ),
+                            todayDateStr = "2026-10-12",
+                            onTriggerHabit = { _, _ -> },
+                            onOpenEdit = {}
+                        )
+                    }
+                }
+            }
+        }
+        assertMarker("Registrar hábito Ler", "registrado hoje")
+        composeTestRule.onNodeWithText("+12 XP").assertIsDisplayed()
+        composeTestRule.onNodeWithText("(+3 | -1)").assertIsDisplayed()
+        composeTestRule.onNodeWithText("streak", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun bodyClick_opensEdit() {
+        // Arrange/Act: toque no título (corpo)
+        // Assert: abre edição
+        var edits = 0
+        setCard(habit(), onEdit = { edits++ })
+        composeTestRule.onNodeWithText("Ler").performClick()
+        composeTestRule.runOnIdle { assertEquals(1, edits) }
+    }
+}

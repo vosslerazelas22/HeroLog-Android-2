@@ -153,6 +153,14 @@ class HeroLogViewModel(
     private val _pendingBreakStart = MutableStateFlow<Int?>(null)
     val pendingBreakStart: StateFlow<Int?> = _pendingBreakStart.asStateFlow()
 
+    // Gatilho de virada de dia (SPEC-Rebranding item 4). O único rollover do app é
+    // o do `init` abaixo (roda uma vez, na abertura); ao expor o tick da execução,
+    // a tela de Hábitos usa-o como `refreshKey` de `rememberTodayDateString` e
+    // recalcula "hoje" quando o estado do dia novo chega (além de ON_RESUME e do
+    // timer de meia-noite do próprio helper).
+    private val _rolloverTick = MutableStateFlow(0)
+    val rolloverTick: StateFlow<Int> = _rolloverTick.asStateFlow()
+
     /**
      * Descarta a primeira conquista da fila de anúncios (FR-009).
      * Usado quando o usuário avança no overlay de anúncio fora do foco.
@@ -256,6 +264,9 @@ class HeroLogViewModel(
             if (finalState != existing) {
                 repository.saveCharacterState(finalState)
             }
+            // Tick do rollover publicado ANTES do estado: a tela nunca compõe com o
+            // tick velho só para recompor em seguida (ver _rolloverTick).
+            _rolloverTick.value = _rolloverTick.value + 1
             _characterState.value = finalState
             refreshDungeonCooldown(finalState.lastDungeonClearedTime)
 

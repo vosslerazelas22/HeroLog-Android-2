@@ -1315,6 +1315,37 @@ class HeroLogViewModelTest {
     }
 
     @Test
+    fun rolloverTick_incrementsAfterInitRollover() = runTest {
+        // SPEC-Rebranding item 4: o tick do rollover é exposto como StateFlow
+        // e incrementado exatamente uma vez no init (após o rollover).
+        val db = createInMemoryDatabase()
+        val repository = CharacterRepository(db.characterStateDao())
+        val focusRepository = FocusSessionRepository(db.activeFocusSessionDao())
+        val todayStr = "Wed Aug 12 2026"
+        val existing = createBaseState().copy(
+            charClass = CharClass.Warrior,
+            todayDate = todayStr, // Mesmo dia — rollover ainda roda mas não muda data
+            hasClaimedLogin = true
+        )
+        repository.saveCharacterState(existing)
+
+        val jsDateRef = java.text.SimpleDateFormat("EEE MMM dd yyyy", java.util.Locale.US).parse(todayStr)!!.time
+        val viewModel = HeroLogViewModel(
+            repository,
+            focusRepository,
+            clock = { jsDateRef },
+            sfxManager = SfxManager.noOp()
+        )
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // O tick incrementa uma vez (o rollover roda no init, tick=1)
+        // StateFlow usa .value, não .first()
+        assertEquals(1, viewModel.rolloverTick.value)
+
+        db.close()
+    }
+
+    @Test
     fun viewModel_mounts_whenRolloverCausesDeath_setsIsPlayerDeadAfterDelay() = runTest {
         val db = createInMemoryDatabase()
         val repository = CharacterRepository(db.characterStateDao())
@@ -1379,8 +1410,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 0,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         val state = createBaseState().copy(
             charClass = CharClass.Warrior,
@@ -1409,7 +1439,9 @@ class HeroLogViewModelTest {
         assertNotNull(updatedHabit)
         assertEquals(1, updatedHabit?.upCount)
         assertEquals(1, updatedHabit?.streak)
-        assertNotNull(updatedHabit?.lastTriggeredDate)
+        // item 4: `+` grava lastUpDate (lastTriggeredDate virou legado de save)
+        assertNotNull(updatedHabit?.lastUpDate)
+        assertNull(updatedHabit?.lastDownDate)
 
         db.close()
     }
@@ -1429,8 +1461,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 2,
             streak = 5,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         val state = createBaseState().copy(
             charClass = CharClass.Warrior,
@@ -1453,6 +1484,9 @@ class HeroLogViewModelTest {
         assertNotNull(updatedHabit)
         assertEquals(3, updatedHabit?.downCount)
         assertEquals(4, updatedHabit?.streak)
+        // item 4: `−` grava lastDownDate de forma independente
+        assertNotNull(updatedHabit?.lastDownDate)
+        assertNull(updatedHabit?.lastUpDate)
 
         db.close()
     }
@@ -1472,8 +1506,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 0,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         val state = createBaseState().copy(
             gold = 100,
@@ -1644,6 +1677,8 @@ class HeroLogViewModelTest {
         assertEquals(0, addedHabit?.streak)
         assertEquals(listOf("learning"), addedHabit?.tags)
         assertNull(addedHabit?.lastTriggeredDate)
+        assertNull(addedHabit?.lastUpDate)
+        assertNull(addedHabit?.lastDownDate)
 
         db.close()
     }
@@ -1664,7 +1699,7 @@ class HeroLogViewModelTest {
             downCount = 1,
             streak = 4,
             tags = listOf("tag1"),
-            lastTriggeredDate = "2026-08-01"
+            lastUpDate = "2026-08-01"
         )
         val state = createBaseState().copy(habits = listOf(habit))
         repository.saveCharacterState(state)
@@ -2266,8 +2301,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 6,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
 
@@ -2302,8 +2336,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 2,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
 
@@ -2334,8 +2367,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 7,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         repository.saveCharacterState(
             createBaseState().copy(
@@ -2418,8 +2450,7 @@ class HeroLogViewModelTest {
             upCount = 0,
             downCount = 0,
             streak = 6,
-            tags = emptyList(),
-            lastTriggeredDate = null
+            tags = emptyList()
         )
         repository.saveCharacterState(createBaseState().copy(habits = listOf(habit)))
 

@@ -156,10 +156,35 @@ object SaveMigrationLogic {
 
         return try {
             val characterState = json.decodeFromJsonElement(CharacterState.serializer(), JsonObject(merged))
-            SaveImportResult.Success(characterState)
+            SaveImportResult.Success(migrateHabitDates(characterState))
         } catch (e: Exception) {
             SaveImportResult.InvalidJson("Save não pôde ser convertido em personagem válido: ${e.message}")
         }
+    }
+
+    /**
+     * Migração de hábitos do SPEC-Rebranding (item 4): saves antigos gravavam só
+     * `Habit.lastTriggeredDate` (escrita apenas pelo `+`), sem `lastUpDate`/`lastDownDate`.
+     *
+     * - `lastUpDate == null` e `lastTriggeredDate != null` → `lastUpDate = lastTriggeredDate`
+     *   (era gravada só no `+`, então o valor é do registro positivo).
+     * - `lastDownDate` fica `null`: não havia como saber o dia do `−`.
+     * - Idempotente e não destrutiva: só preenche `lastUpDate` vazia; nunca sobrescreve.
+     *
+     * Aplicada nos dois pontos de decodificação (blob do Room em
+     * `CharacterRepository.getCharacterState` e import em [normalizeGameState]) — sem
+     * Migration Room, porque `CharacterState` é blob JSON com `ignoreUnknownKeys = true`.
+     */
+    fun migrateHabitDates(state: CharacterState): CharacterState {
+        val habits = state.habits
+        if (habits.all { it.lastUpDate != null || it.lastTriggeredDate == null }) return state
+        return state.copy(
+            habits = habits.map { habit ->
+                if (habit.lastUpDate == null && habit.lastTriggeredDate != null) {
+                    habit.copy(lastUpDate = habit.lastTriggeredDate)
+                } else habit
+            }
+        )
     }
 }
 

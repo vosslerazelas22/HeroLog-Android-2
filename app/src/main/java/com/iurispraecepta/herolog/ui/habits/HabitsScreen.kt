@@ -8,18 +8,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +23,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.DropdownMenu
@@ -44,28 +39,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Habit
-import com.iurispraecepta.herolog.ui.components.DifficultyBadge
 import com.iurispraecepta.herolog.ui.components.HeroLogModal
 import com.iurispraecepta.herolog.ui.components.ModalVariant
 import com.iurispraecepta.herolog.ui.components.difficultyColor
 import com.iurispraecepta.herolog.ui.components.difficultyLabel
+import com.iurispraecepta.herolog.ui.components.RitualEmptyState
+import com.iurispraecepta.herolog.ui.components.RitualTabHeader
+import com.iurispraecepta.herolog.ui.components.rememberTodayDateString
 import com.iurispraecepta.herolog.ui.form.DeleteConfirmState
 import com.iurispraecepta.herolog.ui.form.HabitDraft
 import com.iurispraecepta.herolog.ui.form.QuestFormShell
@@ -74,27 +64,17 @@ import com.iurispraecepta.herolog.ui.form.parseTags
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
-import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.ScoreColor
 import com.iurispraecepta.herolog.ui.theme.Stone400
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone900
 
 import com.iurispraecepta.herolog.ui.theme.Zinc300
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-private val Champagne400 = Color(0xFFE5C158)
-private val Stone600 = Color(0xFF57534E)
 private val Stone500 = Color(0xFF78716C)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber200 = Color(0xFFFDE68A)
 private val Emerald500 = Color(0xFF10B981)
 private val Emerald400 = Color(0xFF34D399)
-private val Purple400 = Color(0xFFC084FC)
 private val Rose500 = Color(0xFFF43F5E)
 private val Rose400 = Color(0xFFFB7185)
 
@@ -110,7 +90,14 @@ fun HabitsScreen(
     initialEditingHabit: Habit? = null,
     initialDeleteConfirmState: DeleteConfirmState = DeleteConfirmState.None,
     initialShowDiscard: Boolean = false,
-    initialSnapshot: HabitDraft? = null
+    initialSnapshot: HabitDraft? = null,
+    /**
+     * Gatilho de virada de dia (SPEC-Rebranding item 4): passe
+     * `HeroLogViewModel.rolloverTick` aqui. Muda quando o rollover do `init` do VM
+     * roda (abertura do app), forçando o recálculo de "hoje" junto com `ON_RESUME`
+     * e com o timer de meia-noite de `rememberTodayDateString`.
+     */
+    dayRefreshKey: Any? = null
 ) {
     var isCreating by remember { mutableStateOf(initialIsCreating) }
     var editingHabit by remember { mutableStateOf(initialEditingHabit) }
@@ -202,98 +189,48 @@ fun HabitsScreen(
     }
 
     val isModalOpen = isCreating || editingHabit != null
-    val todayDateStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()) }
+    val todayDateStr = rememberTodayDateString(refreshKey = habits to dayRefreshKey)
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(vertical = 12.dp)
     ) {
-        // Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "⚡ Capela de Hábitos",
-                fontFamily = Cinzel,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Champagne400,
-                letterSpacing = 1.sp
-            )
+        RitualTabHeader(
+            iconRes = LucideR.drawable.lucide_ic_repeat,
+            title = "Capela de Hábitos",
+            counterText = if (habits.size == 1) "1 hábito" else "${habits.size} hábitos",
+            showNewButton = !isCreating && editingHabit == null,
+            newContentDescription = "Novo hábito",
+            onNewClick = { openCreateModal() }
+        )
 
-            if (!isCreating && editingHabit == null) {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0x0DD4AF37))
-                        .border(1.dp, Color(0x4DD4AF37), RoundedCornerShape(6.dp))
-                        .clickable { openCreateModal() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddCircle,
-                        contentDescription = "Novo Hábito",
-                        tint = Champagne400,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Novo",
-                        fontFamily = Inter,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = Champagne400
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Habit List or Empty State
         if (habits.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-                    .drawBehind {
-                        drawRoundRect(
-                            color = Color(0x1AF59E0B),
-                            style = Stroke(
-                                width = 1.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                            ),
-                            cornerRadius = CornerRadius(8.dp.toPx())
-                        )
-                    }
-                    .background(Color(0x330C0A09), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 20.dp, vertical = 32.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp)
             ) {
-                Text(
-                    text = "A heráldica de seus hábitos está em branco. Comece definindo comportamentos diários positivos ou rituais de quebra de vícios!",
-                    style = TextStyle(
-                        fontStyle = FontStyle.Italic,
-                        fontFamily = Cinzel,
-                        color = Amber100.copy(alpha = 0.4f),
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
+                RitualEmptyState(
+                    message = "Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP."
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 0.dp,
+                    bottom = LocalBottomBarInset.current
+                )
             ) {
                 items(habits, key = { it.id }) { h ->
-                    HabitCardItem(
+                    RitualHabitCard(
                         habit = h,
                         todayDateStr = todayDateStr,
                         onTriggerHabit = onTriggerHabit,
@@ -613,155 +550,4 @@ private fun FormFieldLabel(text: String) {
         color = Zinc300,
         letterSpacing = 0.5.sp
     )
-}
-
-@Composable
-private fun HabitCardItem(
-    habit: Habit,
-    todayDateStr: String,
-    onTriggerHabit: (String, Boolean) -> Unit,
-    onOpenEdit: () -> Unit
-) {
-    val score = habit.upCount - habit.downCount
-    val tokens = ScoreColor.forScore(score)
-    val isDoneToday = habit.lastTriggeredDate == todayDateStr
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Brush.horizontalGradient(listOf(tokens.start, tokens.end)))
-            .border(1.dp, tokens.border, RoundedCornerShape(8.dp))
-    ) {
-        // Zona Esquerda (Up)
-        if (habit.up) {
-            Box(
-                modifier = Modifier
-                    .width(48.dp)
-                    .fillMaxHeight()
-                    .background(Color(0x3310B981))
-                    .clickable { onTriggerHabit(habit.id, true) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Trigger Positivo",
-                    tint = Emerald400,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .width(8.dp)
-                    .fillMaxHeight()
-                    .background(Stone900)
-            )
-        }
-
-        // Zona Central (Conteúdo / Clicável para editar)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .clickable { onOpenEdit() }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            // Linha Título + Badge de Dificuldade
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Text(
-                    text = habit.title,
-                    fontFamily = Cinzel,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Amber100,
-                    modifier = Modifier.weight(1f, fill = false),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                DifficultyBadge(difficulty = habit.difficulty)
-            }
-
-            // Notas se houver
-            if (habit.notes.isNotBlank()) {
-                Text(
-                    text = habit.notes,
-                    fontFamily = Inter,
-                    color = Amber100.copy(alpha = 0.65f),
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Linha de Status
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (isDoneToday) {
-                    Text(
-                        text = "✓ Feito hoje",
-                        color = Amber400,
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else {
-                    Text(
-                        text = "○ Pendente hoje",
-                        color = Stone500,
-                        fontSize = 11.sp,
-                        fontFamily = JetBrainsMono
-                    )
-                }
-
-                Text(
-                    text = "•",
-                    color = Amber500.copy(alpha = 0.2f),
-                    fontSize = 11.sp,
-                    fontFamily = JetBrainsMono
-                )
-
-                Text(
-                    text = "(+${habit.upCount} | -${habit.downCount})",
-                    color = Amber100.copy(alpha = 0.4f),
-                    fontSize = 11.sp,
-                    fontFamily = JetBrainsMono
-                )
-            }
-        }
-
-        // Zona Direita (Down)
-        if (habit.down) {
-            Box(
-                modifier = Modifier
-                    .width(48.dp)
-                    .fillMaxHeight()
-                    .background(Color(0x33F43F5E))
-                    .clickable { onTriggerHabit(habit.id, false) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Remove,
-                    contentDescription = "Trigger Negativo",
-                    tint = Rose400,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        } else {
-            Box(
-                modifier = Modifier
-                    .width(8.dp)
-                    .fillMaxHeight()
-                    .background(Stone900)
-            )
-        }
-    }
 }

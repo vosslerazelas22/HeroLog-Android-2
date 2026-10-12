@@ -171,8 +171,12 @@ import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
+import com.iurispraecepta.herolog.ui.theme.RitualBorder
+import com.iurispraecepta.herolog.ui.theme.RitualGold
+import com.iurispraecepta.herolog.ui.theme.RitualSurfaceElevated
 import com.iurispraecepta.herolog.ui.theme.Stone900
 import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.components.RitualNewButton
 import com.iurispraecepta.herolog.model.OrbConcept
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -260,6 +264,9 @@ class MainActivity : ComponentActivity() {
 
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application, sfxManager))
                 val characterState by heroLogViewModel.characterState.collectAsState()
+                // Gatilho de virada de dia (SPEC-Rebranding item 4): tick da execução do
+                // rollover no init do VM; vira refreshKey de "hoje" na tela de Hábitos.
+                val rolloverTick by heroLogViewModel.rolloverTick.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
@@ -499,31 +506,11 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 }
 
-                                                // Botão "NOVA" — fonte usa PlusCircle + texto champagne.
-                                                Row(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(4.dp))
-                                                        .background(Champagne500.copy(alpha = 0.05f))
-                                                        .border(1.dp, Champagne500.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                                                        .clickable { isCreateModalOpen = true }
-                                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                                ) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.lucide_ic_circle_plus),
-                                                        contentDescription = "Nova Habilidade",
-                                                        tint = Champagne400,
-                                                        modifier = Modifier.size(14.dp)
-                                                    )
-                                                    Text(
-                                                        text = "NOVA",
-                                                        fontFamily = Inter,
-                                                        fontWeight = FontWeight.Bold,
-                                                        fontSize = 12.sp,
-                                                        color = Champagne400
-                                                    )
-                                                }
+                                                // Botão "NOVO" — visual idêntico ao RitualNewButton (habits/dailies/todos).
+                                                RitualNewButton(
+                                                    contentDescription = "Nova Habilidade",
+                                                    onClick = { isCreateModalOpen = true }
+                                                )
                                             }
                                             // border-b border-amber-500/10 da fonte.
                                             Box(
@@ -748,7 +735,8 @@ class MainActivity : ComponentActivity() {
                                             heroLogViewModel.addHabit(title, notes, up, down, difficulty, tags)
                                         },
                                         onEditHabit = { habit -> heroLogViewModel.editHabit(habit) },
-                                        onDeleteHabit = { habitId -> heroLogViewModel.deleteHabit(habitId) }
+                                        onDeleteHabit = { habitId -> heroLogViewModel.deleteHabit(habitId) },
+                                        dayRefreshKey = rolloverTick
                                     )
                                 }
                             }

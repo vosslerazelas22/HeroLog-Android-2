@@ -6530,3 +6530,496 @@ incluindo calibração das sombras (aproximações declaradas no KDoc).
 **Visual e interação em device/emulador: PENDENTE** — acordeão + modal `readOnly` + ticker do cooldown + baselines lado a lado com o React (375×667, 390×844). Sem isso, validação parcial.
 
 **Desvios de escopo:** nenhum. OQ-3 segue aberto (decisão da caixa na inspeção dos baselines).
+
+---
+
+## [2026-10-12] Pré-requisito + Bloco A (spec-rituais-cards — tokens)
+
+**Pré-requisito (patches, antes do bloco):**
+- `specs/habits_today_rememberfix.patch` aplicado via `git apply` (limpo): NOVO
+  `ui/components/TodayDate.kt` (`formatTodayDate` + `rememberTodayDateString(refreshKey)`,
+  recalcula no `ON_RESUME` e quando a lista muda) + `HabitsScreen.kt:79` troca o
+  `remember { SimpleDateFormat... }` sem chave por `rememberTodayDateString(habits)` +
+  NOVO `TodayDateTest.kt` (2 testes de fuso America/Sao_Paulo).
+- `specs/android_first_rituais_cards.patch` NÃO aplicou via `git apply` (contexto
+  deslocado: `ANDROID_FIRST.md` ganhou linhas depois — App Shortcuts, vela de streak,
+  notificações coloridas, histórico, taverna, tema-por-modo). Aplicado manualmente com
+  conteúdo idêntico: 5 linhas (redesign Rituais, sem cor por valor, botão `+` sem check,
+  contador `(+X | -Y)` preservado, frequência localizada) + bullet nas Decisões
+  relacionadas. Diff conferido contra o `.patch` linha a linha.
+- `TodayDateTest` 2/2 PASSED (XML bruto, ver validação abaixo).
+
+**Arquivos criados/alterados (Bloco A):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/theme/RitualCardTokens.kt` (NOVO)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/theme/RitualCardTokensTest.kt` (NOVO)
+
+**Resumo:**
+- 13 tokens do §3 com hexes literais de `specs/rituais-ai-studio/questTheme.ts`
+  (`RitualSurface/SurfaceElevated/SurfaceDrawer/Border/TextPrimary/TextTitleDone/
+  TextSecondary/TextTertiary/Gold/Green/Amber/Lavender/Rose`). Nenhum hex existia em
+  `Color.kt` (confirmado por leitura — nada a reaproveitar). `RitualGold #D9B85C` é
+  token de quest separado (não troca o `Champagne` dos outros módulos). `#0D0A17` (D7)
+  e `blue #75B9E8` (fora de escopo, §2) não portados. Imports de `model.*` confirmados
+  (`Difficulty` de `model.CharacterModels`, não de `logic.quests`).
+- Mapa de dificuldade: `ritualDifficultyStyle(Difficulty)` (chave interna em inglês,
+  label PT) + `ritualDifficultyStyleForKey(String?)` (espelha
+  `DIFFICULTY_CONFIG[key] || DIFFICULTY_CONFIG.Easy`); bg = pastel a 12%, border = pastel
+  a 35%, text = pastel.
+- Incidente de teste: `pastel.copy(alpha = 0.12f).alpha` retorna `31/255 ≈ 0.1216`
+  (Color sRGB de 8 bits quantiza o alpha; border `89/255`). Teste ajustado para os
+  valores quantizados exatos (delta 0.0001) com nota explicativa — não é divergência da
+  spec, é precisão de representação.
+- `ScoreColor.kt` mantido intocado (D3). Nenhum composable tocado (aceite do Bloco A:
+  nenhum literal nos blocos seguintes — base pronta).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `./gradlew :app:testDebugUnitTest --tests "*RitualCardTokensTest*" --tests "*TodayDateTest*"` →
+  BUILD SUCCESSFUL; XML bruto em `app/build/test-results/testDebugUnitTest/`:
+  `TEST-com.iurispraecepta.herolog.ui.theme.RitualCardTokensTest.xml` — tests="5"
+  skipped="0" failures="0" errors="0" (`tokens_matchSpecHexes`,
+  `difficultyMap_hasFourKeys_withPtLabelsAndPastels`,
+  `difficultyMap_usesTwelveAndThirtyFivePercentAlphas`,
+  `difficultyMap_unknownKey_fallsBackToEasy`, `difficultyMap_stringKeys_matchEnumMap`);
+  `TEST-com.iurispraecepta.herolog.ui.components.TodayDateTest.xml` — tests="2"
+  skipped="0" failures="0" (`formatTodayDate_usesLocalDay_beforeMidnight`,
+  `formatTodayDate_usesLocalDay_afterMidnight`).
+- Suíte completa NÃO rodada (escopo do pedido: só `*TodayDateTest*` + teste do bloco).
+- Visual: N/A neste bloco (só tokens). Validação visual no device é do Iuris (Blocos B–F).
+
+**Validação em emulador (Iuris, 12/10 — patch `habits_today_rememberfix`):**
+- Registro `+` mostra o texto antigo "Feito hoje" (`HabitsScreen.kt:708`, com glifo `✓`;
+  pendente "○ Pendente hoje" em `:716`) — esperado: nem o patch nem o Bloco A mexem no
+  texto; a troca para "Concluído hoje"/"Pendente hoje" sem glifo é aceite do Bloco C.
+- Background → foreground: estado preservado, sem flicker nem reset — PASS.
+- Virada de dia real: PENDENTE — Iuris testa ao final da spec, em device físico, após
+  merge (item aberto, ver abaixo).
+- Registro `−` conta como registrado hoje (booleano, D8) — PASS.
+- **Interação: validação parcial** até a virada de dia real ser exercitada.
+
+**Item aberto (pendência formal deste bloco):** virada de dia real com o fix
+(`rememberTodayDateString` recalculando no `ON_RESUME`) — re-executar ao final da spec
+em device físico pós-merge. Sem isso, o cenário que motivou o fix nunca teve cobertura.
+
+---
+
+## [2026-10-12] Bloco B (spec-rituais-cards — peças compartilhadas)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualCardPieces.kt` (NOVO)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/components/RitualCardPiecesTest.kt` (NOVO)
+
+**Resumo (INSPECT → PLAN → IMPLEMENT, escopo só Bloco B):**
+- Referência: `specs/rituais-ai-studio/MissionCard.tsx` (linhas citadas no KDoc de cada
+  peça) + `questTheme.ts`. Nenhum card existente foi tocado (wiring é Blocos C–E).
+- Peças: `RitualDifficultyBar` (4dp, altura total, pastel — `:52`);
+  `RitualDifficultyBadge` (px 8/py 2, raio 7dp, borda 1dp, mono SemiBold 10sp,
+  uppercase, tracking 0,05em = `0.5.sp`, `lineHeight = 10.sp` p/ `leading-none`,
+  cores do mapa do Bloco A — `:98-102`); `RitualProgressChip` (`c/t`, `1/1`, `0/1`;
+  verde+verde 10% concluído, `#625E69`+`#1A1725` pendente — `:286-295`);
+  `RitualChecklistDrawer` (borda superior 1dp, `#100D1C`, px 16/py 10, itens a cada
+  6dp; `if (expanded)` imediato, sem `animateContentSize` — `:316-349`) +
+  `RitualChevronButton` (padding 4dp, 14dp `#928C9A` — `:298-308`) +
+  `RitualChecklistRow` (px 6/py 4, raio 4dp, gap 10dp, mono Regular 12sp, 1 linha;
+  mini-checkbox 16dp/raio 4dp/borda 1dp; marcado verde 20% + check 12dp, texto
+  `#625E69` riscado; pendente `#928C9A` — `:319-346`); `Modifier.ritualPressable`
+  (escala 0,9/200ms e 0,95/150ms via `RitualPress`, `FastOutSlowInEasing`,
+  `indication = null` — sem ripple) + `Modifier.ritualGlow` (radial em `drawBehind`,
+  raio = meio-lado + 12dp, verde 20% → transparente; minSdk 24, sem `shadow` com cor).
+- Imports de `model.*` confirmados (`Difficulty`, `ChecklistItem` de
+  `model.CharacterModels`); zero literais (só tokens do Bloco A); Lucide do AAR via
+  `painterResource` (`check`, `chevron_up/down` — existência conferida no AAR 2.2.1).
+- Decisões conscientes: `DifficultyBadge` atual MANTIDO (modais usam
+  `difficultyColor`/`difficultyLabel`, fora de escopo — spec §6; screens migram em
+  C–E); JetBrainsMono Bold→SemiBold e Medium→Regular (só 400/600 carregados, spec §4);
+  strokes 2.5/3 da spec aproximados (vetores Lucide têm stroke 2.0 fixo — só
+  tamanho/posição são literais); chevron sem `aria-label` no React ganhou
+  contentDescription ("Expandir/Recolher checklist") p/ acessibilidade e teste.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `./gradlew :app:testDebugUnitTest --tests "*RitualCardPiecesTest*"` → BUILD
+  SUCCESSFUL; XML bruto
+  (`TEST-com.iurispraecepta.herolog.ui.components.RitualCardPiecesTest.xml`):
+  **tests="5" skipped="0" failures="0" errors="0"**
+  (`badge_showsUppercasePtLabel_perDifficulty`,
+  `progressChip_showsCountOrOneZeroStates`,
+  `drawer_togglesImmediately_andItemClickReportsId`,
+  `pressable_forwardsClick`, `difficultyBar_andGlow_composeWithoutCrash`).
+- Aceite do bloco: nenhuma animação além das de pressão (conferido por leitura — sem
+  `animateContentSize`, sem `AnimatedVisibility` no arquivo novo).
+- Visual em device: pendente (Iuris, junto dos Blocos C–F — peças ainda sem uso).
+
+**Desvios de escopo aprovados:**
+- Nenhum. `PARIDADE.md` (§6, linha "Aba Rituais" → Blocos A–B) e `ANDROID_FIRST.md`
+  (redesign → "Blocos A–B implementados 12/10; C–F pendentes") atualizados no bloco.
+
+---
+
+## [2026-10-12] Bloco C (spec-rituais-cards — HabitCard)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt` (NOVO)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (call-site
+  → `RitualHabitCard`; `HabitCardItem` antigo deletado; imports `DifficultyBadge` e
+  `ScoreColor` removidos — `difficultyColor`/`difficultyLabel` dos modais mantidos)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualCardPieces.kt`
+  (refino do Bloco B: chevron e linha da gaveta com `indication = null` — "sem ripple")
+- `app/src/test/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCardTest.kt` (NOVO)
+
+**Resumo:**
+- Container: fundo `surface`, borda 1dp, raio 12dp, altura mínima 88dp, clip; toque no
+  corpo abre edição (`indication = null`), botões internos consomem o toque (sem
+  propagação — testado). Linha principal: `[barra 4dp][Row px 14/py 12, gap 14]`.
+- Botão `+` (D1: `+` nos dois estados, nunca check): círculo 36dp, ícone Lucide `plus`
+  16dp; pendente fundo/borda/ícone padrão, registrado fundo verde 15% + borda/ícone
+  verdes + glow; escala 0,9 ao pressionar + 250ms `justTriggered` (`:36-37`; re-toques
+  rápidos compartilham a janela — aproximação). Sem `up` → ponto 8dp (slot 36dp).
+- Botão `−` (D4): visual 32dp (raio 8dp, fundo `#1A1725`, ícone `minus` 14dp
+  `#928C9A`), toque 48dp, escala 0,95/150ms, sem estado persistente; sem `down` →
+  vazio 32dp (spec: lado ausente mantém espaço).
+- Título Cinzel Bold 12sp, tracking 0,025em (`0.3.sp`), 1 linha; `#F4EFE6`
+  registrado / `#E8E0D0` pendente + `RitualDifficultyBadge`. Notas Cinzel Regular
+  11sp `#928C9A` 1 linha (herdam `font-serif` — spec §4, confirmação visual pendente).
+- Linha de status em `FlowRow` (mono Regular 11sp, gap 8, quebra permitida):
+  "Concluído hoje" verde / "Pendente hoje" cinza (sem ícone — troca do texto antigo
+  "✓ Feito hoje"/"○ Pendente hoje", achado do Iuris no emulador), `·`, `+{xp} XP`
+  (`getDifficultyRewards`: 4/12/28/60), [`·`, `{n}d streak` âmbar], `·`,
+  `(+{up} | -{down})` (D10).
+- Incidente de teste: `assertIsDisplayed` em nó sem semântica própria falha sob o
+  `clickable` do corpo (merge de descendentes) — resolvido com `useUnmergedTree`.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `--tests "*RitualHabitCardTest*" --tests "*RitualCardPiecesTest*" --tests
+  "*TodayDateTest*" --tests "*RitualCardTokensTest*"` → BUILD SUCCESSFUL; XML bruto:
+  `RitualHabitCardTest` **9/9** (pendente/registrado/streak/notas/`+`/`-`/sem-`up`/
+  sem-`down`/corpo-edita), regressão A–B 12/12, 0 falhas.
+- Visual em device: pendente (Iuris).
+
+**Desvios de escopo aprovados:**
+- Nenhum. `PARIDADE.md` (§6 → "Blocos A–C") e `ANDROID_FIRST.md` (→ "Blocos A–C
+  implementados 12/10; D–F pendentes") atualizados no bloco.
+
+---
+
+## [2026-10-12] Bloco D (spec-rituais-cards — DailyCard)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/RitualDailyCard.kt` (NOVO)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (call-site
+  → `RitualDailyCard`; `DailyCardItem` antigo deletado; `getFrequencyText` antigo
+  deletado; `repeatIntervalLabel` dos modais mantido; imports/vals mortos removidos:
+  `DifficultyBadge`, `ScoreColor`, `Stone950`, `Stone700`, `Purple400/500`, `Sky400`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt`
+  (correção do bug abaixo — mesma causa latente do Bloco C)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/dailies/RitualDailyCardTest.kt` (NOVO)
+
+**Resumo:**
+- Container em coluna `[linha principal][gaveta]`; barra 4dp só na principal; raio
+  12dp, mínima 88dp; corpo abre edição (sem ripple), checkbox/chevron/itens não
+  propagam (testado).
+- Checkbox 36dp raio 8dp escala 0,9/200ms: pendente fundo `#1A1725` + quadrado vazado
+  Lucide 16dp `#625E69`; concluído fundo verde 15% + borda verde + check 20dp + glow
+  (nunca azul — removida a banda `Sky`).
+- Título Cinzel Bold 12sp (`0.3.sp`); concluído `#928C9A` riscado + badge. Notas
+  Cinzel Regular 11sp (spec §4, confirmação visual pendente).
+- Metadados (mono Regular 11sp, `pt 2`, quebra permitida): `[moeda 12dp gold + XP
+  gold] · [repeat 12dp `#625E69` + frequência] [· `{n}d` âmbar]` à esquerda;
+  `SpaceBetween` com `[chip + chevron]` à direita (gap 4dp, chevron só com checklist).
+- Frequência D5 (`ritualFrequencyText`): `every = 1` → "Diariamente"/"Semanalmente"/
+  "Mensalmente"; `every > 1` → "A cada {n} dias/semanas/meses" (sem o inglês
+  semanticamente errado do React). XP `getDifficultyRewards` (4/12/28/60).
+- Removidos (§6): auto-expansão de concluída, `alpha 0.7`, cor por valor, checkbox
+  roxo, faixa 48dp/chevron 44dp, `DifficultyBadge` (→ `RitualDifficultyBadge`).
+
+**Bug real encontrado e corrigido (valia p/ C e D):** `RitualDifficultyBar` usa
+`fillMaxHeight` dentro de `Row` sem `height(IntrinsicSize.Min)` — com altura
+ilimitada a barra media altura infinita e empurrava a gaveta para fora da janela
+(sintoma: gaveta existe, altura 0 visível; chevron alternava normalmente). Mesmo
+padrão do código antigo (`height(IntrinsicSize.Min)` nas 3 telas) reaplicado na linha
+principal dos dois cards; teste da gaveta aberta virou a rede de regressão (gaveta
+visível ⟹ altura do card sã). Sem o fix, o card gigante quebraria no device.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `--tests "*RitualDailyCardTest*" --tests "*RitualHabitCardTest*" --tests
+  "*RitualCardPiecesTest*"` → BUILD SUCCESSFUL; XML bruto: `RitualDailyCardTest`
+  **9/9** (pendente/frequência-D5/concluído+streak/sem-auto-expansão/chevron+gaveta+
+  checkbox-sem-propagação/título-edita/sem-chevron), regressão C+B 14/14, 0 falhas.
+- Visual em device: pendente (Iuris).
+
+**Desvios de escopo aprovados:**
+- Nenhum. `PARIDADE.md` (§6 → "Blocos A–D") e `ANDROID_FIRST.md` (→ "Blocos A–D
+  implementados 12/10; E–F pendentes") atualizados no bloco.
+
+---
+
+## [2026-10-12] Bloco E (spec-rituais-cards — TodoCard)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/RitualTodoCard.kt` (NOVO)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (call-site →
+  `RitualTodoCard` sem `currentDate`; `TodoCardItem` antigo deletado; parâmetro
+  `currentDate: Date = Date()` removido da tela + import `java.util.Date`;
+  imports/vals mortos: `TodoDecayLogic`, `DifficultyBadge`, `ScoreColor`,
+  `Stone950`, `Stone700`, `Purple400`, `Emerald400`)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/todos/RitualTodoCardTest.kt` (NOVO)
+
+**Resumo:**
+- Estrutura idêntica ao DailyCard (com `height(IntrinsicSize.Min)` + mínima 88dp
+  desde a criação — sem o bug do Bloco D): checkbox 36dp escala 0,9/200ms, título
+  Cinzel Bold 12sp riscado quando concluído + badge, notas Cinzel Regular 11sp,
+  gaveta só pelo chevron, corpo abre edição sem propagação/ripple.
+- Diferenças (spec): sem frequência e sem streak — metadados só `{xp} XP` em gold
+  (`getDifficultyRewards`); sem linha de vencimento (`Todo` não tem o campo —
+  `createdAt`/`completedAt` apenas, confirma §6); sem "🛡️ Tarefa Única"; rótulo
+  "Alternar afazer {título}"; sem cor por valor (lógica `TodoDecayLogic` preservada,
+  só não pinta — ANDROID_FIRST).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `--tests "*RitualTodoCardTest*"` → BUILD SUCCESSFUL; XML bruto: **6/6**
+  (pendente-XP-only/concluído/gaveta+gabarito-dimensões/chevron/checkbox/título),
+  0 falhas.
+- Visual em device: pendente (Iuris).
+
+**Desvios de escopo aprovados:**
+- Nenhum. `PARIDADE.md` (§6 → "Blocos A–E") e `ANDROID_FIRST.md` (→ "Blocos A–E
+  implementados 12/10; F pendente") atualizados no bloco.
+
+---
+
+## [2026-10-12] Bloco F (spec-rituais-cards — cabeçalhos, vazios, filtros)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualTabChrome.kt` (NOVO:
+  `ritualBottomBorder`, `RitualTabHeader`, `RitualNewButton`, `RitualEmptyState`)
+- `HabitsScreen.kt` / `DailiesScreen.kt` / `TodosScreen.kt` (header → `RitualTabHeader`;
+  vazio → `RitualEmptyState`; lista `px 16` via `contentPadding` + 10dp; root perde o
+  padding horizontal p/ bordas full-bleed; imports/vals mortos removidos)
+- `TodosScreen.kt` (+ filtros → `RitualTodoFilterRow`/`RitualFilterChip` privates)
+- `RitualCardPieces.kt` (barra-composable → `Modifier.ritualDifficultyEdge`)
+- `RitualHabitCard.kt` / `RitualDailyCard.kt` / `RitualTodoCard.kt` (barra desenhada)
+- Testes NOVOS: `RitualTabChromeTest.kt` (4), `RitualTodoFilterTest.kt` (3);
+  `RitualHabitCardTest` +1 e `RitualDailyCardTest` +1 (regressão de quebra)
+- Baselines regravados (33 PNGs, só Habits/Dailies/Todos/ScoreTiers)
+
+**Resumo:**
+- Cabeçalho (`HabitsTab.tsx:99-119` e equivalentes): linha `px 16 / pb 12` + borda
+  inferior full-bleed; ícone Lucide 16dp gold (`zap`, `calendar_days`,
+  `clipboard_list` — existência conferida no AAR) + título Cinzel Bold 14sp
+  `#E8E0D0` tracking 0,025em com `.uppercase()` + contador mono 11sp `#928C9A`
+  (singular/plural; Todos conta as FILTRADAS); `+ NOVO` (D2) mono SemiBold 12sp
+  gold, fundo `#1A1725`, borda, raio 8dp, `px 12 / py 6`, plus 14dp, escala 0,95;
+  escondido criando/editando (como no React). Gap 16dp até a lista; Todos tem
+  header → gap 16 → filtros → gap 16 → lista (espaço do `space-y-4`).
+- Vazios com textos literais do React (Inter itálico 12sp `#928C9A`, card tracejado
+  raio 12dp, `py 48 / px 24`; dash 12f/8f mantido — CSS `dashed` sem medida).
+- Filtros (`TodosTab.tsx:144-187`): linha mono 12sp gap 8 `px 16 / pb 8` + borda;
+  chip `px 12 / py 4` raio 8dp borda 1dp; Pendentes ouro 15%, Concluídos verde 15%,
+  Todos fundo/borda padrão; inativo borda transparente + `#928C9A`; SemiBold só no
+  ativo. Lógica `isDisabled` + padrão `Pending` mantidas (§6; `disabled` do React §2).
+- Lista: `px 16` simétrico (o `pr-1` do React divide elemento com `px-4`, efeito
+  incerto — decisão: não replicar sem confirmação no renderizado).
+
+**Bug real encontrado e corrigido (valia p/ C, D e E):** `height(IntrinsicSize.Min)`
+na linha principal (fix do Bloco D p/ barra `fillMaxHeight`) travava a altura
+intrínseca em 1 linha — o `FlowRow` do status DESCARTAVA as quebradas (streak e
+`(+X | -Y)` sumiam em telas estreitas; prova: `habits_screen_up_down.png` mostrava
+"Concluído hoje · +28 XP ·" e nada depois). Sintoma só visível com dados longos +
+viewport estreito (testes antigos passavam porque sem margens cabia 1 linha).
+Correção: barra virou `Modifier.ritualDifficultyEdge` (`drawBehind`, altura final
+real) + conteúdo com `start = 4.dp` (geometria idêntica: 4 + 14); sem
+`IntrinsicSize` em nenhum card. Regressão: testes de quebra em 280dp (Hábito e
+Diária) + asserts de dimensão da gaveta; PNG regravado mostra `· (+14 | -0)` na
+linha 2 com a barra em altura total.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Unitários: RitualTabChromeTest **4/4**, RitualTodoFilterTest **3/3**,
+  RitualHabitCardTest **10/10**, RitualDailyCardTest **10/10**, RitualTodoCardTest
+  **6/6**, RitualCardPiecesTest **5/5**, RitualCardTokensTest **5/5**, TodayDateTest
+  **2/2** (XML bruto, 0 falhas) — **45/45**.
+- Screenshots: 33 baselines regravados (`-Proborazzi.test.record=true`, só as 4
+  classes afetadas — `git status` confirma só PNGs dessas telas); verify
+  (`-Proborazzi.test.verify=true`) verde em seguida; `_compare.png` inspecionado
+  antes de regravar (só o redesign intencional, sem deformação). Sem a flag, o
+  capture não asserta (descoberto no bloco: run sem flag "passa" sem comparar).
+- Suíte COMPLETA ao fechar a spec: `./gradlew :app:testDebugUnitTest` → BUILD
+  SUCCESSFUL; XML bruto agregado em `app/build/test-results/testDebugUnitTest/`:
+  **127 suítes / 972 testes / 0 falhas / 0 erros / 0 skipped**.
+- Regra 10 (fundo escuro): baselines dessas 3 telas seguem com raiz clara (convenção
+  pré-existente dos arquivos); cards escuros legíveis — migração p/ fundo escuro
+  fica como follow-up (não muda pixels dos cards).
+- Visual em device (Iuris, 375×667 e 390×844): PENDENTE — spec inteira.
+
+**Desvios de escopo aprovados:**
+- Nenhum. `PARIDADE.md` (§6 → "Blocos A–F completos") e `ANDROID_FIRST.md`
+  (redesign → "Implementada") atualizados no bloco. Item aberto segue: virada de
+  dia real em device físico pós-merge.
+
+**Desvios de escopo aprovados:**
+- Nenhum. `ANDROID_FIRST.md` (linha do redesign → "Bloco A implementado 12/10; blocos
+  B–F pendentes") e `PARIDADE.md` (§6, linha nova "Aba Rituais — Bloco A") atualizados
+  no mesmo bloco.
+
+## [2026-10-12] Bloco A (SPEC-Rebranding Hábitos/Diárias/Missões Avulsas — itens 1 e 2, copy)
+
+**Pré-condições reportadas e decididas antes de editar:**
+- Base `spec-rituais-cards` (Blocos A–F) estava **inteira sem commit** neste worktree
+  (10 novos, 6 modificados, 33 PNGs, docs). Decisão do Iuris: commit prévio da base
+  (`af79d10`) para separar escopos; os blocos desta spec saem em commits próprios.
+- Spec e relatório de investigação desta spec não estão no repo (só existe
+  `specs/spec-rituais-cards.md`, a spec anterior, cujos itens D2/§5-Bloco-C/§5-Bloco-F
+  são justamente o "antes" deste trabalho). Prompt tratado como supersessor.
+- Docs (`PARIDADE`/`DEV_LOG`/`ANDROID_FIRST`): AGENTS §7 proíbe editá-los em branch
+  secundária; decisão do Iuris — editar aqui (precedente dos Blocos A–F).
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualTabChrome.kt`
+  (`RitualNewButton`: `"+ NOVO"` → `"NOVO"`; comentários do bloco atualizados)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (estado vazio)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/DailiesScreen.kt` (estado vazio)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/TodosScreen.kt` (estado vazio com
+  `when (filter)` sobre `TodoFilter`)
+- Testes: `RitualTabChromeTest.kt` (4 asserts `+ NOVO` → `NOVO`; mensagem do teste de
+  `RitualEmptyState`), `RitualTodoFilterTest.kt` (2 asserts `+ NOVO`; `empty_showsEmptyState`
+  → `empty_pendingFilter_showsPendingMessage` + 2 novos: `empty_completedFilter_…`,
+  `empty_allFilter_…`)
+- Baselines: 23 PNGs regravados (Habits/Dailies/Todos/ScoreColor)
+
+**Resumo:**
+- Item 1: botão novo com texto `NOVO`; o `+` continua sendo o ícone `lucide_ic_plus`.
+  `contentDescription` intocado ("Novo hábito"/"Nova diária"/"Novo afazer").
+- Item 2 (textos exatos da spec):
+  - Hábitos: "Sem hábitos por enquanto. Crie o primeiro e comece a ganhar XP."
+  - Diárias: "Nenhuma tarefa diária ainda. O que você quer fazer todo dia?"
+  - Missões Avulsas: Pending "Nenhuma missão pendente. Crie uma." / Completed
+    "Nenhuma missão concluída ainda." / All "Nenhuma missão ainda. Crie a primeira."
+- Grep de requisito antes de editar: `grep -rn "heráldica\|voto de prática\|afazer místico"
+  app/src` → 6 ocorrências (3 main + 3 teste), todas substituídas; grep final → **0**.
+  `grep -rn '+ NOVO' app/src` → **0**.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Unitários (XML bruto): `RitualTabChromeTest` **4/4**, `RitualTodoFilterTest` **5/5** (0 falhas).
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado
+  **127 suítes / 974 testes / 0 falhas / 0 erros / 0 skipped** (972 + 2 novos).
+- Screenshots: verify (`-Proborazzi.test.verify=true`) antes de regravar em
+  `HabitsScreenScreenshotTest`/`DailiesScreenScreenshotTest`/`TodosScreenScreenshotTest`/
+  `ScoreColorHabitsScreenshotTest` → **23 falhas**, `_compare.png` inspecionado (só o texto
+  do botão e a mensagem do vazio; sem deformação); `-Proborazzi.test.record=true` regrava
+  os mesmos 23 PNGs (`git status` confirma só esses); verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-12] Bloco B (SPEC-Rebranding — item 3, streak fora do card de hábito)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt`
+  (`HabitStatusLine`: parâmetro `streak` removido; bloco `if (streak > 0) { StatusDot();
+  "${streak}d streak" }` removido; import `RitualAmber` removido por ficar sem uso)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCardTest.kt`
+  (`recorded_showsDoneStatus_andStreak` → `recorded_showsDoneStatus_butNeverStreak`;
+  `noStreak_hidesStreakSegment` → `streak_isNotDisplayed_evenWithHighValue`;
+  `narrowCard_wrapsStatusLine_keepingCounterVisible` → `narrowCard_keepsStatusLineItemsVisible`)
+- Baselines: 5 PNGs (`habits_screen_up_down`, `only_up`, `edit_modal`, `confirm_delete`,
+  `confirm_cancel`)
+
+**Resumo:**
+- Linha de status do Hábito agora é `Concluído hoje/Pendente hoje · +XP · (+up | -down)`
+  (sem segmento de streak e sem `·` órfão: o `StatusDot` entre XP e contador permanece).
+- `git grep -n "\.streak" app/src/main` no fechamento: `HabitLogic.kt:85` (`streak + 1`) e
+  `:111` (`max(0, streak - 1)`), `AchievementCatalog.kt:321` (`it.streak >= 7`, conquista
+  `habit_streak_7`), `CharacterModels.kt:134` (`Habit.streak`), `DailyLogic.kt:54/92`
+  (`Daily.streak`), `CharacterState.streak`/`bestStreak` — **todos intactos**.
+- `Habit.streak`, `Daily.streak`, `CharacterState.streak`, `bestStreak` e a conquista
+  `habit_streak_7` não foram tocados; só a exibição no card saiu.
+- Fixtures de `HabitsScreenScreenshotTest` mantêm `streak = …` (o campo continua real);
+  só os PNGs mudaram. `ScoreColorHabitsScreenshotTest` não mudou (fixtures com `streak = 0`).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- `RitualHabitCardTest` → **10/10** (XML bruto, 0 falhas).
+- Suíte COMPLETA → BUILD SUCCESSFUL; XML agregado **127 suítes / 974 testes / 0 falhas /
+  0 erros / 0 skipped**.
+- Screenshots: verify antes de regravar → 5 falhas (exatamente os 5 com `streak > 0`);
+  `_compare.png` inspecionado (só o segmento `5d streak` removido e o contador subindo
+  para a 1ª linha; sem deformação); record regrava os mesmos 5; verify verde em seguida.
+- Visual em device: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-12] Bloco C (SPEC-Rebranding — item 4, botões +/− independentes com datas por botão, timer de virada de dia, a11y)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/model/CharacterModels.kt` (`Habit`: `lastUpDate`/`lastDownDate` + `isUpToday`/`isDownToday`)
+- `app/src/main/java/com/iurispraecepta/herolog/logic/quests/HabitLogic.kt` (`triggerUp` grava `lastUpDate`; `triggerDown` grava `lastDownDate`; sem mudar XP/counts/streak)
+- `app/src/main/java/com/iurispraecepta/herolog/logic/SaveMigrationLogic.kt` (`migrateHabitDates` idempotente; chamado em `normalizeGameState`)
+- `app/src/main/java/com/iurispraecepta/herolog/data/repository/CharacterRepository.kt` (aplica migração no `getCharacterState()`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/theme/RitualCardTokens.kt` (novo `RitualDanger = Color(0xFFE5484D)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualCardPieces.kt` (`ritualGlow(color)` parametrizado)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt` (título sempre `RitualTextPrimary`; `HabitStatusLine` só `+XP · (+up | -down)`; `HabitPlusButton`/`HabitMinusButton` com `stateDescription`; helper `habitMarkerState()`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/TodayDate.kt` (reescrito: `formatTodayDate`, `millisUntilNextMidnight`, `rememberTodayDateString(refreshKey)` com ON_RESUME + LaunchedEffect na meia-noite)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` (`rolloverTick` StateFlow exposto; incrementado após rollover do `init`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (coleta `rolloverTick` e passa como `dayRefreshKey` para `HabitsScreen`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (param `dayRefreshKey` → `rememberTodayDateString(habits to dayRefreshKey)`)
+- Testes: `HabitLogicTest` (+5 testes item 4), `SaveMigrationLogicTest` (+4 testes migração), `RitualHabitCardTest` (fixtures `lastUpDate`/`lastDownDate`; 5 testes marcadores a11y; `Concluído/Pendente hoje` removidos), `HeroLogViewModelTest` (asserts `lastUpDate`/`lastDownDate`; fixture `lastUpDate`; novo `rolloverTick_incrementsAfterInitRollover`), `HabitsScreenScreenshotTest` (fixtures `lastUpDate`/`lastDownDate`), `ScoreColorHabitsScreenshotTest` (fixtures sem `lastTriggeredDate`), `TodayDateTest` (+5 testes `millisUntilNextMidnight`), `TodayDateStringComposeTest` (NOVO: teste compose `refreshKey` + TZ), `RitualCardTokensTest` (+teste `RitualDanger` distinto de `RitualRose`), `CharacterRepositoryTest` (existente passa)
+- Baselines: 7 PNGs hábitos regravados (`habits_screen_*.png`, `score_color_habits_all_tiers.png`)
+
+**Resumo:**
+- Item 3 (Bloco B): streak não exibido no card (já feito). Item 4 (este bloco):
+  - `+` e `−` independentes: cada botão grava sua própria data (`lastUpDate`/`lastDownDate`); `lastTriggeredDate` vira legado de save (não gravado, não relido; migração idempotente semeia `lastUpDate` na primeira leitura pós-merge).
+  - Título do hábito: sempre `RitualTextPrimary`; token `RitualTextTitleDone` órfão no tema (não removido, fora de escopo).
+  - Linha de status: sem textos "Concluído hoje"/"Pendente hoje"; só `+XP · (+up | -down)`.
+  - Botão `−`: visual 32dp (raio 8dp), toque 48dp; aceso = `RitualDanger` 15% + borda + glow (mesmo tratamento do `+` com `RitualGreen`); a11y: `stateDescription` "registrado hoje"/"não registrado hoje" nos dois botões.
+  - `RitualDanger` #E5484D calibrado distinto de `RitualRose` #D99AAA.
+  - Timer de virada de dia: único rollover do app é o do `HeroLogViewModel.init` → `RolloverLogic.applyRollover` (roda 1x). `HeroLogViewModel.rolloverTick` exposto; `MainActivity` passa como `refreshKey` para `HabitsScreen` → `rememberTodayDateString` recalcula "hoje" quando o tick muda. Timer local de meia-noite (`millisUntilNextMidnight` + `LaunchedEffect`) garante recálculo mesmo com app em foreground. ON_RESUME também recalcula.
+  - `ritualGlow(color)` parametrizado (usa `RitualGreen` default para `+`, `RitualDanger` para `−`).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Testes unitários alvo (XML bruto):
+  - `HabitLogicTest` **19/19** (inclui 5 novos: up só lastUpDate, down só lastDownDate, up+down mesmo dia, dia seguinte zera ambos, nunca disparou)
+  - `SaveMigrationLogicTest` **16/16** (inclui 4 novos: migração lastTriggeredDate→lastUpDate, preserva lastUpDate existente, sem data legada não semeia, hábito sem data mantém nulos)
+  - `RitualHabitCardTest` **13/13** (5 novos testes marcadores a11y; fixtures `lastUpDate`/`lastDownDate`; textos status removidos)
+  - `HeroLogViewModelTest` **6/6** (subconjunto: rolloverTick + triggerHabit up/down + addHabit + editHabit)
+  - `TodayDateTest` **7/7** (5 novos `millisUntilNextMidnight`)
+  - `TodayDateStringComposeTest` **1/1** (compose: TZ muda dia, sem key não atualiza, com key atualiza)
+  - `RitualCardTokensTest` **6/6** (inclui `RitualDanger` ≠ `RitualRose`)
+  - `CharacterRepositoryTest` **1/1**
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado **994 testes / 0 falhas**.
+- Screenshots: verify antes de regravar → 7 falhas; `_compare.png` inspecionado (só marcadores +/− e datas; sem deformação); record regrava os 7; verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- `RitualTextTitleDone` mantido no tema (órfão) — decisão do Iuris de não remover tokens fora de escopo.
+- Timer de meia-noite local (`millisUntilNextMidnight` + `LaunchedEffect`) é **Android-first** (sem equivalente no React, cujo único rollover é reload de página) — registrado em `ANDROID_FIRST.md`.
+
+## [2026-10-12] Bloco D (SPEC-Rebranding — item 5, títulos com maxLines=2 + ellipsis, badge alinhado ao topo)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/RitualDailyCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/RitualTodoCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- Baselines: 24 PNGs regravados (7 hábitos + 9 diárias + 8 tarefas)
+
+**Resumo:**
+- Item 5 da spec: títulos dos cards de Hábitos, Diárias e Tarefas passam de 1 linha para **2 linhas** (`maxLines=2`) com `TextOverflow.Ellipsis`.
+- Badge de dificuldade (`RitualDifficultyBadge`) alinhada ao topo do título: a Row que contém título + badge mudou de `verticalAlignment = Alignment.CenterVertically` para `Alignment.Top`. Assim o badge fica visualmente colado ao topo do título (mesma altura da primeira linha), não centralizado verticalmente quando o título ocupa 2 linhas.
+- Validação visual: títulos de até ~60 caracteres (ou largura ~360dp) cabem em 2 linhas; títulos mais longos truncam com reticências.
+- Mudança puramente visual; nenhuma lógica alterada.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado **994 testes / 0 falhas**.
+- Screenshots: verify antes de regravar → 24 falhas (todos os 3 screens); `_compare.png` inspecionado (títulos em 2 linhas, badge no topo, sem deformação); record regrava os 24; verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+

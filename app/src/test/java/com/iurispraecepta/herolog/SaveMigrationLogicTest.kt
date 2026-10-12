@@ -1,8 +1,11 @@
 package com.iurispraecepta.herolog
 
+import com.iurispraecepta.herolog.data.createInitialCharacterState
 import com.iurispraecepta.herolog.logic.SaveImportResult
 import com.iurispraecepta.herolog.logic.SaveMigrationLogic
 import com.iurispraecepta.herolog.model.CharClass
+import com.iurispraecepta.herolog.model.Difficulty
+import com.iurispraecepta.herolog.model.Habit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -256,5 +259,100 @@ class SaveMigrationLogicTest {
         assertEquals("Aventureiro do Foco", state.charName)
         assertNotNull(state.pomodoroSettings)
         assertEquals(listOf(null, null, null), state.equippedEquipment)
+    }
+
+    // ---------------------------------------------------------------------
+    // SPEC-Rebranding item 4: migração lastTriggeredDate → lastUpDate (hábito)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun normalizeGameState_legacyHabitWithoutLastUpDate_seedsLastUpDateFromLegacy() {
+        val rawJson = """
+        {
+          "habits": [
+            { "id": "h-1", "title": "Beber água", "notes": "", "up": true, "down": false,
+              "difficulty": "Easy", "upCount": 7, "downCount": 0, "streak": 3, "tags": [],
+              "lastTriggeredDate": "2026-08-01" }
+          ]
+        }
+        """.trimIndent()
+
+        val state = asSuccess(SaveMigrationLogic.normalizeGameState(rawJson, fixedNow))!!
+
+        assertEquals("2026-08-01", state.habits[0].lastUpDate)
+        assertNull(state.habits[0].lastDownDate)
+        assertEquals("2026-08-01", state.habits[0].lastTriggeredDate)
+    }
+
+    @Test
+    fun normalizeGameState_habitWithLastUpDate_migrateHabitDatesKeepsIt() {
+        val legacy = createInitialCharacterState(fixedNow).copy(
+            habits = listOf(
+                Habit(
+                    id = "h-1",
+                    title = "Beber água",
+                    notes = "",
+                    up = true,
+                    down = true,
+                    difficulty = Difficulty.Easy,
+                    upCount = 1,
+                    downCount = 1,
+                    streak = 3,
+                    tags = emptyList(),
+                    lastTriggeredDate = "2026-08-01",
+                    lastUpDate = "2026-08-18",
+                    lastDownDate = "2026-08-17"
+                )
+            )
+        )
+
+        val migrated = SaveMigrationLogic.migrateHabitDates(legacy)
+
+        assertEquals("2026-08-18", migrated.habits[0].lastUpDate)
+        assertEquals("2026-08-17", migrated.habits[0].lastDownDate)
+        assertEquals("2026-08-01", migrated.habits[0].lastTriggeredDate)
+    }
+
+    @Test
+    fun migrateHabitDates_withoutLegacyDate_doesNotSeedAnything() {
+        val state = createInitialCharacterState(fixedNow).copy(
+            habits = listOf(
+                Habit(
+                    id = "h-1",
+                    title = "Beber água",
+                    notes = "",
+                    up = true,
+                    down = false,
+                    difficulty = Difficulty.Easy,
+                    upCount = 0,
+                    downCount = 0,
+                    streak = 0,
+                    tags = emptyList()
+                )
+            )
+        )
+
+        val migrated = SaveMigrationLogic.migrateHabitDates(state)
+
+        assertNull(migrated.habits[0].lastUpDate)
+        assertNull(migrated.habits[0].lastDownDate)
+    }
+
+    @Test
+    fun normalizeGameState_habitWithoutAnyDate_staysWithNullDates() {
+        val rawJson = """
+        {
+          "habits": [
+            { "id": "h-1", "title": "Beber água", "notes": "", "up": true, "down": false,
+              "difficulty": "Easy", "upCount": 0, "downCount": 0, "streak": 0, "tags": [] }
+          ]
+        }
+        """.trimIndent()
+
+        val state = asSuccess(SaveMigrationLogic.normalizeGameState(rawJson, fixedNow))!!
+
+        assertNull(state.habits[0].lastUpDate)
+        assertNull(state.habits[0].lastDownDate)
+        assertNull(state.habits[0].lastTriggeredDate)
     }
 }

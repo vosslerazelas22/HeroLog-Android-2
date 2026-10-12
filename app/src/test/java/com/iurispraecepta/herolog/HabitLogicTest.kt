@@ -6,7 +6,9 @@ import com.iurispraecepta.herolog.model.CharClass
 import com.iurispraecepta.herolog.model.Difficulty
 import com.iurispraecepta.herolog.model.Habit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -22,7 +24,9 @@ class HabitLogicTest {
         upCount: Int = 0,
         downCount: Int = 0,
         streak: Int = 0,
-        lastTriggeredDate: String? = null
+        lastTriggeredDate: String? = null,
+        lastUpDate: String? = null,
+        lastDownDate: String? = null
     ) = Habit(
         id = "h-test-1",
         title = "Exercício",
@@ -34,19 +38,91 @@ class HabitLogicTest {
         downCount = downCount,
         streak = streak,
         tags = emptyList(),
-        lastTriggeredDate = lastTriggeredDate
+        lastTriggeredDate = lastTriggeredDate,
+        lastUpDate = lastUpDate,
+        lastDownDate = lastDownDate
     )
 
     @Test
     fun triggerUp_incrementsStreakAndUpCount_evenOnMultipleTriggersSameDay() {
         val initialState = createInitialCharacterState(dateDay1).copy(charClass = CharClass.Ranger)
-        val habit = sampleHabit(upCount = 1, streak = 5, lastTriggeredDate = "2026-08-18")
+        val habit = sampleHabit(upCount = 1, streak = 5, lastTriggeredDate = "2026-08-01")
 
         val result = HabitLogic.trigger(habit, initialState, isUp = true, referenceDate = dateDay1)
 
         assertEquals(2, result.updatedHabit.upCount)
         assertEquals(6, result.updatedHabit.streak)
-        assertEquals("2026-08-18", result.updatedHabit.lastTriggeredDate)
+    }
+
+    // ---------------------------------------------------------------------
+    // SPEC-Rebranding item 4: datas de "hoje" por botão (+ e − independentes)
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun triggerUp_writesOnlyLastUpDate_andKeepsLegacyFieldUntouched() {
+        val initialState = createInitialCharacterState(dateDay1)
+        val habit = sampleHabit(lastTriggeredDate = "2026-08-01")
+
+        val result = HabitLogic.trigger(habit, initialState, isUp = true, referenceDate = dateDay1)
+
+        assertEquals("2026-08-18", result.updatedHabit.lastUpDate)
+        assertNull(result.updatedHabit.lastDownDate)
+        // lastTriggeredDate é legado de save: não é mais gravada nem relida
+        assertEquals("2026-08-01", result.updatedHabit.lastTriggeredDate)
+    }
+
+    @Test
+    fun triggerDown_writesOnlyLastDownDate_andDoesNotTouchUpDate() {
+        val initialState = createInitialCharacterState(dateDay1).copy(hp = 50)
+        val habit = sampleHabit(lastTriggeredDate = "2026-08-01", lastUpDate = "2026-08-18")
+
+        val result = HabitLogic.trigger(habit, initialState, isUp = false, referenceDate = dateDay1)
+
+        assertEquals("2026-08-18", result.updatedHabit.lastDownDate)
+        assertEquals("2026-08-18", result.updatedHabit.lastUpDate)
+        assertEquals("2026-08-01", result.updatedHabit.lastTriggeredDate)
+    }
+
+    @Test
+    fun triggerUpAndDown_sameDay_keepsBothDates_andBothAreToday() {
+        val initialState = createInitialCharacterState(dateDay1).copy(hp = 50)
+        val habit = sampleHabit()
+
+        val afterDown = HabitLogic.trigger(habit, initialState, isUp = false, referenceDate = dateDay1).updatedHabit
+        val afterBoth = HabitLogic.trigger(afterDown, initialState, isUp = true, referenceDate = dateDay1).updatedHabit
+
+        assertEquals("2026-08-18", afterBoth.lastDownDate)
+        assertEquals("2026-08-18", afterBoth.lastUpDate)
+        // Os dois botões ficam acesos de forma independente no mesmo dia
+        assertTrue(afterBoth.isUpToday("2026-08-18"))
+        assertTrue(afterBoth.isDownToday("2026-08-18"))
+    }
+
+    @Test
+    fun nextDay_comparison_clearsBothMarkers_withoutMutatingDates() {
+        val initialState = createInitialCharacterState(dateDay1).copy(hp = 50)
+        val afterUp = HabitLogic.trigger(sampleHabit(), initialState, isUp = true, referenceDate = dateDay1).updatedHabit
+        val afterBoth = HabitLogic.trigger(afterUp, initialState, isUp = false, referenceDate = dateDay1).updatedHabit
+
+        // Dia seguinte: a COMPARAÇÃO zera os dois (os campos continuam na data antiga)
+        assertFalse(afterBoth.isUpToday("2026-08-19"))
+        assertFalse(afterBoth.isDownToday("2026-08-19"))
+        assertEquals("2026-08-18", afterBoth.lastUpDate)
+        assertEquals("2026-08-18", afterBoth.lastDownDate)
+        // E no dia da marcação continuam acesos
+        assertTrue(afterBoth.isUpToday("2026-08-18"))
+        assertTrue(afterBoth.isDownToday("2026-08-18"))
+    }
+
+    @Test
+    fun neverTriggered_bothDatesNull_markersNeverLit() {
+        val initialState = createInitialCharacterState(dateDay1)
+        val habit = sampleHabit()
+
+        val result = HabitLogic.trigger(habit, initialState, isUp = true, referenceDate = dateDay1)
+
+        assertNull(result.updatedHabit.lastDownDate)
+        assertFalse(result.updatedHabit.isDownToday("2026-08-18"))
     }
 
     @Test
