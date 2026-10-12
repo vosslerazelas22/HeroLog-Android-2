@@ -45,6 +45,7 @@ import com.iurispraecepta.herolog.data.TITLE_CATALOG
 import com.iurispraecepta.herolog.data.TitleCategory
 import com.iurispraecepta.herolog.data.TitleItem
 import com.iurispraecepta.herolog.model.CharacterState
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.Amber500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
@@ -119,7 +120,7 @@ fun TitleShopScreen(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 24.dp),
+            .padding(bottom = 24.dp + LocalBottomBarInset.current),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         // ═══ Cabeçalho introdutório ═══
