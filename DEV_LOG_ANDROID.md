@@ -7023,3 +7023,22 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Nenhum.
 
+
+## [2026-10-12] Bloco: issue #38 — inset inferior na loja de títulos
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleShopScreen.kt`
+
+**Resumo:**
+- O conteúdo rolável da sub-aba de títulos agora soma `LocalBottomBarInset.current` ao padding inferior de `24.dp`, permitindo que o último item role acima da bottom nav.
+- A sub-aba de itens já reservava esse inset; não precisou de alteração.
+
+**Validação:**
+- `git diff --check`: aprovado.
+- `./gradlew :app:compileDebugKotlin`: BUILD SUCCESSFUL.
+- `./gradlew :app:assembleDebug`: falhou em `validateSigningDebug` porque o arquivo `debug.keystore` não existe neste worktree.
+- Testes: não executados.
+- Visual: validação em aparelho físico e tela pequena pendente.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
