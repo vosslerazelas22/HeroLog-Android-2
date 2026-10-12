@@ -37,43 +37,43 @@ class ScoreColorHabitsScreenshotTest {
                 id = "h_tier1", title = "Score 15 (Tier 1 — Sky Bright)", notes = "",
                 up = true, down = true, difficulty = Difficulty.Medium,
                 upCount = 20, downCount = 5, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier2", title = "Score 7 (Tier 2 — Sky Dim)", notes = "",
                 up = true, down = true, difficulty = Difficulty.Medium,
                 upCount = 10, downCount = 3, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier3", title = "Score 3 (Tier 3 — Emerald)", notes = "",
                 up = true, down = true, difficulty = Difficulty.Medium,
                 upCount = 5, downCount = 2, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier4", title = "Score 0 (Tier 4 — Amber)", notes = "",
                 up = true, down = true, difficulty = Difficulty.Medium,
                 upCount = 3, downCount = 3, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier5", title = "Score -5 (Tier 5 — Orange)", notes = "",
                 up = true, down = true, difficulty = Difficulty.Medium,
                 upCount = 1, downCount = 6, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier6", title = "Score -15 (Tier 6 — Red)", notes = "",
                 up = false, down = true, difficulty = Difficulty.Medium,
                 upCount = 0, downCount = 15, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             ),
             Habit(
                 id = "h_tier7", title = "Score -25 (Tier 7 — Dark Red)", notes = "",
                 up = false, down = true, difficulty = Difficulty.Medium,
                 upCount = 0, downCount = 25, streak = 0,
-                tags = emptyList(), lastTriggeredDate = null
+                tags = emptyList()
             )
         )
 

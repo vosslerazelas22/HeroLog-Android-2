@@ -115,15 +115,19 @@ fun Modifier.ritualPressable(
 }
 
 /**
- * Glow verde do estado concluído: aproximação de
- * `0 0 12px rgba(105,214,183,0.2)` via gradiente radial em `drawBehind`
- * (funciona no minSdk 24; sem `Modifier.shadow` com cor — só API 28+).
+ * Glow do estado aceso/feito: aproximação de `0 0 12px rgba(105,214,183,0.2)` via
+ * gradiente radial em `drawBehind` (funciona no minSdk 24; sem `Modifier.shadow`
+ * com cor — só API 28+).
+ *
+ * [color] default é o verde do "concluído" (Diária/Tarefa/`+` do Hábito); o `−` do
+ * Hábito aceso usa `RitualDanger` (SPEC-Rebranding item 4) — mesmo tratamento,
+ * cor diferente.
  */
-fun Modifier.ritualGlow(): Modifier = this.drawBehind {
+fun Modifier.ritualGlow(color: Color = RitualGreen): Modifier = this.drawBehind {
     val radius = (maxOf(size.width, size.height) / 2f) + 12.dp.toPx()
     drawCircle(
         brush = Brush.radialGradient(
-            0.0f to RitualGreen.copy(alpha = 0.2f),
+            0.0f to color.copy(alpha = 0.2f),
             1.0f to Color.Transparent,
             radius = radius
         ),

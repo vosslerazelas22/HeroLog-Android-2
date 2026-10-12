@@ -6953,3 +6953,73 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-12] Bloco C (SPEC-Rebranding — item 4, botões +/− independentes com datas por botão, timer de virada de dia, a11y)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/model/CharacterModels.kt` (`Habit`: `lastUpDate`/`lastDownDate` + `isUpToday`/`isDownToday`)
+- `app/src/main/java/com/iurispraecepta/herolog/logic/quests/HabitLogic.kt` (`triggerUp` grava `lastUpDate`; `triggerDown` grava `lastDownDate`; sem mudar XP/counts/streak)
+- `app/src/main/java/com/iurispraecepta/herolog/logic/SaveMigrationLogic.kt` (`migrateHabitDates` idempotente; chamado em `normalizeGameState`)
+- `app/src/main/java/com/iurispraecepta/herolog/data/repository/CharacterRepository.kt` (aplica migração no `getCharacterState()`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/theme/RitualCardTokens.kt` (novo `RitualDanger = Color(0xFFE5484D)`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/RitualCardPieces.kt` (`ritualGlow(color)` parametrizado)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt` (título sempre `RitualTextPrimary`; `HabitStatusLine` só `+XP · (+up | -down)`; `HabitPlusButton`/`HabitMinusButton` com `stateDescription`; helper `habitMarkerState()`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/components/TodayDate.kt` (reescrito: `formatTodayDate`, `millisUntilNextMidnight`, `rememberTodayDateString(refreshKey)` com ON_RESUME + LaunchedEffect na meia-noite)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/HeroLogViewModel.kt` (`rolloverTick` StateFlow exposto; incrementado após rollover do `init`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (coleta `rolloverTick` e passa como `dayRefreshKey` para `HabitsScreen`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/HabitsScreen.kt` (param `dayRefreshKey` → `rememberTodayDateString(habits to dayRefreshKey)`)
+- Testes: `HabitLogicTest` (+5 testes item 4), `SaveMigrationLogicTest` (+4 testes migração), `RitualHabitCardTest` (fixtures `lastUpDate`/`lastDownDate`; 5 testes marcadores a11y; `Concluído/Pendente hoje` removidos), `HeroLogViewModelTest` (asserts `lastUpDate`/`lastDownDate`; fixture `lastUpDate`; novo `rolloverTick_incrementsAfterInitRollover`), `HabitsScreenScreenshotTest` (fixtures `lastUpDate`/`lastDownDate`), `ScoreColorHabitsScreenshotTest` (fixtures sem `lastTriggeredDate`), `TodayDateTest` (+5 testes `millisUntilNextMidnight`), `TodayDateStringComposeTest` (NOVO: teste compose `refreshKey` + TZ), `RitualCardTokensTest` (+teste `RitualDanger` distinto de `RitualRose`), `CharacterRepositoryTest` (existente passa)
+- Baselines: 7 PNGs hábitos regravados (`habits_screen_*.png`, `score_color_habits_all_tiers.png`)
+
+**Resumo:**
+- Item 3 (Bloco B): streak não exibido no card (já feito). Item 4 (este bloco):
+  - `+` e `−` independentes: cada botão grava sua própria data (`lastUpDate`/`lastDownDate`); `lastTriggeredDate` vira legado de save (não gravado, não relido; migração idempotente semeia `lastUpDate` na primeira leitura pós-merge).
+  - Título do hábito: sempre `RitualTextPrimary`; token `RitualTextTitleDone` órfão no tema (não removido, fora de escopo).
+  - Linha de status: sem textos "Concluído hoje"/"Pendente hoje"; só `+XP · (+up | -down)`.
+  - Botão `−`: visual 32dp (raio 8dp), toque 48dp; aceso = `RitualDanger` 15% + borda + glow (mesmo tratamento do `+` com `RitualGreen`); a11y: `stateDescription` "registrado hoje"/"não registrado hoje" nos dois botões.
+  - `RitualDanger` #E5484D calibrado distinto de `RitualRose` #D99AAA.
+  - Timer de virada de dia: único rollover do app é o do `HeroLogViewModel.init` → `RolloverLogic.applyRollover` (roda 1x). `HeroLogViewModel.rolloverTick` exposto; `MainActivity` passa como `refreshKey` para `HabitsScreen` → `rememberTodayDateString` recalcula "hoje" quando o tick muda. Timer local de meia-noite (`millisUntilNextMidnight` + `LaunchedEffect`) garante recálculo mesmo com app em foreground. ON_RESUME também recalcula.
+  - `ritualGlow(color)` parametrizado (usa `RitualGreen` default para `+`, `RitualDanger` para `−`).
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Testes unitários alvo (XML bruto):
+  - `HabitLogicTest` **19/19** (inclui 5 novos: up só lastUpDate, down só lastDownDate, up+down mesmo dia, dia seguinte zera ambos, nunca disparou)
+  - `SaveMigrationLogicTest` **16/16** (inclui 4 novos: migração lastTriggeredDate→lastUpDate, preserva lastUpDate existente, sem data legada não semeia, hábito sem data mantém nulos)
+  - `RitualHabitCardTest` **13/13** (5 novos testes marcadores a11y; fixtures `lastUpDate`/`lastDownDate`; textos status removidos)
+  - `HeroLogViewModelTest` **6/6** (subconjunto: rolloverTick + triggerHabit up/down + addHabit + editHabit)
+  - `TodayDateTest` **7/7** (5 novos `millisUntilNextMidnight`)
+  - `TodayDateStringComposeTest` **1/1** (compose: TZ muda dia, sem key não atualiza, com key atualiza)
+  - `RitualCardTokensTest` **6/6** (inclui `RitualDanger` ≠ `RitualRose`)
+  - `CharacterRepositoryTest` **1/1**
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado **994 testes / 0 falhas**.
+- Screenshots: verify antes de regravar → 7 falhas; `_compare.png` inspecionado (só marcadores +/− e datas; sem deformação); record regrava os 7; verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- `RitualTextTitleDone` mantido no tema (órfão) — decisão do Iuris de não remover tokens fora de escopo.
+- Timer de meia-noite local (`millisUntilNextMidnight` + `LaunchedEffect`) é **Android-first** (sem equivalente no React, cujo único rollover é reload de página) — registrado em `ANDROID_FIRST.md`.
+
+## [2026-10-12] Bloco D (SPEC-Rebranding — item 5, títulos com maxLines=2 + ellipsis, badge alinhado ao topo)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/habits/RitualHabitCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/dailies/RitualDailyCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/todos/RitualTodoCard.kt` (título `maxLines=2`, Row `verticalAlignment=Alignment.Top`)
+- Baselines: 24 PNGs regravados (7 hábitos + 9 diárias + 8 tarefas)
+
+**Resumo:**
+- Item 5 da spec: títulos dos cards de Hábitos, Diárias e Tarefas passam de 1 linha para **2 linhas** (`maxLines=2`) com `TextOverflow.Ellipsis`.
+- Badge de dificuldade (`RitualDifficultyBadge`) alinhada ao topo do título: a Row que contém título + badge mudou de `verticalAlignment = Alignment.CenterVertically` para `Alignment.Top`. Assim o badge fica visualmente colado ao topo do título (mesma altura da primeira linha), não centralizado verticalmente quando o título ocupa 2 linhas.
+- Validação visual: títulos de até ~60 caracteres (ou largura ~360dp) cabem em 2 linhas; títulos mais longos truncam com reticências.
+- Mudança puramente visual; nenhuma lógica alterada.
+
+**Validação:**
+- `./gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- Suíte COMPLETA `./gradlew :app:testDebugUnitTest` → BUILD SUCCESSFUL; XML agregado **994 testes / 0 falhas**.
+- Screenshots: verify antes de regravar → 24 falhas (todos os 3 screens); `_compare.png` inspecionado (títulos em 2 linhas, badge no topo, sem deformação); record regrava os 24; verify verde em seguida.
+- Visual em device (375×667, 390×844): PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+

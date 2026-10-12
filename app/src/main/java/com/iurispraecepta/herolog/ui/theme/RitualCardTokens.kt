@@ -37,6 +37,16 @@ val RitualLavender = Color(0xFFB69AE8)
 val RitualRose = Color(0xFFD99AAA)
 
 /**
+ * Vermelho do botão `−` **aceso** (SPEC-Rebranding item 4 — Android-first, sem
+ * equivalente no React/AI Studio, cujo `−` não tem estado persistente).
+ *
+ * Deliberadamente **distinto de [RitualRose]** (rosa `#D99AAA`, que é a cor da
+ * dificuldade Difícil): o aceso do `−` é preenchimento + borda + glow, não só cor,
+ * para não depender de discriminação cromática (daltonismo).
+ */
+val RitualDanger = Color(0xFFE5484D)
+
+/**
  * Estilo tonal por dificuldade (spec §3 + `DIFFICULTY_CONFIG` em `questTheme.ts`).
  * `bg` = pastel a 12%; `border` = pastel a 35%; `text` = pastel.
  */

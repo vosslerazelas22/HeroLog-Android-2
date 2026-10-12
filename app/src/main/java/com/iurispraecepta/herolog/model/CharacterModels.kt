@@ -121,6 +121,21 @@ enum class Difficulty {
     @SerialName("Hard") Hard
 }
 
+/**
+ * Hábito da aba Rituais.
+ *
+ * Datas no formato `yyyy-MM-dd` (o mesmo de `HabitLogic`/`formatTodayDate`), fuso do
+ * dispositivo.
+ *
+ * - [lastTriggeredDate]: **legado de save** (SPEC-Rebranding item 4). Continua no modelo
+ *   para não quebrar saves antigos, mas **não é mais lida nem gravada**; em saves antigos
+ *   seu valor é copiado para [lastUpDate] pela migração (`SaveMigrationLogic.migrateHabitDates`).
+ * - [lastUpDate]: último dia em que o `+` foi registrado.
+ * - [lastDownDate]: último dia em que o `−` foi registrado.
+ *
+ * Os dois são independentes: marcar `−` e depois `+` no mesmo dia deixa os dois
+ * "acesos" (os botões da UI leem cada um por separado).
+ */
 @Serializable
 data class Habit(
     val id: String,
@@ -133,8 +148,20 @@ data class Habit(
     val downCount: Int,
     val streak: Int,
     val tags: List<String>,
-    val lastTriggeredDate: String? = null
-)
+    val lastTriggeredDate: String? = null,
+    val lastUpDate: String? = null,
+    val lastDownDate: String? = null
+) {
+    /**
+     * Único ponto de comparação "registrou `+` hoje?" (SPEC-Rebranding item 4).
+     * [todayStr] precisa estar em `yyyy-MM-dd` (formato de [lastUpDate]); composable
+     * nenhum compara data diretamente.
+     */
+    fun isUpToday(todayStr: String): Boolean = lastUpDate == todayStr
+
+    /** Único ponto de comparação "registrou `−` hoje?". Mesmo formato de [isUpToday]. */
+    fun isDownToday(todayStr: String): Boolean = lastDownDate == todayStr
+}
 
 @Serializable
 enum class RepeatInterval {

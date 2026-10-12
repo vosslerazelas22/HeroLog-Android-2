@@ -3,6 +3,7 @@ package com.iurispraecepta.herolog.ui.theme
 import androidx.compose.ui.graphics.Color
 import com.iurispraecepta.herolog.model.Difficulty
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class RitualCardTokensTest {
@@ -23,6 +24,14 @@ class RitualCardTokensTest {
         assertEquals(Color(0xFFDCC36A), RitualAmber)
         assertEquals(Color(0xFFB69AE8), RitualLavender)
         assertEquals(Color(0xFFD99AAA), RitualRose)
+    }
+
+    @Test
+    fun ritualDanger_isExplicitRed_andNotConfusedWithRose() {
+        // Novo token do item 4 (botão `−` aceso). Precisa ser vermelho de "perigo",
+        // distinto do rosa de dificuldade Difícil, para o `−` não ler como "Difícil".
+        assertEquals(Color(0xFFE5484D), RitualDanger)
+        assertNotEquals(RitualRose, RitualDanger)
     }
 
     @Test

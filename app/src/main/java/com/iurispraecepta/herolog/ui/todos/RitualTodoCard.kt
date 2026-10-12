@@ -122,7 +122,7 @@ fun RitualTodoCard(
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.Top,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
@@ -138,7 +138,7 @@ fun RitualTodoCard(
                                 } else {
                                     TextDecoration.None
                                 },
-                                maxLines = 1,
+                                maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false)
                             )

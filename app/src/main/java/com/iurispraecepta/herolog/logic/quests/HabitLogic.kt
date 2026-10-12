@@ -28,7 +28,7 @@ object HabitLogic {
     ): HabitTriggerResult {
         val rewards = getDifficultyRewards(habit.difficulty)
         return if (isUp) triggerUp(habit, state, rewards, referenceDate)
-        else triggerDown(habit, state, rewards)
+        else triggerDown(habit, state, rewards, referenceDate)
     }
 
     private fun triggerUp(
@@ -80,10 +80,12 @@ object HabitLogic {
             at = referenceDate
         )
 
+        // SPEC-Rebranding item 4: o `+` grava só `lastUpDate` (`yyyy-MM-dd`).
+        // `lastTriggeredDate` deixou de ser escrita (fica no modelo só p/ saves antigos).
         val updatedHabit = habit.copy(
             upCount = habit.upCount + 1,
             streak = habit.streak + 1,
-            lastTriggeredDate = todayStr
+            lastUpDate = todayStr
         )
 
         return HabitTriggerResult(updatedHabit, updatedStateWithFeed)
@@ -92,8 +94,11 @@ object HabitLogic {
     private fun triggerDown(
         habit: Habit,
         state: CharacterState,
-        rewards: DifficultyRewards
+        rewards: DifficultyRewards,
+        referenceDate: Date
     ): HabitTriggerResult {
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(referenceDate)
+
         val finalDamage = if (state.charClass == CharClass.Ranger) {
             max(1, floor(rewards.damage * 0.7).toInt())
         } else rewards.damage
@@ -106,9 +111,11 @@ object HabitLogic {
             isPlayerDead = if (isDead) true else state.isPlayerDead
         )
 
+        // SPEC-Rebranding item 4: o `−` grava só `lastDownDate` (independente do `+`).
         val updatedHabit = habit.copy(
             downCount = habit.downCount + 1,
-            streak = max(0, habit.streak - 1)
+            streak = max(0, habit.streak - 1),
+            lastDownDate = todayStr
         )
 
         return HabitTriggerResult(updatedHabit, updatedState)

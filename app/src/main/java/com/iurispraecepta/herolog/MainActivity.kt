@@ -260,6 +260,9 @@ class MainActivity : ComponentActivity() {
 
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application, sfxManager))
                 val characterState by heroLogViewModel.characterState.collectAsState()
+                // Gatilho de virada de dia (SPEC-Rebranding item 4): tick da execução do
+                // rollover no init do VM; vira refreshKey de "hoje" na tela de Hábitos.
+                val rolloverTick by heroLogViewModel.rolloverTick.collectAsState()
                 var inspectingItem by remember { mutableStateOf<InventoryItem?>(null) }
                 var isSfxMuted by remember { mutableStateOf(false) }
                 val coroutineScope = rememberCoroutineScope()
@@ -748,7 +751,8 @@ class MainActivity : ComponentActivity() {
                                             heroLogViewModel.addHabit(title, notes, up, down, difficulty, tags)
                                         },
                                         onEditHabit = { habit -> heroLogViewModel.editHabit(habit) },
-                                        onDeleteHabit = { habitId -> heroLogViewModel.deleteHabit(habitId) }
+                                        onDeleteHabit = { habitId -> heroLogViewModel.deleteHabit(habitId) },
+                                        dayRefreshKey = rolloverTick
                                     )
                                 }
                             }

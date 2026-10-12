@@ -61,7 +61,7 @@ class HabitsScreenScreenshotTest {
                 downCount = 2,
                 streak = 5,
                 tags = listOf("saude", "nutricao"),
-                lastTriggeredDate = todayStr
+                lastUpDate = todayStr
             )
         )
 
@@ -94,7 +94,7 @@ class HabitsScreenScreenshotTest {
                 downCount = 0,
                 streak = 12,
                 tags = listOf("estudo", "livros"),
-                lastTriggeredDate = "2026-08-01"
+                lastUpDate = "2026-08-01"
             )
         )
 
@@ -127,7 +127,7 @@ class HabitsScreenScreenshotTest {
                 downCount = 5,
                 streak = 0,
                 tags = listOf("vicio", "atencao"),
-                lastTriggeredDate = null
+                lastDownDate = todayStr
             )
         )
 
@@ -177,7 +177,7 @@ class HabitsScreenScreenshotTest {
             downCount = 1,
             streak = 4,
             tags = listOf("treino", "fitness"),
-            lastTriggeredDate = todayStr
+            lastUpDate = todayStr
         )
 
         composeTestRule.setContent {
@@ -209,7 +209,7 @@ class HabitsScreenScreenshotTest {
             downCount = 0,
             streak = 1,
             tags = listOf("temporario"),
-            lastTriggeredDate = todayStr
+            lastUpDate = todayStr
         )
 
         composeTestRule.setContent {
@@ -242,7 +242,7 @@ class HabitsScreenScreenshotTest {
             downCount = 0,
             streak = 2,
             tags = listOf("foco"),
-            lastTriggeredDate = todayStr
+            lastUpDate = todayStr
         )
 
         composeTestRule.setContent {

@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,13 +51,13 @@ import com.iurispraecepta.herolog.ui.components.ritualGlow
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.iurispraecepta.herolog.ui.theme.RitualBorder
+import com.iurispraecepta.herolog.ui.theme.RitualDanger
 import com.iurispraecepta.herolog.ui.theme.RitualGreen
 import com.iurispraecepta.herolog.ui.theme.RitualSurface
 import com.iurispraecepta.herolog.ui.theme.RitualSurfaceElevated
 import com.iurispraecepta.herolog.ui.theme.RitualTextPrimary
 import com.iurispraecepta.herolog.ui.theme.RitualTextSecondary
 import com.iurispraecepta.herolog.ui.theme.RitualTextTertiary
-import com.iurispraecepta.herolog.ui.theme.RitualTextTitleDone
 import com.iurispraecepta.herolog.ui.theme.ritualDifficultyStyle
 import kotlinx.coroutines.delay
 
@@ -83,7 +85,8 @@ fun RitualHabitCard(
     onOpenEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isRecordedToday = habit.lastTriggeredDate == todayDateStr
+    val isUpToday = habit.isUpToday(todayDateStr)
+    val isDownToday = habit.isDownToday(todayDateStr)
     val xp = getDifficultyRewards(habit.difficulty).xp
 
     Box(
@@ -122,7 +125,7 @@ fun RitualHabitCard(
                 if (habit.up) {
                     HabitPlusButton(
                         title = habit.title,
-                        isRecordedToday = isRecordedToday,
+                        isUpToday = isUpToday,
                         onClick = { onTriggerHabit(habit.id, true) }
                     )
                 } else {
@@ -148,7 +151,7 @@ fun RitualHabitCard(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
@@ -158,8 +161,8 @@ fun RitualHabitCard(
                             fontSize = 12.sp,
                             lineHeight = 14.sp,
                             letterSpacing = 0.3.sp,
-                            color = if (isRecordedToday) RitualTextTitleDone else RitualTextPrimary,
-                            maxLines = 1,
+                            color = RitualTextPrimary,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                         )
@@ -180,7 +183,6 @@ fun RitualHabitCard(
                     }
 
                     HabitStatusLine(
-                        isRecordedToday = isRecordedToday,
                         xp = xp,
                         upCount = habit.upCount,
                         downCount = habit.downCount
@@ -188,33 +190,11 @@ fun RitualHabitCard(
                 }
 
                 if (habit.down) {
-                    val minusDescription = "Registrar desvio negativo de ${habit.title}"
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .ritualPressScaleButton(
-                                targetScale = RitualPress.MinusScale,
-                                durationMs = RitualPress.MinusDurationMs,
-                                onClick = { onTriggerHabit(habit.id, false) }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(RitualSurfaceElevated)
-                                .border(1.dp, RitualBorder, RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(LucideR.drawable.lucide_ic_minus),
-                                contentDescription = minusDescription,
-                                tint = RitualTextSecondary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
+                    HabitMinusButton(
+                        title = habit.title,
+                        isDownToday = isDownToday,
+                        onClick = { onTriggerHabit(habit.id, false) }
+                    )
                 } else {
                     Box(modifier = Modifier.width(32.dp))
                 }
@@ -225,13 +205,17 @@ fun RitualHabitCard(
 
 /**
  * Botão `+` (`MissionCard.tsx:59-77` com D1): círculo 36dp, borda 1dp, ícone `+`
- * 16dp nos dois estados. Sem registro: fundo/borda/ícone padrão; registrado: fundo
- * verde 15%, borda e ícone verdes + glow. Escala 0,9 ao pressionar e 250ms após.
+ * 16dp nos dois estados. Sem registro: fundo/borda/ícone padrão; **aceso** quando
+ * `habit.isUpToday(hoje)`: fundo verde 15%, borda e ícone verdes + glow. Escala 0,9
+ * ao pressionar e 250ms após.
+ *
+ * Acessibilidade (SPEC-Rebranding item 4): o estado aceso também é anunciado por
+ * `stateDescription` — não depende só de cor (daltonismo).
  */
 @Composable
 private fun HabitPlusButton(
     title: String,
-    isRecordedToday: Boolean,
+    isUpToday: Boolean,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -257,20 +241,21 @@ private fun HabitPlusButton(
         label = "habitPlusPress"
     )
     var glowModifier: Modifier = Modifier
-    if (isRecordedToday) glowModifier = glowModifier.ritualGlow()
+    if (isUpToday) glowModifier = glowModifier.ritualGlow(RitualGreen)
     Box(
         modifier = glowModifier
             .size(36.dp)
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(CircleShape)
             .background(
-                if (isRecordedToday) RitualGreen.copy(alpha = 0.15f) else RitualSurfaceElevated
+                if (isUpToday) RitualGreen.copy(alpha = 0.15f) else RitualSurfaceElevated
             )
             .border(
                 1.dp,
-                if (isRecordedToday) RitualGreen else RitualBorder,
+                if (isUpToday) RitualGreen else RitualBorder,
                 CircleShape
             )
+            .semantics { stateDescription = habitMarkerState(isUpToday) }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -285,24 +270,80 @@ private fun HabitPlusButton(
         Icon(
             painter = painterResource(LucideR.drawable.lucide_ic_plus),
             contentDescription = "Registrar hábito $title",
-            tint = if (isRecordedToday) RitualGreen else RitualTextTertiary,
+            tint = if (isUpToday) RitualGreen else RitualTextTertiary,
             modifier = Modifier.size(16.dp)
         )
     }
 }
 
 /**
+ * Botão `−` (SPEC-Rebranding item 4): 32dp visual, raio 8dp, área de toque 48dp,
+ * escala 0,95/150ms. **Aceso** quando `habit.isDownToday(hoje)`, com o mesmo
+ * tratamento do `+` (fundo tonal 15% + borda sólida + glow) em `RitualDanger` —
+ * preenchimento e borda, não só a cor do ícone, para o estado não depender de
+ * discriminação cromática.
+ */
+@Composable
+private fun HabitMinusButton(
+    title: String,
+    isDownToday: Boolean,
+    onClick: () -> Unit
+) {
+    var glowModifier: Modifier = Modifier
+    if (isDownToday) glowModifier = glowModifier.ritualGlow(RitualDanger)
+    Box(
+        modifier = Modifier
+            .semantics { stateDescription = habitMarkerState(isDownToday) }
+            .size(48.dp)
+            .ritualPressScaleButton(
+                targetScale = RitualPress.MinusScale,
+                durationMs = RitualPress.MinusDurationMs,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = glowModifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (isDownToday) RitualDanger.copy(alpha = 0.15f) else RitualSurfaceElevated
+                )
+                .border(
+                    1.dp,
+                    if (isDownToday) RitualDanger else RitualBorder,
+                    RoundedCornerShape(8.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(LucideR.drawable.lucide_ic_minus),
+                contentDescription = "Registrar desvio negativo de $title",
+                tint = if (isDownToday) RitualDanger else RitualTextSecondary,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+    }
+}
+
+/** Estado anunciado pelos marcadores `+`/`−` (a11y — não só cor). */
+private fun habitMarkerState(markedToday: Boolean): String =
+    if (markedToday) "registrado hoje" else "não registrado hoje"
+
+/**
  * Linha de status (mono 11sp, gap 8, quebra permitida — `MissionCard.tsx:117-142`
- * + D10): "Concluído hoje" verde / "Pendente hoje" cinza (Regular, sem ícone),
- * `·`, `+XP`, `·`, `(+up | -down)`.
+ * + D10): `+XP`, `·`, `(+up | -down)`.
  *
- * SPEC-Rebranding item 3: o segmento `{n}d streak` foi removido daqui — o streak
- * de hábito continua calculado (`HabitLogic`) e continua alimentando a conquista
+ * SPEC-Rebranding item 3: o segmento `{n}d streak` foi removido — o streak de hábito
+ * continua calculado (`HabitLogic`) e continua alimentando a conquista
  * `habit_streak_7`, mas **não é exibido** (decisão de produto).
+ *
+ * Item 4: os textos "Concluído hoje"/"Pendente hoje" saíram também — o estado de hoje
+ * vive nos botões `+`/`−` acesos. A linha continua existindo porque `+XP` e o contador
+ * permanecem; se um dia ficasse vazia, o composable seria removido.
  */
 @Composable
 private fun HabitStatusLine(
-    isRecordedToday: Boolean,
     xp: Int,
     upCount: Int,
     downCount: Int
@@ -310,15 +351,6 @@ private fun HabitStatusLine(
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = if (isRecordedToday) "Concluído hoje" else "Pendente hoje",
-            color = if (isRecordedToday) RitualGreen else RitualTextSecondary,
-            fontSize = 11.sp,
-            lineHeight = 11.sp,
-            fontWeight = FontWeight.Normal,
-            fontFamily = JetBrainsMono
-        )
-        StatusDot()
         Text(
             text = "+$xp XP",
             color = RitualTextSecondary,

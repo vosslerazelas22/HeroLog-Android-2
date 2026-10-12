@@ -90,7 +90,14 @@ fun HabitsScreen(
     initialEditingHabit: Habit? = null,
     initialDeleteConfirmState: DeleteConfirmState = DeleteConfirmState.None,
     initialShowDiscard: Boolean = false,
-    initialSnapshot: HabitDraft? = null
+    initialSnapshot: HabitDraft? = null,
+    /**
+     * Gatilho de virada de dia (SPEC-Rebranding item 4): passe
+     * `HeroLogViewModel.rolloverTick` aqui. Muda quando o rollover do `init` do VM
+     * roda (abertura do app), forçando o recálculo de "hoje" junto com `ON_RESUME`
+     * e com o timer de meia-noite de `rememberTodayDateString`.
+     */
+    dayRefreshKey: Any? = null
 ) {
     var isCreating by remember { mutableStateOf(initialIsCreating) }
     var editingHabit by remember { mutableStateOf(initialEditingHabit) }
@@ -182,7 +189,7 @@ fun HabitsScreen(
     }
 
     val isModalOpen = isCreating || editingHabit != null
-    val todayDateStr = rememberTodayDateString(habits)
+    val todayDateStr = rememberTodayDateString(refreshKey = habits to dayRefreshKey)
 
     Column(
         modifier = modifier
