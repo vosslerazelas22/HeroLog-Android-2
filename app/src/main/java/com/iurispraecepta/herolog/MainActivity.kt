@@ -85,7 +85,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.SkillLogic
-import com.iurispraecepta.herolog.ui.focus.PendingCelebrationHost
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.semantics
+import com.iurispraecepta.herolog.ui.focus.PendingCelebrationOverlay
+import com.iurispraecepta.herolog.ui.focus.shouldExitFocusOnDismiss
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharClass
@@ -334,6 +337,27 @@ class MainActivity : ComponentActivity() {
                 // mirroring React (App.tsx:2055) — when isFocusMode, return
                 // <FocusModeScreen> at the top level, no header, no bottom nav.
                 val csForFullscreen = characterState
+
+                // spec-008 T11: coletar celebrações pendentes no nível superior
+                // para renderizar overlay fullscreen sobre FocusModeScreen OU Scaffold
+                val pendingCelebration by heroLogViewModel.pendingCelebration.collectAsState()
+                val pendingCelebrationSummary = pendingCelebration
+                // Coletado no topo (fora do branch isFocusMode) para o overlay decidir
+                // se o dismiss deve sair do focus mode — um descanso em andamento
+                // (BREAK_RUNNING no Service) não deve ser abandonado pelo dismiss.
+                val breakTimerState by heroLogViewModel.breakTimerState.collectAsState()
+
+                // TalkBack: enquanto o overlay de celebração cobre a tela, o conteúdo
+                // por baixo (FocusModeScreen ou Scaffold) fica invisível para serviços
+                // de acessibilidade — senão o TalkBack navega em controles visualmente
+                // encobertos. Removido automaticamente quando o overlay some.
+                val coveredByCelebrationModifier =
+                    if (pendingCelebrationSummary != null) {
+                        Modifier.semantics { invisibleToUser() }
+                    } else {
+                        Modifier
+                    }
+
                 if (isFocusMode && csForFullscreen != null) {
                     val focusState = heroLogViewModel.focusSessionState.value
                     val breakTimerState = heroLogViewModel.breakTimerState.value
@@ -365,7 +389,7 @@ class MainActivity : ComponentActivity() {
                             onRespawn = {},
                             orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
                             isBreakActive = true,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize().then(coveredByCelebrationModifier)
                         )
                     } else {
                         val config = focusState.config
@@ -389,36 +413,35 @@ class MainActivity : ComponentActivity() {
                             onReturnToFocusCap = { heroLogViewModel.returnToFocusFromGrace() },
                             onRespawn = { heroLogViewModel.respawnHero() },
                             orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize().then(coveredByCelebrationModifier)
                         )
                     }
                 } else {
-
-                // spec-002: hazeSource no Scaffold inteiro para que o
-                // AppHeader (topBar) também faça parte da fonte do blur.
-                // Padrão canônico do Haze; nós de hazeEffect se auto-excluem.
-                Scaffold(
-                    modifier = Modifier.fillMaxSize().hazeSource(hazeState),
-                    containerColor = QuestPanel,
-                    topBar = {
-                        AppHeader(
-                            streak = characterState?.streak ?: 0,
-                            gold = characterState?.gold ?: 0,
-                            isSfxMuted = isSfxMuted,
-                            onToggleSfx = { isSfxMuted = !isSfxMuted },
-                            onOpenSettings = {
-                                isGeneralSettingsOpen = true
-                            }
-                        )
-                    },
-                    bottomBar = {
-                        HeroLogBottomNav(
-                            activeTab = activeTab,
-                            onChangeTab = { activeTab = it },
-                            hazeState = hazeState
-                        )
-                    },
-                ) { innerPadding ->
+                    // spec-002: hazeSource no Scaffold inteiro para que o
+                    // AppHeader (topBar) também faça parte da fonte do blur.
+                    // Padrão canônico do Haze; nós de hazeEffect se auto-excluem.
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize().hazeSource(hazeState).then(coveredByCelebrationModifier),
+                        containerColor = QuestPanel,
+                        topBar = {
+                            AppHeader(
+                                streak = characterState?.streak ?: 0,
+                                gold = characterState?.gold ?: 0,
+                                isSfxMuted = isSfxMuted,
+                                onToggleSfx = { isSfxMuted = !isSfxMuted },
+                                onOpenSettings = {
+                                    isGeneralSettingsOpen = true
+                                }
+                            )
+                        },
+                        bottomBar = {
+                            HeroLogBottomNav(
+                                activeTab = activeTab,
+                                onChangeTab = { activeTab = it },
+                                hazeState = hazeState
+                            )
+                        },
+                    ) { innerPadding ->
                     CompositionLocalProvider(
                         LocalBottomBarInset provides innerPadding.calculateBottomPadding(),
                         LocalSfxManager provides sfxManager,
@@ -995,6 +1018,23 @@ class MainActivity : ComponentActivity() {
                     } // CompositionLocalProvider
                 } // Scaffold
                 } // else (not focusMode)
+
+                // Fullscreen overlay para celebração de conclusão de foco (spec-008 T11)
+                // Renderizado no nível superior para cobrir TANTO FocusModeScreen QUANTO Scaffold
+                // (espelha React: FocusCompletionFlow em App.tsx linha 3624, fora do branch isFocusMode)
+                PendingCelebrationOverlay(
+                    summary = pendingCelebrationSummary,
+                    exitFocusModeOnDismiss = shouldExitFocusOnDismiss(
+                        isFocusMode = isFocusMode,
+                        isBreakActive = breakTimerState.isBreakActive
+                    ),
+                    onExitFocusMode = { isFocusMode = false },
+                    onConfirmSingle = { historyId, notes, tag ->
+                        heroLogViewModel.confirmPendingCelebrationWithNotes(historyId, notes, tag)
+                    },
+                    onConfirmAggregated = { heroLogViewModel.confirmPendingCelebration() },
+                    skills = characterState?.skills ?: emptyList()
+                )
             }
         }
     }
@@ -1095,28 +1135,7 @@ fun FocusOrbPreviewScreen(
     val focusDuration = characterState.pomodoroSettings.focusDuration
 
     Box(modifier = modifier.fillMaxSize()) {
-        // spec-008 T11: celebrações pendentes de sessões concluídas em background
-        // (single → FocusCompletionFlow; multiple → MultipleSessionCelebration)
-        // BUG CRÍTICO (Notifications feat android-first, PR #29): lia `.value` direto do
-        // StateFlow em vez de `collectAsState()` -- Compose nunca observava mudanças, então
-        // nem o término do timer (Service -> refreshPendingCelebration) nem o dismiss do
-        // modal (confirmPendingCelebration -> null) disparavam recomposição. O modal só
-        // "aparecia"/"sumia" de carona em outra recomposição não relacionada (ex.: abandonar
-        // sessão mexendo em focusState), daí o padrão relatado de "só abandonar faz algo".
-        val pendingCelebration by viewModel.pendingCelebration.collectAsState()
-        // Kotlin não faz smart cast de propriedade delegada (`by collectAsState()`) --
-        // captura numa val local antes do `if` pra poder usar não-nulo abaixo.
-        val pendingCelebrationSummary = pendingCelebration
-        if (pendingCelebrationSummary != null) {
-            PendingCelebrationHost(
-                summary = pendingCelebrationSummary,
-                onConfirmSingle = { historyId, notes, tag ->
-                    viewModel.confirmPendingCelebrationWithNotes(historyId, notes, tag)
-                },
-                onDismissAggregated = { viewModel.confirmPendingCelebration() },
-                skills = characterState.skills
-            )
-        } else if (breakTimerState.isBreakPrep) {
+        if (breakTimerState.isBreakPrep) {
             // Break prep inline — React (App.tsx:2413-2475) mantém banner + carousel +
             // quick actions visíveis; só o viewport do timer vira o card de escolha de pausa.
             Column(modifier = Modifier.fillMaxSize()) {

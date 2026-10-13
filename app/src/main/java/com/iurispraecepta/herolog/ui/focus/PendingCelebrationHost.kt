@@ -37,7 +37,9 @@ fun PendingCelebrationHost(
     onConfirmSingle: (historyId: String?, notes: String, tag: String) -> Unit,
     onDismissAggregated: () -> Unit,
     modifier: Modifier = Modifier,
-    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList()
+    skills: List<com.iurispraecepta.herolog.model.Skill> = emptyList(),
+    onNotesChange: (String) -> Unit = {},
+    onTagChange: (String) -> Unit = {}
 ) {
     when (selectCelebrationMode(summary.sessionCount)) {
         CelebrationMode.SINGLE -> {
@@ -70,6 +72,8 @@ fun PendingCelebrationHost(
                 onConfirm = { notes: String, tag: String ->
                     onConfirmSingle(session.historyId, notes, tag)
                 },
+                onNotesChange = onNotesChange,
+                onTagChange = onTagChange,
                 dungeonSessionsCompleted = session.dungeonSessionsCompleted,
                 modifier = modifier.fillMaxSize()
             )
