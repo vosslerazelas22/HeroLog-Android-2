@@ -7042,3 +7042,39 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-13] Bloco: Focus Completion Flow — overlay fullscreen + correções (Issue #39)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/PendingCelebrationOverlay.kt` (novo — composable extraído da MainActivity + função pura `shouldExitFocusOnDismiss`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt`
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt` (params `onNotesChange`/`onTagChange` com default `{}`, invocados em cada update de estado, inclusive clear/deselect)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/PendingCelebrationHost.kt` (pass-through dos novos callbacks)
+- `app/src/test/java/com/iurispraecepta/herolog/FocusCelebrationOverlayBehaviorTest.kt` (novo, 8 testes — usa o composable real `PendingCelebrationOverlay`)
+
+**Resumo:**
+- `PendingCelebrationHost` (SINGLE e AGGREGATED) renderizado como overlay fullscreen **fora do Scaffold** (irmão, após ambos os branches), espelhando o React (`fixed inset-0 z-[10000]`, `App.tsx:3624`): cobre AppHeader, HeroLogBottomNav **e** FocusModeScreen (coleta de `pendingCelebration` movida para antes do branch `isFocusMode`).
+- **Bloqueio de input**: `Box` fillMaxSize do overlay ganhou `pointerInput(Unit) { detectTapGestures { } }` — consome toques em áreas vazias; filhos clicáveis seguem funcionando. Prova de falha: com a linha removida, `overlay_visible_tapOnEmptyBottomArea_doesNotTriggerScaffoldControl` falha com `expected:<0> but was:<1>` (scaffoldClicks==1, toque vaza para o Scaffold); com ela, 0.
+- **Inset dinâmico**: removidos o param `bottomInset` (CompletionShell/FocusCompletionFlow/PendingCelebrationHost) e a função placeholder `rememberSafeAreaBottomInset()`; botão "RECEBER RECOMPENSAS" usa `Modifier.navigationBarsPadding().padding(bottom = 16.dp)`; `enableEdgeToEdge()` confirmado em `MainActivity.onCreate`.
+- **Focus mode + break**: callbacks de dispensa setam `isFocusMode = false` ANTES de chamar o ViewModel — verificado que não afeta crédito (`isFocusMode` é estado local de UI, não lido pelo ViewModel; recompensas salvas em `FocusUseCase.applyRewards` antes do `queueCelebration`). Saída do focus mode no dismiss é condicionada por `shouldExitFocusOnDismiss(isFocusMode, isBreakActive)`: com descanso ativo (`BREAK_RUNNING` — possível via ação de notificação `ACTION_START_BREAK`, guard `phase == COMPLETED`), o dismiss fecha só a overlay sem sair do FocusModeScreen.
+- **Voltar confirma pelo caminho do botão**: `BackHandler` no overlay — AGGREGATED → `confirmPendingCelebration()`; SINGLE → `confirmPendingCelebrationWithNotes(historyId, notes, tag)`, com as notas/tag espelhadas via `onNotesChange`/`onTagChange`. Permite pular steps. Recompensa nunca é descartada sem crédito: `applyRewards` (com `saveCharacterState`) roda antes de `queueCelebration`.
+- **Isolamento entre celebrações**: `inProgressNotes`/`inProgressTag` do overlay usam `remember(firstHistoryId) { mutableStateOf("") }` — troca de summary sem passar por null (crescimento de fila via `refreshPendingCelebration` em `handleServiceCompleted`, `HeroLogViewModel.kt:539`) não vaza estado de A para B.
+- **TalkBack**: `coveredByCelebrationModifier = Modifier.semantics { invisibleToUser() }`, aplicado condicionalmente enquanto o overlay está visível ao FocusModeScreen (variantes descanso e normal) e ao Scaffold raiz.
+- **Decisões Android-first** (sem equivalente no React; React não tem dismiss — única saída é completar os steps): (a) voltar confirma pelo mesmo caminho do botão e permite pular steps; (b) dismiss só sai do focus mode sem descanso ativo; (c) back no SINGLE salva notas/tag digitadas; (d) key por historyId isola o estado entre celebrações.
+- **Divergência React registrada**: no React o focus mode é exitado na conclusão da sessão (`FocusModeScreen.tsx:79` `setIsFocusMode(false)` antes de `completeFocusQuest`), então a celebração nunca cobre o FocusModeScreen; no Android o Service conclui em background — por isso o dismiss sai do focus mode (comportamento Android-first necessário, não é bug de port).
+
+**Validação (XML bruto):**
+- Build: `./gradlew :app:assembleDebug` — BUILD SUCCESSFUL.
+- Classe nova: `FocusCelebrationOverlayBehaviorTest` **8/8, failures=0, errors=0** — `overlay_visible_tapOnEmptyBottomArea_doesNotTriggerScaffoldControl`, `focusMode_withPendingCelebration_overlayAppears_andDismissExitsFocusMode`, `breakActive_dismissDoesNotExitFocusMode_overlayGone_confirmCalledOnce`, `singleMode_backPress_confirmsWithTypedNotesAndTag`, `singleMode_backPress_withoutTypedNotes_confirmsEmpty`, `singleMode_summarySwapWithoutNull_notesOfADoNotLeakToB`, `shouldExitFocusOnDismiss_focusModeWithoutBreak_exits`, `shouldExitFocusOnDismiss_focusModeWithBreak_doesNotExit`, `shouldExitFocusOnDismiss_notInFocusMode_doesNotExit`.
+- Regressão de celebração (failures=0, errors=0): `FocusCompletionFlowScreenshotTest` 8/8, `FocusCompletionFlowMediumScreenTest` 3/3, `FocusCompletionFlowSmallScreenTest` 4/4, `MultipleSessionCelebrationTest` 3/3, `PendingCelebrationHostTest` 6/6, `PendingCelebrationNotesTest` 3/3, `CelebrationAggregationTest` 6/6, `DungeonCelebrationUseCaseTest` 2/2 (35/35).
+- Suíte completa reexecutada neste bloco: **1002/1002, failures=0, errors=0, skipped=0**.
+- Visual/interação em device: **PENDENTE**.
+
+**Pendências (antes de promover Parcial → Validada):**
+- Device/emulador com 5 casos: (1) gesto voltar; (2) os 3 botões ("RECEBER RECOMPENSAS", card de loot, tag); (3) toque na área vazia não aciona nada embaixo; (4) back com notas digitadas confirma com o texto; (5) descanso por baixo da overlay (inicia break pela notificação e confere que o dismiss não mata o descanso).
+- TalkBack real: conteúdo coberto invisível para leitores de tela; overlay navegável.
+- Validação visual formal (prints lado a lado 375×667 e 390×844).
+
+**Desvios de escopo aprovados:**
+- Saída de focus mode no dismiss (com break ativo: não sai) — Android-first necessário, registrado acima e na linha do PARIDADE.
+- Testes Robolectric do comportamento do overlay usam o composable real `PendingCelebrationOverlay` com summary/state injetados; `isFocusMode` no teste de dismiss é o flag booleano passado à composição (no app vem do `remember` da MainActivity — não injetável sem refatoração maior; convenção já usada no repo para testes de UI do focus).
