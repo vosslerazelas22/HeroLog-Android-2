@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.logic.achievements.Achievement
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
@@ -73,14 +74,6 @@ import com.iurispraecepta.herolog.ui.theme.Champagne400
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
 import com.composables.icons.lucide.R as LucideR
-
-@Composable
-fun rememberSafeAreaBottomInset(): androidx.compose.ui.unit.Dp {
-    // System gestures inset para gesture navigation (barra de navegação do sistema)
-    // Valor típico: 24-32dp. Usamos 32dp para garantir espaço suficiente acima dos botões nativos.
-    // TODO: Usar LocalWindowInsets.current.systemGestures.bottom quando disponível na versão do Compose
-    return 32.dp
-}
 
 fun getRank(isWildernessChecked: Boolean, pauseCount: Int): String = when {
     isWildernessChecked && pauseCount == 0 -> "S+"
@@ -105,7 +98,6 @@ fun CompletionShell(
     onNext: () -> Unit,
     isLastStep: Boolean,
     modifier: Modifier = Modifier,
-    bottomInset: androidx.compose.ui.unit.Dp = LocalBottomBarInset.current,
     content: @Composable () -> Unit
 ) {
     Column(
@@ -117,7 +109,7 @@ fun CompletionShell(
                 start = 24.dp,
                 top = 24.dp,
                 end = 24.dp,
-                bottom = 24.dp + bottomInset
+                bottom = 24.dp
             )
     ) {
         Box(
@@ -134,6 +126,8 @@ fun CompletionShell(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
                 .shadow(12.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFC29544).copy(alpha = 0.25f)),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
@@ -878,10 +872,11 @@ fun FocusCompletionFlow(
     newAchievements: List<Achievement> = emptyList(),
     initialNotes: String = "",
     onConfirm: (editedNotes: String, selectedTag: String) -> Unit,
+    onNotesChange: (String) -> Unit = {},
+    onTagChange: (String) -> Unit = {},
     initialStepIndex: Int = 0,
     dungeonSessionsCompleted: Int = 0,
-    modifier: Modifier = Modifier,
-    bottomInset: androidx.compose.ui.unit.Dp = LocalBottomBarInset.current
+    modifier: Modifier = Modifier
 ) {
     val hasLoot = remember(rewardsCalculation) {
         rewardsCalculation.lootedItems.isNotEmpty() || rewardsCalculation.droppedTitle != null
@@ -923,8 +918,7 @@ fun FocusCompletionFlow(
             }
         },
         isLastStep = isLastStep,
-        modifier = modifier,
-        bottomInset = bottomInset
+        modifier = modifier
     ) {
         when (currentStep) {
             "streak" -> StreakCelebrationScreen(streakPreview = streakPreview)
@@ -949,9 +943,15 @@ fun FocusCompletionFlow(
             }
             "notes" -> SessionNotesScreen(
                 completionNotes = completionNotes,
-                onNotesChange = { completionNotes = it },
+                onNotesChange = {
+                    completionNotes = it
+                    onNotesChange(it)
+                },
                 completionTag = completionTag,
-                onTagChange = { completionTag = it },
+                onTagChange = {
+                    completionTag = it
+                    onTagChange(it)
+                },
                 skillTags = skillTags
             )
         }

@@ -85,8 +85,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.iurispraecepta.herolog.logic.DeleteSkillEligibility
 import com.iurispraecepta.herolog.logic.InventoryLogic
 import com.iurispraecepta.herolog.logic.SkillLogic
-import com.iurispraecepta.herolog.ui.focus.PendingCelebrationHost
-import com.iurispraecepta.herolog.ui.focus.rememberSafeAreaBottomInset
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.semantics
+import com.iurispraecepta.herolog.ui.focus.PendingCelebrationOverlay
+import com.iurispraecepta.herolog.ui.focus.shouldExitFocusOnDismiss
 import com.iurispraecepta.herolog.logic.SkillOperationResult
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharClass
@@ -335,6 +337,27 @@ class MainActivity : ComponentActivity() {
                 // mirroring React (App.tsx:2055) — when isFocusMode, return
                 // <FocusModeScreen> at the top level, no header, no bottom nav.
                 val csForFullscreen = characterState
+
+                // spec-008 T11: coletar celebrações pendentes no nível superior
+                // para renderizar overlay fullscreen sobre FocusModeScreen OU Scaffold
+                val pendingCelebration by heroLogViewModel.pendingCelebration.collectAsState()
+                val pendingCelebrationSummary = pendingCelebration
+                // Coletado no topo (fora do branch isFocusMode) para o overlay decidir
+                // se o dismiss deve sair do focus mode — um descanso em andamento
+                // (BREAK_RUNNING no Service) não deve ser abandonado pelo dismiss.
+                val breakTimerState by heroLogViewModel.breakTimerState.collectAsState()
+
+                // TalkBack: enquanto o overlay de celebração cobre a tela, o conteúdo
+                // por baixo (FocusModeScreen ou Scaffold) fica invisível para serviços
+                // de acessibilidade — senão o TalkBack navega em controles visualmente
+                // encobertos. Removido automaticamente quando o overlay some.
+                val coveredByCelebrationModifier =
+                    if (pendingCelebrationSummary != null) {
+                        Modifier.semantics { invisibleToUser() }
+                    } else {
+                        Modifier
+                    }
+
                 if (isFocusMode && csForFullscreen != null) {
                     val focusState = heroLogViewModel.focusSessionState.value
                     val breakTimerState = heroLogViewModel.breakTimerState.value
@@ -366,7 +389,7 @@ class MainActivity : ComponentActivity() {
                             onRespawn = {},
                             orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
                             isBreakActive = true,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize().then(coveredByCelebrationModifier)
                         )
                     } else {
                         val config = focusState.config
@@ -390,23 +413,15 @@ class MainActivity : ComponentActivity() {
                             onReturnToFocusCap = { heroLogViewModel.returnToFocusFromGrace() },
                             onRespawn = { heroLogViewModel.respawnHero() },
                             orbConcept = csForFullscreen.orbConcept ?: OrbConcept.D,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize().then(coveredByCelebrationModifier)
                         )
                     }
                 } else {
-                // spec-008 T11: coletar celebrações pendentes antes do Scaffold
-                // para poder renderizar como overlay fullscreen (fora do Scaffold)
-                val pendingCelebration by heroLogViewModel.pendingCelebration.collectAsState()
-                val pendingCelebrationSummary = pendingCelebration
-                // Safe area inset para o overlay fullscreen (system gestures / home indicator)
-                val safeAreaBottomInset = rememberSafeAreaBottomInset()
-
-                Box(modifier = Modifier.fillMaxSize()) {
                     // spec-002: hazeSource no Scaffold inteiro para que o
                     // AppHeader (topBar) também faça parte da fonte do blur.
                     // Padrão canônico do Haze; nós de hazeEffect se auto-excluem.
                     Scaffold(
-                        modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+                        modifier = Modifier.fillMaxSize().hazeSource(hazeState).then(coveredByCelebrationModifier),
                         containerColor = QuestPanel,
                         topBar = {
                             AppHeader(
@@ -1002,23 +1017,24 @@ class MainActivity : ComponentActivity() {
                     }
                     } // CompositionLocalProvider
                 } // Scaffold
-
-                // Fullscreen overlay for focus completion flow (spec-008 T11)
-                // Renderizado fora do Scaffold para cobrir header e bottom nav (como no React)
-                if (pendingCelebrationSummary != null) {
-                    PendingCelebrationHost(
-                        summary = pendingCelebrationSummary,
-                        onConfirmSingle = { historyId, notes, tag ->
-                            heroLogViewModel.confirmPendingCelebrationWithNotes(historyId, notes, tag)
-                        },
-                        onDismissAggregated = { heroLogViewModel.confirmPendingCelebration() },
-                        skills = characterState?.skills ?: emptyList(),
-                        modifier = Modifier.fillMaxSize(),
-                        bottomInset = safeAreaBottomInset
-                    )
-                }
-                } // Box (fullscreen overlay container)
                 } // else (not focusMode)
+
+                // Fullscreen overlay para celebração de conclusão de foco (spec-008 T11)
+                // Renderizado no nível superior para cobrir TANTO FocusModeScreen QUANTO Scaffold
+                // (espelha React: FocusCompletionFlow em App.tsx linha 3624, fora do branch isFocusMode)
+                PendingCelebrationOverlay(
+                    summary = pendingCelebrationSummary,
+                    exitFocusModeOnDismiss = shouldExitFocusOnDismiss(
+                        isFocusMode = isFocusMode,
+                        isBreakActive = breakTimerState.isBreakActive
+                    ),
+                    onExitFocusMode = { isFocusMode = false },
+                    onConfirmSingle = { historyId, notes, tag ->
+                        heroLogViewModel.confirmPendingCelebrationWithNotes(historyId, notes, tag)
+                    },
+                    onConfirmAggregated = { heroLogViewModel.confirmPendingCelebration() },
+                    skills = characterState?.skills ?: emptyList()
+                )
             }
         }
     }
