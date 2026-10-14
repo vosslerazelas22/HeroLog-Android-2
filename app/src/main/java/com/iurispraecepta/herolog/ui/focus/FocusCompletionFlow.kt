@@ -49,6 +49,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
@@ -57,14 +58,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.iurispraecepta.herolog.logic.achievements.Achievement
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import com.iurispraecepta.herolog.logic.focus.DroppedTitle
 import com.iurispraecepta.herolog.logic.focus.FocusRewardsCalculation
 import com.iurispraecepta.herolog.logic.focus.LootItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.components.StreakIcon
-import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import com.iurispraecepta.herolog.ui.theme.Stone950
 import com.iurispraecepta.herolog.ui.theme.Amber500
@@ -109,7 +108,7 @@ fun CompletionShell(
                 start = 24.dp,
                 top = 24.dp,
                 end = 24.dp,
-                bottom = 24.dp
+                bottom = 0.dp
             )
     ) {
         Box(
@@ -124,10 +123,11 @@ fun CompletionShell(
         Button(
             onClick = onNext,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp)
+                .testTag("completion_cta")
+                .fillMaxWidth()
+                .height(56.dp)
                 .shadow(12.dp, RoundedCornerShape(12.dp), ambientColor = Color(0xFFC29544).copy(alpha = 0.25f)),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(

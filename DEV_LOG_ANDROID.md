@@ -7078,3 +7078,29 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Saída de focus mode no dismiss (com break ativo: não sai) — Android-first necessário, registrado acima e na linha do PARIDADE.
 - Testes Robolectric do comportamento do overlay usam o composable real `PendingCelebrationOverlay` com summary/state injetados; `isFocusMode` no teste de dismiss é o flag booleano passado à composição (no app vem do `remember` da MainActivity — não injetável sem refatoração maior; convenção já usada no repo para testes de UI do focus).
+
+## [2026-10-13] Bloco: CTA do FocusCompletionFlow fora da tela — correção do inset (regressão do PR #41)
+
+**Arquivos criados/alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt` (reordem dos modifiers do CTA, coluna com `bottom = 0.dp`, `testTag("completion_cta")`, remoção dos imports órfãos `WindowInsets`/`LocalBottomBarInset`)
+- `app/src/test/java/com/iurispraecepta/herolog/FocusCompletionCtaInsetsTest.kt` (novo, 2 testes — inset injetado de 48dp e 24dp)
+- `app/src/test/java/com/iurispraecepta/herolog/FocusCelebrationOverlayBehaviorTest.kt` (clique do teste de área vazia retargetado para a faixa vazia de 16dp + comentário de geometria atualizado)
+- 15 PNGs de baseline regravados (`focus_completion_flow_*`, `focus_completion_375x667_*`, `focus_completion_390x844_*`)
+
+**Resumo:**
+- Causa raiz (commit `73aacf0`, PR #41): `navigationBarsPadding()` + `padding(bottom = 16.dp)` foram adicionados DEPOIS do `height(56.dp)` no modifier do botão do `CompletionShell`, então o inset era consumido DENTRO dos 56dp fixos — altura dourada visível de `56 − inset − 16` (0dp com navegação de 3 botões ≈48dp, ~16dp com gestos ≈16–24dp). A remoção do `bottomInset` da coluna no mesmo commit moveu o slot para `[H−80, H−24]`, dentro da faixa da barra do sistema. Em 3 botões só restava a sombra de `shadow(12.dp)` do nó de altura 0 ("faixa escura"); em gestos, só a ponta superior do ouro.
+- Correção (espelho do footer React `p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]` em `FocusCompletionFlow.tsx:103`, botão `h-14` em `:106`): inset/padding movidos para ANTES do `height(56.dp)` (fora do tamanho fixo) e coluna com `bottom = 0.dp` — abaixo do botão ficam `16dp + navInset`, altura dourada sempre 56dp. Largura/start/end (24dp) intactos, fora de escopo.
+- `testTag("completion_cta")` no botão (logo após o `padding(bottom)`, para o nó da tag ser o wrapper de 56dp) — usado pelos testes de geometria.
+- Teste de área vazia (`overlay_visible_tapOnEmptyBottomArea_doesNotTriggerScaffoldControl`): com o botão 24dp mais baixo, o centro do controle simulado (H−28) cairia sobre o ouro e confirmaria o fluxo; clique retargetado para posição explícita nos últimos 8dp (faixa vazia de 16dp abaixo do botão).
+
+**Validação (XML bruto):**
+- Prova RED (fix revertido temporariamente, tag mantida): `FocusCompletionCtaInsetsTest` 2/2 FALHAM — 48dp: `assertIsDisplayed` ("The component is not displayed!"); 24dp: `altura do CTA … expected:<56> but was:<16>` (matemática exata do bug: 56−24−16). Injeção de inset via `ViewCompat.dispatchApplyWindowInsets` direto na ComposeView funciona no Robolectric (`@Config(sdk = [36])`, densidade 1.0).
+- GREEN: `FocusCompletionCtaInsetsTest` **2/2**, `FocusCelebrationOverlayBehaviorTest` **8/8**, regressão de celebração **20/20** (`PendingCelebrationHostTest` 6, `PendingCelebrationNotesTest` 3, `MultipleSessionCelebrationTest` 3, `CelebrationAggregationTest` 6, `DungeonCelebrationUseCaseTest` 2), failures=0, errors=0, skipped=0.
+- Suíte completa: **1004/1004, failures=0, errors=0, skipped=0** (130 classes, XML em `app/build/test-results/testDebugUnitTest/`).
+- Build: `./gradlew :app:assembleDebug` — BUILD SUCCESSFUL.
+- Baselines: regravados só os 15 PNGs da família focus-completion (`-Proborazzi.test.record=true` nas 3 classes `FocusCompletionFlow*Test`); `git status --short app/src/test/screenshots/` mostra só esses. PNGs reinspecionados (botão dourado cheio "CONTINUAR" acima da borda) — inspeção humana lado a lado com o React continua pendente.
+- Visual/interação em device: **PENDENTE** — (1) 3 botões; (2) gestos; (3) etapa de notas com teclado aberto (`imePadding` da coluna + `navigationBarsPadding` do botão podem somar); (4) landscape (inset lateral estreita o botão — o React só usa `safe-area-inset-bottom`); (5) prints 375×667 e 390×844.
+- Device (usuário, 13/10): botão visível e funcional após o fix; teste em device físico pendente.
+
+**Desvios de escopo aprovados:**
+- Nenhum. Divergência pré-existente mantida: botão com padding horizontal 24dp (footer React usa `p-4` = 16dp) — fora do escopo deste bloco.

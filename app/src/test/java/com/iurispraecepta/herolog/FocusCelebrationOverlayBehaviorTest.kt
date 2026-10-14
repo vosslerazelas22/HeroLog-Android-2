@@ -15,14 +15,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.unit.dp
 import com.iurispraecepta.herolog.data.JsonConfig
@@ -122,10 +125,17 @@ class FocusCelebrationOverlayBehaviorTest {
         // O controle do Scaffold continua na árvore (por baixo, encoberto)
         composeTestRule.onNodeWithTag("scaffold-control").assertExists()
 
-        // Toque na faixa da base, na posição do controle do Scaffold. A faixa de 56dp
-        // fica abaixo do botão da celebração (que termina ~40dp acima da borda por causa
-        // do padding do CompletionShell) — área vazia do overlay.
-        composeTestRule.onNodeWithTag("scaffold-control").performClick()
+        // Toque na faixa vazia da base: o botão da celebração agora termina 16dp
+        // acima da borda (coluna com bottom 0 + padding 16dp do botão, inset 0 no
+        // Robolectric) e ocupa quase toda a faixa do controle do Scaffold (56dp),
+        // então o clique usa posição explícita nos últimos 8dp — área vazia do overlay.
+        // (Antes do fix do CTA o botão terminava ~40dp acima da borda e o centro do
+        // controle caía na área vazia; com o botão em 56dp o centro atingiria o ouro.)
+        val controlNode = composeTestRule.onNodeWithTag("scaffold-control").fetchSemanticsNode()
+        val clickY = controlNode.size.height - with(composeTestRule.density) { 8.dp.roundToPx() }.toFloat()
+        composeTestRule.onNodeWithTag("scaffold-control").performTouchInput {
+            click(Offset(controlNode.size.width / 2f, clickY))
+        }
         composeTestRule.waitForIdle()
 
         // O toque foi consumido pelo overlay: o controle do Scaffold NÃO foi acionado
