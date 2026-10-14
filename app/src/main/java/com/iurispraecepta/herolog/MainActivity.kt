@@ -267,6 +267,9 @@ class MainActivity : ComponentActivity() {
 
                 val heroLogViewModel: HeroLogViewModel = viewModel(factory = HeroLogViewModelFactory(application, sfxManager))
                 val characterState by heroLogViewModel.characterState.collectAsState()
+                // O fullscreen desmonta FocusOrbPreviewScreen; coletar aqui mantém
+                // os ticks do timer observáveis enquanto a tela imersiva está aberta.
+                val focusState by heroLogViewModel.focusSessionState.collectAsState()
                 // Gatilho de virada de dia (SPEC-Rebranding item 4): tick da execução do
                 // rollover no init do VM; vira refreshKey de "hoje" na tela de Hábitos.
                 val rolloverTick by heroLogViewModel.rolloverTick.collectAsState()
@@ -337,7 +340,6 @@ class MainActivity : ComponentActivity() {
                 // mirroring React (App.tsx:2055) — when isFocusMode, return
                 // <FocusModeScreen> at the top level, no header, no bottom nav.
                 val csForFullscreen = characterState
-
                 // spec-008 T11: coletar celebrações pendentes no nível superior
                 // para renderizar overlay fullscreen sobre FocusModeScreen OU Scaffold
                 val pendingCelebration by heroLogViewModel.pendingCelebration.collectAsState()
@@ -358,9 +360,9 @@ class MainActivity : ComponentActivity() {
                         Modifier
                     }
 
-                if (isFocusMode && csForFullscreen != null) {
-                    val focusState = heroLogViewModel.focusSessionState.value
-                    val breakTimerState = heroLogViewModel.breakTimerState.value
+                // Durante o preaviso, volta ao Scaffold para exibir BreakPrepScreen.
+                // O overlay de celebração continua renderizado por cima nos dois ramos.
+                if (isFocusMode && !breakTimerState.isBreakPrep && csForFullscreen != null) {
                     val selectedSkillIdx = focusState.config?.selectedSkillIdx ?: 0
                     val validSkillIdx = selectedSkillIdx.coerceIn(0, (csForFullscreen.skills.size - 1).coerceAtLeast(0))
                     val selectedSkillForSession = csForFullscreen.skills.getOrNull(validSkillIdx)
