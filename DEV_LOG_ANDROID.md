@@ -7104,3 +7104,23 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum. Divergência pré-existente mantida: botão com padding horizontal 24dp (footer React usa `p-4` = 16dp) — fora do escopo deste bloco.
+
+## [2026-10-12] Bloco — Issue #16: correções do modo tela cheia do Foco
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (observação dos `StateFlow` de foco, descanso e celebração no escopo raiz; saída do fullscreen ao concluir a sessão ou entrar no preaviso de pausa)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusModeScreen.kt` (insets verticais seguros no conteúdo interativo)
+
+**Resumo:**
+- O fullscreen agora observa `focusSessionState`, `breakTimerState` e `pendingCelebration` via `collectAsState()` no escopo raiz. Assim, continua recebendo as atualizações do timer mesmo quando `FocusOrbPreviewScreen` está desmontada.
+- A conclusão da sessão e o preaviso de pausa retornam ao layout normal do app, onde os fluxos existentes são apresentados.
+- `FocusModeScreen` aplica `WindowInsets.safeDrawing` verticalmente, afastando o cabeçalho e os controles da status bar, da navegação e dos recortes da tela.
+
+**Validação:**
+- `./gradlew :app:compileDebugKotlin` → BUILD SUCCESSFUL.
+- `git -c core.whitespace=cr-at-eol diff --check` → sem erros.
+- Testes unitários: não executados nesta sessão.
+- Inspeção em device/emulador: pendente.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
