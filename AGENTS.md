@@ -116,15 +116,31 @@ MainActivity (Compose, single Activity)
   ainda usam `FontFamily.Serif/Monospace` do sistema (pendência de wiring; lista em
   `specs/002b-kingdom-visual-audit-addendum.md`).
 
-### Toolchain (WSL)
+### Ambiente de desenvolvimento Android
 
-JDK 17 (`~/jdk-17`, compilação), JDK 21 (`~/jdk-21`, Robolectric), Gradle 9.3.1 (wrapper),
-Android SDK 36 (`~/Android/Sdk`), Roborazzi. `./gradlew assembleDebug` e
-`./gradlew testDebugUnitTest` rodam direto na sessão. Validação visual e de interação é em
-device/emulador.
-Screenshot: `-Proborazzi.test.verify=true` compara; `-Proborazzi.test.record=true`
-regrava. O filtro `--tests "*Classe.metodo"` usa o nome da classe Kotlin, não o do
-arquivo (uma classe pode viver dentro do arquivo de outra).
+JDK 21: JVM padrão do ambiente WSL e para execução do Gradle 9.3.1 (Wrapper). Caminho padrão: /usr/lib/jvm/java-21-openjdk-amd64.
+
+JDK 17: permanece instalado em ~/jdk-17, mas não é mais a JVM padrão do terminal. Não presumir que seja necessário para compilar o aplicativo; respeitar a toolchain e as configurações efetivas do projeto.
+
+Robolectric: utilizar JDK 21 para os testes que dependem dessa configuração.
+
+Gradle: utilizar sempre o Wrapper do projeto (./gradlew), versão 9.3.1.
+
+Android SDK: instalado em ~/Android/Sdk, versão de referência 36.
+
+Roborazzi: ./gradlew assembleDebug e ./gradlew testDebugUnitTest podem ser executados diretamente na sessão WSL.
+
+Validação visual e de interação: realizar em dispositivo ou emulador Android.
+
+Screenshots Roborazzi:
+
+-Proborazzi.test.verify=true: compara as imagens com as referências existentes.
+
+-Proborazzi.test.record=true: grava ou atualiza as referências.
+
+Filtro de testes: --tests "*Classe.metodo" utiliza o nome da classe Kotlin, não necessariamente o nome do arquivo. Uma classe pode estar declarada dentro de um arquivo com outro nome.
+
+Não alterar a versão Java de compilação, a toolchain ou as configurações de testes sem verificar primeiro as configurações efetivas do projeto.
 
 ## 5. Fluxo por bloco
 
