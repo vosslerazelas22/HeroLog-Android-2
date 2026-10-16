@@ -792,43 +792,101 @@ fun AchievementUnlockScreen(
     totalCount: Int,
     modifier: Modifier = Modifier
 ) {
+    // Padrão loot (LootDropScreen) + streak (StreakCelebrationScreen):
+    // emoji com bounce + glow pulsante com guard API 31+.
+    val infiniteTransition = rememberInfiniteTransition(label = "achievement_bounce")
+    val bounceOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.15f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Troféu fixo (decisão: sem subir/descer; só o emoji do achievement anima).
         Text(
-            text = "🏆 CONQUISTA DESBLOQUEADA",
-            color = Color(0xFFE5C158),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 1.5.sp
+            text = "🏆",
+            fontSize = 36.sp,
+            modifier = Modifier
+                .shadow(15.dp, CircleShape, ambientColor = Color(0xFFD4AF37).copy(alpha = 0.5f))
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "CONQUISTA DESBLOQUEADA",
+            color = Color(0xFFE5C158),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            fontFamily = Cinzel,
+            letterSpacing = 2.sp,
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = Color(0xFFE2B054).copy(alpha = 0.35f),
+                    offset = Offset(0f, 2f),
+                    blurRadius = 8f
+                )
+            )
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(1.dp)
+                .background(Color(0xFFD4AF37).copy(alpha = 0.2f))
+        )
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Ícone central da conquista
         Box(
-            modifier = Modifier
-                .size(80.dp)
-                .shadow(12.dp, CircleShape)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFD4AF37).copy(alpha = 0.3f),
-                            Color(0xFFD4AF37).copy(alpha = 0.05f)
-                        )
-                    )
-                )
-                .border(2.dp, Color(0xFFD4AF37).copy(alpha = 0.4f), CircleShape),
+            modifier = Modifier.size(96.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = achievement.icon, fontSize = 40.sp)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .blur(24.dp)
+                        .background(Color(0xFFD4AF37).copy(alpha = pulseAlpha), CircleShape)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .offset { IntOffset(0, bounceOffset.dp.roundToPx()) }
+                    .shadow(12.dp, CircleShape, ambientColor = Color(0xFFD4AF37).copy(alpha = 0.4f))
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFD4AF37).copy(alpha = 0.3f),
+                                Color(0xFFD4AF37).copy(alpha = 0.05f)
+                            )
+                        )
+                    )
+                    .border(2.dp, Color(0xFFD4AF37).copy(alpha = 0.4f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = achievement.icon, fontSize = 40.sp)
+            }
         }
-
-        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = achievement.name,
@@ -838,8 +896,6 @@ fun AchievementUnlockScreen(
             color = Color(0xFFF5F5F4),
             textAlign = TextAlign.Center
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = achievement.desc,
@@ -851,7 +907,6 @@ fun AchievementUnlockScreen(
         )
 
         if (totalCount > 1) {
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "${currentIndex + 1} de $totalCount",
                 fontFamily = JetBrainsMono,
