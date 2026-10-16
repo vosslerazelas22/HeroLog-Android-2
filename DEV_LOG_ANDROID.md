@@ -7189,3 +7189,22 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-16] Bloco: achievement-step visual — redesign do step achievement do FocusCompletionFlow (PR #47)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/FocusCompletionFlow.kt` (`AchievementUnlockScreen`: troféu 🏆 36sp fixo com shadow dourado; título "CONQUISTA DESBLOQUEADA" 18sp Black Cinzel 2sp + shadow; divider 0.85f; bounce −8dp + glow pulsante com guard API 31+ só no ícone do achievement; `spacedBy(16.dp)` + scroll)
+- 4 baselines regravados (`focus_completion_flow_achievement_single.png`, `focus_completion_flow_achievement_multi_1.png`, `focus_completion_375x667_achievement.png`, `focus_completion_390x844_achievement.png`)
+
+**Resumo:**
+- `AchievementUnlockScreen` segue o padrão loot/streak: troféu fixo, título no padrão dos steps, divider e animação só no ícone central da conquista.
+- Ajuste pós-aprovação em emulador: troféu 🏆 fixado (removido `.offset` do bounce; shadow mantido) — só o emoji do achievement anima.
+
+**Validação:**
+- `assembleDebug` OK.
+- Unitários nominais (15 FocusCompletionFlow + 64 achievements + 32 celebração, 0 falhas).
+- `verifyRoborazziDebug` verde (4 baselines acima); verde também após o ajuste do troféu, sem regravação de baselines.
+- Visual em device pendente.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
