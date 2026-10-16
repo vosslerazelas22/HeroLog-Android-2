@@ -1,16 +1,16 @@
-# PARIDADE.md — Rastreamento de fidelidade React ↔ Android
+# PARIDADE.md — Rastreamento de fidelidade (paridade declarada em 15/10/2026)
 
 ## Por que este arquivo existe
 
-O objetivo inegociável do port é **fidelidade de lógica de negócio e fidelidade visual** entre o
-app React (fonte de verdade) e o app Android nativo (Kotlin/Compose). Com migração incremental e
-os dois apps rodando em paralelo, é fácil perder de vista o que já foi portado e validado, o que
-está em andamento, e o que nem foi tocado ainda. Este arquivo é o mapa único desse estado.
+O Android nasceu como port do app React com objetivo de **fidelidade de lógica de negócio
+e fidelidade visual**. **Em 15/10/2026 o Bruno declarou a paridade e desvinculou o projeto
+do repositório React externo** (clone mantido em disco só como arquivo morto, sem acesso
+do agent). A partir desta data, **a referência de "correto" é o código Android + este
+arquivo + `specs/`** — não o React.
 
-**Fonte de verdade para o que "correto" significa**: o código real do app React (`main branch`,
-não o ambiente AI Studio — ver `ARCHITECTURE_MOC.md` seção 1 para as distinções conhecidas entre
-os dois). Sempre que o Android divergir, o React é quem está certo, a menos que a divergência seja
-uma decisão consciente registrada aqui (ex: sync com Supabase fora de escopo por ora).
+**Notas históricas que citam o React como "fonte de verdade"** (tabelas por módulo, abaixo)
+são proveniência do processo de port, não dependência ativa — não "corrigir". Qualquer
+divergência não documentada **neste arquivo** é um bug no Android.
 
 ## Como atualizar
 

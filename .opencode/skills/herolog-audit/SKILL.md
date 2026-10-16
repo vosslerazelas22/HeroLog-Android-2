@@ -1,13 +1,15 @@
 ---
 name: herolog-audit
-description: Audita paridade funcional/visual entre o HeroLog React (fonte de verdade) e o HeroLog Android, ou audita a consistência de qualquer documento do projeto (AGENTS.md, PARIDADE.md, DEV_LOG_ANDROID.md) contra o código real. Use antes de declarar qualquer módulo como "validado" ou antes de aceitar um documento novo/editado como pronto para commit.
+description: Audita a consistência funcional/visual do HeroLog Android contra PARIDADE.md/specs/código real, ou audita a consistência de qualquer documento do projeto (AGENTS.md, PARIDADE.md, DEV_LOG_ANDROID.md) contra o código real. Use antes de declarar qualquer módulo como "validado" ou antes de aceitar um documento novo/editado como pronto para commit.
 license: MIT
 compatibility: opencode
 ---
 
 # HeroLog Audit
 
-Auditoria independente de paridade ou de consistência documental. **Não modifique nenhum
+Auditoria independente de consistência com `PARIDADE.md`/`specs/` ou de consistência
+documental. (Paridade com o React declarada em 15/10/2026 — o React não é mais
+consultado.) **Não modifique nenhum
 arquivo durante uma auditoria** — este skill só lê, compara e reporta.
 
 ## Quando usar
@@ -20,8 +22,8 @@ arquivo durante uma auditoria** — este skill só lê, compara e reporta.
 ## Processo obrigatório
 
 1. **Leia a especificação ou o alvo da auditoria** — o que deveria ser verdade.
-2. **Leia o trecho real do código React** correspondente (fonte de verdade). Nunca supor
-   comportamento por analogia com outro módulo já portado.
+2. **Leia a seção correspondente no `PARIDADE.md` e no `spec/` aplicável.**
+   Nunca supor comportamento por analogia com outro módulo.
 3. **Leia a implementação Android atual** correspondente.
 4. **Consulte PARIDADE.md e DEV_LOG_ANDROID.md** para decisões conscientes de divergência
    já registradas — uma divergência documentada não é um bug.

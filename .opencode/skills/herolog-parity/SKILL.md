@@ -1,20 +1,21 @@
 ---
 name: herolog-parity
-description: Compara um módulo ou feature específica entre o HeroLog React (fonte de verdade) e o HeroLog Android para determinar fidelidade lógica e visual. Use ao portar uma feature nova, ao investigar uma regressão suspeita, ou ao decidir se uma divergência encontrada é bug ou decisão consciente já registrada.
+description: Compara um módulo ou feature específica dentro do HeroLog Android contra PARIDADE.md/specs para determinar fidelidade lógica e visual. Use ao investigar uma regressão suspeita, ou ao decidir se uma divergência encontrada é bug ou decisão consciente já registrada.
 license: MIT
 compatibility: opencode
 ---
 
 # HeroLog Parity
 
-Comparação estruturada de paridade entre o React (fonte de verdade) e o Android. Este
-skill não decide sozinho se algo deve ser corrigido — ele produz a comparação que
+Comparação estruturada de um módulo/feature do Android contra `PARIDADE.md` + `specs/`.
+(Paridade com o React declarada em 15/10/2026 — o React não é mais consultado.)
+Este skill não decide sozinho se algo deve ser corrigido — ele produz a comparação que
 permite ao Bruno decidir.
 
 ## Princípio central
 
-O código real do app React (branch main) é a fonte de verdade. O Android é uma cópia
-fiel — qualquer divergência não documentada é um bug, não uma melhoria.
+A referência de "correto" é o **código Android + `PARIDADE.md` + `specs/`**.
+Qualquer divergência não documentada é um bug, não uma melhoria.
 
 **Nunca assumir equivalência entre módulos parecidos.** Foco ≠ Habit ≠ Daily ≠ Todo —
 cada um tem sua própria fórmula e seu próprio comportamento, mesmo quando a UI parece
@@ -23,8 +24,8 @@ outro módulo já portado.
 
 ## Processo obrigatório
 
-1. **Obter o trecho real do código React** correspondente à feature — não supor
-   comportamento pela documentação ou pela versão Android existente.
+1. **Ler a seção correspondente no `PARIDADE.md` e no `spec/` aplicável** — não supor
+   comportamento pela memória ou pela versão de outro módulo.
 2. **Localizar a implementação Android atual** correspondente.
 3. **Comparar modelo de dados**: tipos, campos, valores default, nullability.
 4. **Comparar side effects**: o que muda de estado, e em que momento exatamente.

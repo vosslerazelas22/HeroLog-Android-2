@@ -1,6 +1,6 @@
 ---
 name: herolog-implementation
-description: Implementa uma mudança de código no HeroLog Android seguindo workflow obrigatório de requisitos, inspeção da fonte React e do PARIDADE.md, plano, implementação e diff — com build/teste executados localmente via ./gradlew ou delegados ao Android Studio. Use ao portar uma feature do React, corrigir um bug, ou fazer qualquer alteração de código Kotlin/Compose.
+description: Implementa uma mudança de código no HeroLog Android seguindo workflow obrigatório de requisitos, inspeção do PARIDADE.md e do código Android, plano, implementação e diff — com build/teste executados localmente via ./gradlew ou delegados ao Android Studio. Use ao corrigir um bug, ou fazer qualquer alteração de código Kotlin/Compose.
 license: MIT
 compatibility: opencode
 ---
@@ -29,12 +29,10 @@ podem ser validados aqui via XML bruto.
 2. **INSPECT**:
    - Ler PARIDADE.md e DEV_LOG_ANDROID.md para o módulo em questão (estado atual,
      decisões conscientes já registradas, riscos conhecidos).
-   - Ler o trecho real do código React correspondente via `@react-source` — nunca
-     supor comportamento por analogia com outro módulo já portado.
-   - Ler a implementação Android atual do módulo.
-   - Ao citar o comportamento React como referência no relatório final, citar o
-     arquivo e a linha exata consultados — nunca descrever o comportamento React
-     em prosa sem essa citação.
+   - Ler a implementação Android atual do módulo (+ `specs/` quando houver spec).
+     Nunca supor comportamento por analogia com outro módulo já implementado.
+   - Ao citar o comportamento esperado no relatório final, citar o arquivo/spec e
+     a linha exata consultados — nunca descrever comportamento em prosa sem essa citação.
 
 3. **PLAN** — escopo mínimo e auditável (um "Bloco"). Se o escopo crescer durante a
    inspeção, dividir em blocos menores em vez de expandir silenciosamente o bloco atual.
@@ -60,7 +58,7 @@ podem ser validados aqui via XML bruto.
 - Catálogos e dados literais extensos: sempre transcritos da fonte real, nunca
   inventados; verificar campo a campo contra a fonte após a escrita.
 - Nunca presumir que dois módulos usam a mesma lógica por analogia — cada um exige
-  verificação literal da fonte React (Foco ≠ Habit ≠ Daily ≠ Todo).
+  verificação literal no código Android + `PARIDADE.md`/`specs/` (Foco ≠ Habit ≠ Daily ≠ Todo).
 - Confirmar que os imports apontam para `model.*` real, nunca um pacote
   paralelo/morto por resolução silenciosa.
 - Nunca alterar o schema do Room sem criar Migration explícita.
@@ -84,7 +82,7 @@ Arquivos criados/alterados: <lista com caminho completo>
 nunca de memória — o relatório deve refletir o diff real, mesmo que ele
 inclua arquivos fora da intenção original do bloco)
 
-Resumo: <o que mudou e por quê, incluindo qualquer decisão de divergência do React>
+Resumo: <o que mudou e por quê, incluindo qualquer decisão de divergência do PARIDADE.md>
 
 Validação: <resultado de build/teste — BUILD SUCCESSFUL + XML bruto nominal, ou PENDENTE>
 Visual: PENDENTE — aguardando inspeção em device/emulador

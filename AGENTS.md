@@ -6,17 +6,21 @@
 
 ## 1. Objetivo
 
-Port Android/Kotlin (Compose) do HeroLog, app web React de produtividade com mecânicas de RPG.
-O objetivo inegociável é **fidelidade de lógica de negócio e fidelidade visual** ao React.
-Os dois apps rodam em paralelo; o port é incremental. Qualquer divergência não documentada
+App Android/Kotlin (Compose) de produtividade com mecânicas de RPG (HeroLog).
+**Paridade com o React declarada em 15/10/2026; o projeto é standalone e não
+depende mais do repositório React externo** (clone mantido em disco só como
+arquivo morto, fora do acesso do agent). A referência de comportamento é o
+código Android + `PARIDADE.md` + `specs/`. Qualquer divergência não documentada
 é um bug.
 
-## 2. Relação React → Android
+## 2. Relação com o React (histórico — paridade declarada em 15/10/2026)
 
-- **Fonte de verdade**: o código real do app React (`main`). Em caso de divergência, o React
-  está certo, salvo **decisão consciente registrada no `PARIDADE.md`**.
-- O AI Studio não tem acesso ao repo React e seu código pode divergir do real. Em dúvida,
-  exigir o **trecho real** do React (fornecido por quem tem acesso ao repo); nunca supor.
+- O Android nasceu como port do app React. **Desde 15/10/2026 a paridade está
+  declarada e o projeto não depende mais do repositório React externo.**
+- A referência de "correto" agora é o **código Android + `PARIDADE.md` + `specs/`**.
+  Divergência sem nota consciente no `PARIDADE.md` é bug no Android.
+- Citações históricas ao React em `DEV_LOG_ANDROID.md`, comentários de código e
+  `RELATORIO_PARIDADE.md` são proveniência, não dependência ativa — não "corrigir".
 - Há divergências intencionais (ex.: `lastDungeonClearedTime` persistido só no Android,
   `totalXP` incrementado só no Android). **Consulte o `PARIDADE.md` antes de "corrigir"
   qualquer divergência.**
@@ -31,7 +35,6 @@ Os dois apps rodam em paralelo; o port é incremental. Qualquer divergência nã
 |---|---|---|
 | `PARIDADE.md` | **Antes** de cada bloco | Estado de paridade por módulo, decisões conscientes, riscos |
 | `DEV_LOG_ANDROID.md` | Antes (últimas entradas) e **depois** de cada bloco | Log técnico por bloco: arquivos, validação, desvios aprovados |
-| Código React real | Quando a lógica não está clara | Fonte de verdade |
 | `app/schemas/` | Ao alterar entidades Room | Schemas versionados |
 | `specs/` | Quando houver spec para o trabalho | Escopo e auditorias (ex.: `002b-kingdom-visual-audit-addendum.md`) |
 | `ANDROID_FIRST.md` | Antes de reportar "feature X não existe no React" | Catálogo de features exclusivas do Android — sem equivalente React por decisão de produto, não são divergência a corrigir |
@@ -150,7 +153,7 @@ validado e registrado no `DEV_LOG_ANDROID.md` na mesma sessão.
 Antes de implementar:
 1. Ler a seção do módulo no `PARIDADE.md` (status, decisões conscientes, riscos, pendências).
 2. Ler as últimas entradas do `DEV_LOG_ANDROID.md`.
-3. Obter o trecho real do React correspondente.
+3. Ler a implementação Android atual do módulo (+ `specs/` quando houver spec).
 4. Confirmar que os imports são de `model.*` (os tipos reais).
 5. Implementar com escopo mínimo, separando lógica pura de UI.
 
@@ -168,10 +171,10 @@ Ao fechar:
 2. **"O arquivo não existe" / "não há tela de config" exige grep real.** Entry points podem
    estar escondidos em componentes existentes.
 3. **Catálogos e dados literais extensos** (títulos, quests, conquistas) são transcritos do
-   código real, nunca inventados, e verificados campo a campo. A taxa de fabricação em
+   código/spec real, nunca inventados, e verificados campo a campo. A taxa de fabricação em
    transcrição extensa já foi alta.
 4. **Nunca presumir a mesma lógica por analogia.** Foco, Habit, Daily e Todo têm fórmulas
-   próprias; cada um exige verificação literal do React.
+   próprias; cada um exige verificação literal no código Android + `PARIDADE.md`/`specs/`.
 5. **Imports silenciosos podem ligar a tipos errados.** Conferir que os tipos vêm de
    `model.*`, não de pacote paralelo/morto (`logic.quests.*` já teve cópias mortas).
 6. **Nunca alterar o schema Room sem `Migration` explícita** (ver Persistência).
@@ -180,8 +183,8 @@ Ao fechar:
    insuficiente). Nesse caso, rodar por classe e registrar como **validação parcial**; nunca
    declarar "validado" numa validação parcial.
 9. **Testes de screenshot (Roborazzi) são baseline, não substituem inspeção humana.**
-   Diferença de pixels não diz qual lado está certo: comparar com o React antes de
-   regravar (`_compare.png` em `app/build/outputs/roborazzi/`). Regravar só o teste alvo
+   Diferença de pixels não diz qual lado está certo: comparar com o `PARIDADE.md`/`specs/`
+   antes de regravar (`_compare.png` em `app/build/outputs/roborazzi/`). Regravar só o teste alvo
    e conferir com `git status --short app/src/test/screenshots/` que só os PNGs
    esperados mudaram.
 10. **Screenshots de teste (Roborazzi) devem ser gerados em modo escuro.** O app roda
@@ -224,3 +227,16 @@ confirmação explícita do usuário.
 (`/home/bruno/projetos/HeroLog-Android-2`) com `git worktree list` e `pwd`. Se estiver em
 worktree de feature, **parar e avisar o usuário**: esse worktree pode estar desatualizado
 ou conter arquivos revertidos.
+
+## 8. Declaração de paridade (15/10/2026)
+
+Em 15/10/2026 o Bruno declarou a paridade com o React e desvinculou este projeto do
+repositório React externo (`~/projetos/HeroLog-React-ref`, mantido em disco só como arquivo
+morto, sem acesso do agent — `opencode.json` sem `references`/`permission`).
+
+A partir desta data:
+- O projeto é **standalone**; a referência de comportamento é o código Android +
+  `PARIDADE.md` + `specs/`.
+- Não consultar o React para portar, validar ou decidir divergências.
+- Citações históricas ao React (docs, comentários, skills arquivadas) são proveniência,
+  não instrução ativa.

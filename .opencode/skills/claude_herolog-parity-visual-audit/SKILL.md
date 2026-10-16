@@ -1,11 +1,15 @@
 ---
 name: claude_herolog-parity-visual-audit
-description: Audita paridade visual entre uma tela do HeroLog React (fonte da verdade) e sua implementação Android (Kotlin/Compose), comparando valores literais de código dos dois lados, elemento a elemento, com gate obrigatório de citação dos dois trechos por linha. Use antes de declarar qualquer fidelidade visual como validada.
+description: [ARQUIVADA em 15/10/2026 — paridade com o React declarada, React não mais consultável. Mantida só como proveniência.] Auditava paridade visual entre uma tela do HeroLog React e sua implementação Android.
 ---
 
-# Skill: Auditoria de Paridade Visual (React → Android Compose)
+# Skill: Auditoria de Paridade Visual (ARQUIVADA em 15/10/2026)
 
-## Propósito
+> **Arquivada — paridade com o React declarada em 15/10/2026.** O protocolo abaixo
+> comparava o React (inacessível desde a desvinculação) com o Android e não deve mais
+> ser executado. Mantido só como proveniência histórica do processo de port.
+
+## Propósito original (histórico)
 Auditar paridade visual entre uma tela do HeroLog-React-ref (fonte da verdade) e sua
 implementação em HeroLog-Android-2 (Kotlin/Jetpack Compose). O objetivo NÃO é dizer
 "parece igual" — é extrair valores literais dos dois lados, colocá-los lado a lado, e

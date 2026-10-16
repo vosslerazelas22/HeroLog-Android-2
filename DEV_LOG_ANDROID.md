@@ -7168,3 +7168,24 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Android-first registrado em `ANDROID_FIRST.md` + nota no `PARIDADE.md` (React não distingue masmorra no histórico — não é divergência).
+
+## [2026-10-15] Bloco — Declaração de paridade + desvinculação do React
+
+**Arquivos alterados:**
+- `opencode.json` (removidos `references.react-source` + `permission.edit` do React — agent sem acesso; clone `~/projetos/HeroLog-React-ref/` mantido em disco como arquivo morto)
+- `AGENTS.md` (§1, §2, §3, §5 passo 3, §6 regras 3/4/9 + nova §8 Declaração de paridade 15/10/2026)
+- `PARIDADE.md` (cabeçalho: referência passa a ser código Android + este arquivo + `specs/`)
+- `RELATORIO_PARIDADE.md` (banner "documento histórico")
+- `.opencode/skills/herolog-parity/SKILL.md`, `herolog-implementation/SKILL.md`, `herolog-audit/SKILL.md` (removido passo "ler React"; fonte passa a ser `PARIDADE.md`/`specs/`/código Android; mantidas guardas anti-analogia e exigência de citação/XML/grep)
+- `.opencode/skills/claude_herolog-parity-visual-audit/SKILL.md` (arquivada — protocolo React × Android não executável após desvinculação)
+
+**Resumo:**
+- Decisão do Bruno: paridade declarada em 15/10/2026; projeto standalone. Não tocar `docs/PRD.md`/`docs/TRD.md` (fora de uso), `ANDROID_FIRST.md`, comentários `*.kt` (proveniência) nem reescrever histórico do `DEV_LOG`.
+- Citações históricas ao React em docs/código/skills arquivadas são proveniência, não instrução ativa.
+
+**Validação:**
+- Só docs/config — sem build/testes (nenhum `*.kt` de produção alterado).
+- `git status --short` confere a lista de arquivos acima antes de commit.
+
+**Desvios de escopo aprovados:**
+- Nenhum.

@@ -1,7 +1,11 @@
 # RELATORIO_PARIDADE.md — Auditoria de Paridade Visual/Estrutural React × Android
 
+> **Documento histórico — paridade declarada em 15/10/2026.** O projeto Android é
+> standalone desde essa data e não depende mais do repositório React externo
+> (`~/projetos/HeroLog-React-ref/`, arquivo morto em disco). O conteúdo abaixo
+> permanece como proveniência do port; não usar como ordem para consultar o React.
+
 **Data:** 2026-09-07
-**Fonte de verdade:** React (`~/projetos/HeroLog-React-ref/`)
 **Port Android:** `~/projetos/HeroLog-Android-2/`
 **Escopo:** Inventário de todas as telas e modais + divergências estruturais de UI, Copy, Modal e Navegação.
 **Não incluído:** Re-verificação de fórmulas de recompensa/matematica já testadas no `PARIDADE.md`.
