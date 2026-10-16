@@ -40,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
 import com.iurispraecepta.herolog.ui.theme.Amber100
 import com.iurispraecepta.herolog.ui.theme.Amber400
 import com.iurispraecepta.herolog.ui.theme.Amber500
@@ -129,7 +130,7 @@ fun GuideScreen(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 32.dp),
+                .padding(bottom = 32.dp + LocalBottomBarInset.current),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // ── Seção 1: Como Funciona o Jogo? ──

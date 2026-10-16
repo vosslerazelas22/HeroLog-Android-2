@@ -7208,3 +7208,20 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-16] Bloco: issue #46 — bottom inset na aba Tutorial (GuideScreen)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/GuideScreen.kt` (+2/-1: import `LocalBottomBarInset`; `.padding(bottom = 32.dp)` → `.padding(bottom = 32.dp + LocalBottomBarInset.current)` na coluna com `verticalScroll`)
+
+**Resumo:**
+- Ao final do scroll, o conteúdo da aba Tutorial era sobreposto pela bottom nav. Mesmo padrão aplicado na issue #38 à aba Títulos do bazar (`TitleShopScreen.kt:123`, `24.dp + LocalBottomBarInset.current`): soma o inset ao respiro inferior existente (32dp preservados, sem mudança visual quando o inset é 0).
+- Sem mudança de lógica — tela 100% estática.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest`: 131 classes, 1010 testes, 0 falhas/erros/skips (XML bruto em `app/build/test-results/testDebugUnitTest/`).
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
