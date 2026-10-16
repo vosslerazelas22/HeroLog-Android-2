@@ -68,7 +68,9 @@ data class HistoryEntry(
     val notes: String,
     val wilderness: Boolean,
     val aiChronicle: String? = null,
-    val subskillTag: String? = null
+    val subskillTag: String? = null,
+    /** Android-first: marca sessões de Masmorra (sem equivalente no React). Default `false` mantém saves antigos íntegros; `JsonConfig` ignora chaves desconhecidas. */
+    val isDungeon: Boolean = false
 )
 
 /**

@@ -7124,3 +7124,47 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-15] Bloco — Crônicas Diárias: limpeza pós-escolha (V3 promovida a HistoryScreen)
+
+**Arquivos alterados (só UI):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt` (reescrito com o conteúdo da opção V3, mesmo nome/assinatura pública; helpers `History*`, 3 `@Preview` mantidos, slot comentado da crônica IA mantido, `LocalBottomBarInset` restaurado no `LazyColumn`)
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (revertida a fiação do seletor debug — volta a `HistoryScreen(history = state.history)`)
+- Removidos: `CronicasDiariasV1.kt`, `CronicasDiariasV2.kt`, `CronicasDiariasV3.kt`, `CronicasDiariasDebug.kt`
+
+**Resumo:**
+- Opção escolhida: **V3 — timeline agrupada por data** (trilha vertical com marcos, cabeçalhos de dia, blocos sem cards, XP/GP/duração inline). Motivo: decisão do usuário na etapa de limpeza (não detalhada neste bloco).
+- Descartados: V1 (lista densa com divisores) e V2 (cards grandes com faixa heroica + barra de duração) + seletor temporário ORIG/V1/V2/V3.
+- Auditoria de condições V3 × original antes de substituir: `history.isEmpty()` (vazio geral sem toggle), toggle, filtro `notes.isNotBlank()`, vazio de notas, badge wilderness, bloco de notas, `hasChronicle` (REVELAR/painel, expansão única por tela) — todas idênticas. Única divergência aceita: fallback "Nenhuma crônica antiga disponível" oculto com slot comentado (crônica IA não existe no Android). Divergências inerentes ao design escolhido (reportadas): sem canto vermelho girado (marco + badge sinalizam wilderness), modo notes mostra só a hora (dia virou cabeçalho de grupo). `LocalBottomBarInset` restaurado (a V3 tinha só 12dp fixos).
+- Nenhum toque em ViewModel, modelos, lógica, repositórios ou navegação — comportamento idêntico (mesmo `state.history`, sem callbacks).
+
+**Validação (XML bruto):**
+- `grep -rn "CronicasDiariasV\|CronicasDiariasDebug" app/src` → vazio (inclui resíduos `CronicasV[123]` e `TEMPORÁRIO (debug visual`).
+- `./gradlew assembleDebug testDebugUnitTest` — BUILD SUCCESSFUL (4m38s).
+- Suíte completa: **1004/1004, failures=0, errors=0, skipped=0** (130 classes, `app/build/test-results/testDebugUnitTest/`).
+- `git diff --stat`: em `app/src` só `ui/history/HistoryScreen.kt` (`M`); `MainActivity.kt` voltou ao original (sem diff). `AGENTS.md`/`opencode.json` aparecem no diff mas são modificações pré-existentes de outro contexto, não deste bloco.
+- Visual/interação em device: pendente (prints 375×667 e 390×844 + navegação real).
+
+**Desvios de escopo aprovados:**
+- Divergência intencional registrada no `PARIDADE.md` (linha Crônicas Diárias): fallback de crônica IA oculto + slot comentado.
+
+## [2026-10-15] Bloco — Crônicas: marco roxo de Masmorra (Android-first)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/model/CharacterModels.kt` (`HistoryEntry.isDungeon: Boolean = false`)
+- `app/src/main/java/com/iurispraecepta/herolog/logic/focus/FocusApplyLogic.kt` (preenche `isDungeon = calc.isDungeonMode`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/history/HistoryScreen.kt` (helper puro `timelineDotColor`, marco roxo `Purple400`, preview com entrada dungeon)
+- `app/src/test/java/com/iurispraecepta/herolog/FocusApplyLogicTest.kt` (+2 testes) e `HistoryTimelineDotTest.kt` (novo, 4 testes)
+
+**Resumo:**
+- Decisão do usuário (etapa de limpeza das Crônicas): sessões de Masmorra ganham marco roxo na timeline, em vez da cor padrão. Precedência: Terra Selvagem (vermelho) > Masmorra (roxo) > padrão (champagne). Modos são mutuamente exclusivos na UI.
+- Sem migration Room (blob JSON, campo com default); `JsonConfig.ignoreUnknownKeys = true` + React ignora o campo extra — saves cruzados intactos. Entradas antigas (sem o campo) seguem champagne.
+- Baselines Roborazzi do histórico: sem regen (dados de `HistoryScreenScreenshotBase` não têm entrada dungeon → PNGs inalterados).
+
+**Validação (XML bruto):**
+- `./gradlew assembleDebug testDebugUnitTest` — BUILD SUCCESSFUL.
+- Suíte: **1010/1010, failures=0, errors=0, skipped=0** (131 classes; +6 novos: `apply_dungeonSession_historyEntryMarkedAsDungeon`, `apply_standardSession_historyEntryNotMarkedAsDungeon`, 4× `dotColor_*`).
+- Visual em device: pendente (marco roxo numa sessão dungeon real).
+
+**Desvios de escopo aprovados:**
+- Android-first registrado em `ANDROID_FIRST.md` + nota no `PARIDADE.md` (React não distingue masmorra no histórico — não é divergência).

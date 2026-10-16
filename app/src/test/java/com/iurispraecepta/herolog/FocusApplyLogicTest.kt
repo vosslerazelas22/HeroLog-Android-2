@@ -13,6 +13,7 @@ import com.iurispraecepta.herolog.model.PomodoroSettings
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.model.Skill
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -137,6 +138,34 @@ class FocusApplyLogicTest {
         val nextState = FocusApplyLogic.apply(state, calc, editedNotes = "", selectedTag = null)
 
         assertTrue(nextState.achievements.contains("survive_wilderness"))
+    }
+
+    @Test
+    fun apply_dungeonSession_historyEntryMarkedAsDungeon() {
+        // Arrange: sessão em modo Masmorra
+        val state = createBaseState()
+        val calc = createBaseCalc().copy(isDungeonMode = true)
+
+        // Act: aplicar a sessão
+        val nextState = FocusApplyLogic.apply(state, calc, editedNotes = "", selectedTag = null)
+
+        // Assert: entrada do histórico carrega a marca de masmorra
+        assertEquals(1, nextState.history.size)
+        assertTrue(nextState.history[0].isDungeon)
+    }
+
+    @Test
+    fun apply_standardSession_historyEntryNotMarkedAsDungeon() {
+        // Arrange: sessão padrão (createBaseCalc já vem com isDungeonMode = false)
+        val state = createBaseState()
+        val calc = createBaseCalc()
+
+        // Act: aplicar a sessão
+        val nextState = FocusApplyLogic.apply(state, calc, editedNotes = "", selectedTag = null)
+
+        // Assert: entrada do histórico sem marca de masmorra
+        assertEquals(1, nextState.history.size)
+        assertFalse(nextState.history[0].isDungeon)
     }
 
     @Test

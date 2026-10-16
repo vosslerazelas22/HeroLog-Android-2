@@ -105,6 +105,7 @@ object FocusApplyLogic {
             notes = editedNotes.trim(),
             subskillTag = selectedTag,
             wilderness = calc.isWildernessChecked,
+            isDungeon = calc.isDungeonMode,
             aiChronicle = null
         )
 
