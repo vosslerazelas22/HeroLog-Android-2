@@ -7225,3 +7225,22 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-16] Bloco: issue #48 — fundo da ficha do herói mais escuro que as demais abas
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt` (-3: removidos `.clip(RoundedCornerShape(8.dp))` + `.background(QuestPanel)` + `.border(1.dp, White@10%, 8.dp)` do `Column` da branch `"character"`; mantidos `fillMaxSize` + `padding(20.dp)` + `spacedBy(24.dp)`)
+
+**Resumo:**
+- Causa: o wrapper da ficha era um painel opaco (`QuestPanel`) full-bleed que cobria o overlay de gradiente roxo (`purple-950 20% → transparente`, `MainActivity.kt:457-468`) aplicado sobre o `Scaffold`. As demais abas não têm wrapper opaco e exibem o gradiente sobre o `QuestPanel` do `Scaffold.containerColor` — por isso a ficha parecia mais escura.
+- Correção: wrapper sem fundo próprio; a ficha agora herda `QuestPanel` do `Scaffold` + gradiente, igual a Habits/Dailies/Todos/Skills. Cards internos (`sectionCard`, `IdentityCard`) mantêm seus fundos próprios — inalterados.
+- Fora de escopo: wrapper de Inventory (`Stone900@50%` + border âmbar) continua pendente, como já registrado no `PARIDADE.md`.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (classes afetadas, XML bruto): `CharacterMappersTest` 1/1, `CharacterRepositoryTest` 1/1, `CharacterScreenScreenshotTest` 4/4, `CharacterViewLogicTest` 21/21, `HeroLogViewModelTest` 70/70, `TavernLogicTest` 32/32, `NavigationConfigTest` 18/18, `TavernScreenScreenshotTest` 6/6 — 0 falhas/erros. (Suíte completa não rodada; cobre só o entorno da mudança pois o bloco não altera lógica.)
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+

@@ -663,9 +663,6 @@ class MainActivity : ComponentActivity() {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(QuestPanel)
-                                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
                                             .padding(20.dp),
                                         verticalArrangement = Arrangement.spacedBy(24.dp)
                                     ) {
