@@ -9,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,46 +26,41 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.composables.icons.lucide.R as LucideR
 import com.iurispraecepta.herolog.ui.ProcessedQuest
-import com.iurispraecepta.herolog.ui.theme.Amber100
-import com.iurispraecepta.herolog.ui.theme.Amber400
-import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.components.RitualEmptyState
+import com.iurispraecepta.herolog.ui.components.RitualPress
+import com.iurispraecepta.herolog.ui.components.RitualTabHeader
+import com.iurispraecepta.herolog.ui.components.ritualDifficultyEdge
+import com.iurispraecepta.herolog.ui.components.ritualGlow
+import com.iurispraecepta.herolog.ui.components.ritualPressable
 import com.iurispraecepta.herolog.ui.theme.Cinzel
 import com.iurispraecepta.herolog.ui.theme.Inter
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.Stone400
-import com.iurispraecepta.herolog.ui.theme.Stone900
-import com.iurispraecepta.herolog.ui.theme.Stone950
+import com.iurispraecepta.herolog.ui.theme.RitualTextSecondary
+import com.iurispraecepta.herolog.ui.theme.RitualBorder
+import com.iurispraecepta.herolog.ui.theme.RitualGold
+import com.iurispraecepta.herolog.ui.theme.RitualGreen
+import com.iurispraecepta.herolog.ui.theme.RitualSurface
+import com.iurispraecepta.herolog.ui.theme.RitualSurfaceElevated
+import com.iurispraecepta.herolog.ui.theme.RitualTextPrimary
+import com.iurispraecepta.herolog.ui.theme.RitualTextTertiary
 
-private val Amber200 = Color(0xFFFDE68A)
-private val Amber300 = Color(0xFFFCD34D)
-private val Amber600 = Color(0xFFD97706)
-private val Emerald400 = Color(0xFF34D399)
-private val Emerald500 = Color(0xFF10B981)
 
 @Composable
 fun QuestsScreen(
@@ -76,53 +71,52 @@ fun QuestsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(vertical = 12.dp)
     ) {
+        RitualTabHeader(
+            iconRes = LucideR.drawable.lucide_ic_scroll_text,
+            title = "Contratos",
+            counterText = if (dailyQuests.size == 1) "1 contrato" else "${dailyQuests.size} contratos",
+            showNewButton = false,
+            newContentDescription = "",
+            onNewClick = {}
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
-
-        // ═══ CABEÇALHO DO PAINEL (vem do wrapper em App.tsx) ═══
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Layers,
-                contentDescription = null,
-                tint = Amber400,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Contratos",
-                fontFamily = Cinzel,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                letterSpacing = 0.12.em,
-                color = Amber400
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
 
         // ── Legenda ──────────────────────────────────────────────────
         Text(
             text = "Sorteio rotativo — 3 missões por dia. Renova à meia-noite.",
-            color = Amber200.copy(alpha = 0.7f),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 12.dp)
+            fontFamily = Inter,
+            fontWeight = FontWeight.Normal,
+            fontSize = 11.sp,
+            lineHeight = 14.sp,
+            color = RitualTextSecondary,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // ═══ LISTA DE CONTRATOS ═══
         if (dailyQuests.isEmpty()) {
-            EmptyQuestsPlaceholder(
-                message = "Nenhum contrato diário ativo para hoje."
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                RitualEmptyState(
+                    message = "Nenhum contrato diário ativo para hoje."
+                )
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = LocalBottomBarInset.current
+                )
             ) {
                 items(
                     items = dailyQuests,
@@ -149,28 +143,28 @@ private fun QuestCard(
     val isReadyToClaim = quest.isCompleted && !quest.isClaimed
     val isClaimed = quest.isClaimed
 
-    // Estilos de borda e fundo conforme os 3 estados
-    val cardBorderColor = when {
-        isClaimed -> Emerald500.copy(alpha = 0.1f)
-        isReadyToClaim -> Amber400
-        else -> Amber500.copy(alpha = 0.1f)
+    // Estado → cor da barra lateral e da borda (tokens Ritual*, padrão das abas de Rituais).
+    val stateColor = when {
+        isClaimed -> RitualGreen
+        isReadyToClaim -> RitualGold
+        else -> RitualTextTertiary
     }
+    val cardBorderColor = if (isReadyToClaim) RitualGold else RitualBorder
 
-    val cardBgColor = when {
-        isReadyToClaim -> Amber500.copy(alpha = 0.03f)
-        else -> Stone900
-    }
-
-    val cardModifier = modifier
-        .fillMaxWidth()
-        .then(if (isClaimed) Modifier.alpha(0.6f) else Modifier)
-        .clip(RoundedCornerShape(8.dp))
-        .background(cardBgColor)
-        .border(1.dp, cardBorderColor, RoundedCornerShape(8.dp))
-        .padding(14.dp)
-
-    Box(modifier = cardModifier) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(RitualSurface)
+            .border(1.dp, cardBorderColor, RoundedCornerShape(12.dp))
+            .ritualDifficultyEdge(stateColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
             // ── Linha Superior: Nome da Quest + Bolinha Pulsante + Badge Concluído ──
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -185,9 +179,15 @@ private fun QuestCard(
                         text = quest.name,
                         fontFamily = Cinzel,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = if (isClaimed) Amber100.copy(alpha = 0.6f) else if (isReadyToClaim) Amber300 else Amber100,
-                        maxLines = 1,
+                        fontSize = 12.sp,
+                        lineHeight = 14.sp,
+                        letterSpacing = 0.3.sp,
+                        color = when {
+                            isClaimed -> RitualTextSecondary
+                            isReadyToClaim -> RitualGold
+                            else -> RitualTextPrimary
+                        },
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
 
@@ -198,21 +198,32 @@ private fun QuestCard(
                     }
                 }
 
-                // Badge no canto direito se isClaimed
+                // Badge no canto direito se isClaimed (tonal verde, como o badge de dificuldade)
                 if (isClaimed) {
                     Spacer(modifier = Modifier.width(8.dp))
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0x1A10B981))
-                            .border(1.dp, Emerald500.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(RitualGreen.copy(alpha = 0.12f))
+                            .border(1.dp, RitualGreen.copy(alpha = 0.35f), RoundedCornerShape(7.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        Icon(
+                            painter = painterResource(LucideR.drawable.lucide_ic_check),
+                            contentDescription = null,
+                            tint = RitualGreen,
+                            modifier = Modifier.size(10.dp)
+                        )
                         Text(
-                            text = "✔️ Concluído",
+                            text = "CONCLUÍDO",
+                            fontFamily = JetBrainsMono,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Emerald400
+                            lineHeight = 10.sp,
+                            letterSpacing = 0.5.sp,
+                            color = RitualGreen
                         )
                     }
                 }
@@ -223,9 +234,11 @@ private fun QuestCard(
             // ── Descrição da Quest ──────────────────────────────────────────
             Text(
                 text = quest.desc,
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.Normal,
                 fontSize = 11.sp,
-                color = Amber100.copy(alpha = 0.5f),
-                lineHeight = 15.sp
+                lineHeight = 14.sp,
+                color = if (isClaimed) RitualTextTertiary else RitualTextSecondary
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -244,15 +257,22 @@ private fun QuestCard(
                 Text(
                     text = "Progresso",
                     fontSize = 10.sp,
-                    fontFamily = Inter,
-                    color = Stone400
+                    lineHeight = 10.sp,
+                    fontFamily = JetBrainsMono,
+                    fontWeight = FontWeight.Normal,
+                    color = RitualTextSecondary
                 )
                 Text(
                     text = "$clampedProgress / ${quest.target}",
                     fontSize = 10.sp,
+                    lineHeight = 10.sp,
                     fontFamily = JetBrainsMono,
-                    fontWeight = FontWeight.Bold,
-                    color = if (quest.isCompleted) Amber400 else Stone400
+                    fontWeight = FontWeight.SemiBold,
+                    color = when {
+                        isClaimed -> RitualGreen
+                        quest.isCompleted -> RitualGold
+                        else -> RitualTextSecondary
+                    }
                 )
             }
 
@@ -263,12 +283,12 @@ private fun QuestCard(
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(Stone900)
+                    .background(RitualSurfaceElevated)
             ) {
-                val fillBrush = if (quest.isCompleted) {
-                    Brush.horizontalGradient(listOf(Amber500, Amber300))
-                } else {
-                    Brush.horizontalGradient(listOf(Amber600.copy(alpha = 0.4f), Amber600.copy(alpha = 0.4f)))
+                val fillColor = when {
+                    isClaimed -> RitualGreen
+                    quest.isCompleted -> RitualGold
+                    else -> RitualGold.copy(alpha = 0.4f)
                 }
 
                 Box(
@@ -276,7 +296,7 @@ private fun QuestCard(
                         .fillMaxWidth(fraction = progressFraction)
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
-                        .background(fillBrush)
+                        .background(fillColor)
                 )
             }
 
@@ -288,7 +308,7 @@ private fun QuestCard(
                     .fillMaxWidth()
                     .drawBehind {
                         drawLine(
-                            color = Color(0x1AF59E0B),
+                            color = RitualBorder,
                             start = Offset(0f, 0f),
                             end = Offset(size.width, 0f),
                             strokeWidth = 1.dp.toPx()
@@ -301,7 +321,7 @@ private fun QuestCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Recompensas: 💎 {rewardGold} GP em Amber400 | ⚡ {rewardXp} XP em Emerald400
+                    // Recompensas: 💎 {rewardGold} GP em RitualGold | ⚡ {rewardXp} XP em RitualGreen
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -309,40 +329,54 @@ private fun QuestCard(
                         Text(
                             text = "💎 ${quest.rewardGold} GP",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Amber400
+                            lineHeight = 12.sp,
+                            fontFamily = JetBrainsMono,
+                            fontWeight = FontWeight.SemiBold,
+                            color = RitualGold
                         )
 
                         Text(
                             text = "⚡ ${quest.rewardXp} XP",
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Emerald400
+                            lineHeight = 12.sp,
+                            fontFamily = JetBrainsMono,
+                            fontWeight = FontWeight.SemiBold,
+                            color = RitualGreen
                         )
                     }
 
                     // Ação à direita
                     when {
                         isReadyToClaim -> {
+                            // Área de toque de 48dp; visual compacto com glow dourado.
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(
-                                        Brush.horizontalGradient(
-                                            listOf(Amber500, Amber400)
-                                        )
-                                    )
-                                    .clickable(onClick = onClaim)
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .heightIn(min = 48.dp)
+                                    .ritualPressable(
+                                        targetScale = RitualPress.MinusScale,
+                                        durationMs = RitualPress.MinusDurationMs,
+                                        onClick = onClaim
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "REIVINDICAR",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.05.em,
-                                    color = Stone950
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .ritualGlow(RitualGold)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(RitualGold.copy(alpha = 0.15f))
+                                        .border(1.dp, RitualGold, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "REIVINDICAR",
+                                        fontFamily = JetBrainsMono,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 12.sp,
+                                        lineHeight = 12.sp,
+                                        color = RitualGold
+                                    )
+                                }
                             }
                         }
                         isClaimed -> {
@@ -351,7 +385,7 @@ private fun QuestCard(
                                 fontSize = 10.sp,
                                 fontFamily = Cinzel,
                                 fontStyle = FontStyle.Italic,
-                                color = Amber100.copy(alpha = 0.3f)
+                                color = RitualTextTertiary
                             )
                         }
                         else -> {
@@ -359,7 +393,7 @@ private fun QuestCard(
                                 text = "Desbloqueia ao atingir progresso",
                                 fontSize = 10.sp,
                                 fontFamily = Cinzel,
-                                color = Amber100.copy(alpha = 0.3f)
+                                color = RitualTextTertiary
                             )
                         }
                     }
@@ -400,56 +434,14 @@ private fun PulsingDot(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(6.dp * scale)
                 .clip(CircleShape)
-                .background(Amber400.copy(alpha = alpha))
+                .background(RitualGold.copy(alpha = alpha))
         )
         // Círculo sólido central
         Box(
             modifier = Modifier
                 .size(6.dp)
                 .clip(CircleShape)
-                .background(Amber400)
+                .background(RitualGold)
         )
-    }
-}
-
-@Composable
-private fun EmptyQuestsPlaceholder(
-    message: String,
-    modifier: Modifier = Modifier
-) {
-    val borderColor = Color(0x33F59E0B)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp)
-            .drawBehind {
-                drawRoundRect(
-                    color = borderColor,
-                    style = Stroke(
-                        width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                    ),
-                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
-                )
-            }
-            .padding(28.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "📜",
-                fontSize = 28.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = message,
-                fontSize = 13.sp,
-                color = Stone400,
-                textAlign = TextAlign.Center
-            )
-        }
     }
 }

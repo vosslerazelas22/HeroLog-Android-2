@@ -7324,3 +7324,83 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Re-gravação dos 4 baselines da ficha (pré-existentes obsoletos, justificada acima) — fora do escopo estrito da issue #48, mas necessária para fechar a validação do bloco.
+
+## [2026-10-16] Bloco: aplicar `contratos_01_header_layout.patch` (header RitualTabHeader na aba Contratos)
+
+**Arquivos alterados (via patch — `git apply --check` OK e aplicado sem rejeição):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (35+/37−): header manual removido (`Icon` `Icons.Default.Layers` + "Contratos" Cinzel Bold 13sp `Amber400` + 2 `Spacer`s) → `RitualTabHeader(iconRes = lucide_ic_scroll_text, title = "Contratos", counterText = "1 contrato"/"N contratos", showNewButton = false)`; root `padding(horizontal = 16.dp)` → `padding(vertical = 12.dp)` (o header/legenda/lista passam a carregar o 16dp); legenda "Sorteio rotativo — 3 missões por dia..." → `Inter` Normal 11sp/14sp `RitualTextSecondary` com `padding(horizontal = 16.dp)`; `LazyColumn` com `contentPadding(start/end = 16.dp, bottom = LocalBottomBarInset)`; empty embrulhado em `Box` com `padding(horizontal = 16.dp)`. Imports: removidos `material.icons.Icons`/`filled.Layers`/`material3.Icon` e `private val Amber200` (sem uso restante); adicionados `com.composables.icons.lucide.R as LucideR`, `ui.components.RitualTabHeader`, `ui.theme.RitualTextSecondary`.
+
+**Resumo:**
+- Bloco 01 de 4 da cadeia `.patches/contratos_*.patch`; escopo limitado ao 01 por decisão do Bruno (02–04: card tokens, botão REIVINDICAR, empty state ficam para blocos seguintes).
+- Só UI — nenhuma mudança de lógica; resultado `git diff` bate com o `index` do patch (blob `0ed52d0`→`a8fecbd`; o arquivo atual era byte-idêntico ao base antes da aplicação).
+- Nota de processo: `git apply --check` combinando 01+02 falha no hunk de imports do 02 (o check multi-arquivo casa o contexto contra o arquivo ainda pré-01, offset +3). Cadeia conferida hunk a hunk manualmente — cada patch será aplicado e conferido **isolado** na sua vez.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (XML bruto em `app/build/test-results/testDebugUnitTest/`): `QuestLogicTest` 8/8, `QuestTypesTest` 4/4, `QuestsViewModelIntegrationTest` 2/2 — 14 testes, 0 falhas/0 erros.
+- Sem baseline Roborazzi da aba Contratos (grep em `app/src/test/screenshots/` não tem PNG de quests) — nada a regravar.
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-16] Bloco: aplicar `contratos_02_card_tokens.patch` (tokens Ritual no card de contrato)
+
+**Arquivos alterados (via patch — `git apply --check` OK e aplicado sem rejeição, isolado do 01):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (blob `a8fecbd`→`8a7e041`, conferido via `git hash-object`): card migra de `Stone900`/`Amber*` ad-hoc para tokens Ritual — fundo `RitualSurface`, raio 8→12dp, borda `RitualBorder` (`RitualGold` só quando `isReadyToClaim`), `ritualDifficultyEdge(stateColor)` de 4dp na esquerda (`isClaimed`→`RitualGreen`, `isReadyToClaim`→`RitualGold`, `else`→`RitualTextTertiary`) no lugar do `Modifier.alpha(0.6f)` do card reclamado; título Cinzel 12sp/`maxLines=2`/tracking 0.3sp nas cores Ritual (antes 14sp/1 linha `Amber100`); descrição `Cinzel` Normal 11sp/14sp `RitualTextSecondary` (claimed→`RitualTextTertiary`); label "Progresso" vira `JetBrainsMono` `RitualTextSecondary`; contador `x / y` SemiBold com `when` (claimed→Green, completed→Gold, else→Secondary); barra: trilho `RitualSurfaceElevated`, preenchimento cor sólida (`Brush.horizontalGradient` removido — privados `Amber300`/`Amber600` e import `alpha` deletados); divisor do rodapé `Color(0x1AF59E0B)`→`RitualBorder`; recompensas GP/XP em `JetBrainsMono` SemiBold `RitualGold`/`RitualGreen`; textos de rodapé não-reivindicáveis em `RitualTextTertiary`. Imports `Amber100`/`Stone900` removidos; +7 imports de token Ritual.
+
+**Resumo:**
+- Bloco 02 de 4 da cadeia `.patches/contratos_*.patch`, aplicado isolado (conforme nota de processo do bloco 01 — sem `--check` em cadeia). Só visual/tokens; lógica de progress/reward intocada.
+- Imports mortos gerados: nenhum (grep conferido — `Amber400`/`Amber500`/`Emerald*`/`Stone400`/`Brush` seguem em uso no badge reclamado, no botão REIVINDICAR e no `PulsingDot`, tratados pelos blocos 03/04).
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (XML bruto): `QuestLogicTest` 8/8, `QuestTypesTest` 4/4, `QuestsViewModelIntegrationTest` 2/2 — 14 testes, 0 falhas/0 erros.
+- Sem baseline Roborazzi da aba Contratos — nada a regravar.
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-16] Bloco: aplicar `contratos_03_claim_button_states.patch` (botão REIVINDICAR + badge + PulsingDot)
+
+**Arquivos alterados (via patch — `git apply --check` OK e aplicado sem rejeição, isolado):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (blob `8a7e041`→`acbedf6`, conferido via `git hash-object`):
+  - **Botão REIVINDICAR**: área de toque `heightIn(min = 48.dp)` + `ritualPressable(targetScale = RitualPress.MinusScale, durationMs = RitualPress.MinusDurationMs)` (sem ripple, `Role.Button`); visual interno = `ritualGlow(RitualGold)` + fundo `RitualGold@15%` + borda 1dp `RitualGold` raio 8dp, texto "REIVINDICAR" `JetBrainsMono` SemiBold 12sp `RitualGold` (antes: `Box` com gradiente `Amber500→Amber400`, `clickable` puro, texto 11sp `Stone950`, altura ~30dp).
+  - **Badge reclamado**: `Box` "✔️ Concluído" (`Emerald400` + borda `Emerald500@20%`, raio 4dp) → `Row` tonal verde: raio 7dp, fundo `RitualGreen@12%`, borda `RitualGreen@35%`, ícone `lucide_ic_check` 10dp tint `RitualGreen` + texto "CONCLUÍDO" `JetBrainsMono` SemiBold 10sp/10sp tracking 0.5sp (mesmo padrão do `RitualDifficultyBadge`).
+  - **`PulsingDot`**: anel + centro `Amber400` → `RitualGold`.
+  - Atualizado comentário do bloco de recompensas (referência de cores).
+  - Imports: removidos `foundation.clickable`, `graphics.Brush`, `theme.Amber400`, `theme.Amber500`, `theme.Stone950` e os privados `Emerald400`/`Emerald500`; adicionados `layout.heightIn`, `material3.Icon` (reentrando — removido no bloco 01 e agora usado pelo badge), `res.painterResource`, `components.RitualPress`, `components.ritualGlow`, `components.ritualPressable`.
+
+**Resumo:**
+- Bloco 03 de 4 da cadeia `.patches/contratos_*.patch`, aplicado isolado. Só visual/interação; `onClaim` e a lógica de resgate intactos.
+- Área de toque cresce para 48dp (a11y); glow via `drawBehind` (minSdk 24, sem `Modifier.shadow`).
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL (sem warnings de `QuestsScreen.kt`).
+- `testDebugUnitTest` (XML bruto): `QuestLogicTest` 8/8, `QuestTypesTest` 4/4, `QuestsViewModelIntegrationTest` 2/2 — 14 testes, 0 falhas/0 erros.
+- Sem baseline Roborazzi da aba Contratos — nada a regravar.
+- Visual/interação em device: PENDENTE (press/glow/toque precisam de device, AGENTS §6.11).
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-16] Bloco: aplicar `contratos_04_empty_state.patch` (RitualEmptyState) — fecha a cadeia contratos_01..04
+
+**Arquivos alterados (via patch — `git apply --check` OK e aplicado sem rejeição, isolado):**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/quests/QuestsScreen.kt` (blob `acbedf6`→`afc248e`, conferido via `git hash-object`; 447 linhas): `EmptyQuestsPlaceholder(message = "Nenhum contrato diário ativo para hoje.")` → `RitualEmptyState(message = ...)` (componente compartilhado de `RitualTabChrome.kt:183`: borda tracejada `RitualBorder`, fundo `RitualSurface`, raio 12dp, `py 48 / px 24`, texto `Inter` itálico 12sp `RitualTextSecondary` centralizado); o `EmptyQuestsPlaceholder` local foi deletado do arquivo (50 linhas, borda tracejada `0x33F59E0B` + "📜" + `Stone400`).
+- Imports removidos (todos sem uso restante, grep conferido): `geometry.CornerRadius`, `graphics.Color`, `graphics.PathEffect`, `graphics.drawscope.Stroke`, `text.style.TextAlign`, `unit.em`, `theme.Stone400`.
+
+**Resumo:**
+- Bloco 04 de 4 — **cadeia `.patches/contratos_01..04` completa**, um patch por bloco com `--check` isolado + `git hash-object` conferindo o blob intermediário de cada um (01 `a8fecbd`, 02 `8a7e041`, 03 `acbedf6`, 04 `afc248e`), conforme nota de processo do bloco 01 (o `--check` em cadeia multi-arquivo não encadeia).
+- Só UI; a legenda/história ficou vazia de emoji — mesmo comportamento visual do estado vazio das demais abas (componente compartilhado).
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL (sem warnings de `QuestsScreen.kt`).
+- `testDebugUnitTest` alvo (XML bruto): `QuestLogicTest` 8/8, `QuestTypesTest` 4/4, `QuestsViewModelIntegrationTest` 2/2 — 14 testes, 0 falhas/0 erros.
+- `testDebugUnitTest` **suíte completa** (XML bruto, 131 arquivos em `app/build/test-results/testDebugUnitTest/`): **1010 testes, 0 skipped, 0 falhas, 0 erros** — nenhuma classe com `failures>0`/`errors>0`.
+- Sem baseline Roborazzi da aba Contratos (nenhum PNG de quests no repo) e nada regravado nesta cadeia (`git status --short` mostra só os 3 arquivos do bloco + untracked pré-existentes).
+- Visual em device/emulador: PENDENTE (redesign Ritual inteiro da aba precisa de inspeção humana — AGENTS §6.9).
+
+**Desvios de escopo aprovados:**
+- Nenhum.
