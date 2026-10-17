@@ -7282,3 +7282,45 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Nenhum.
 
+## [2026-10-16] Bloco: aplicar `tavern-area-util.patch` (sem painel-wrapper na Taverna)
+
+**Arquivos alterados (via patch, aplicado com `git apply` sem rejeição — `--check` OK antes):**
+- `app/src/main/java/com/iurispraecepta/herolog/MainActivity.kt`: removido o `Box` painel-wrapper da branch `"tavern"` (`.clip 8dp` + `.background(QuestPanel)` + `.border White10%` + `.padding(12.dp)`); `TavernScreen` vai direto no `Column` com scroll. Padding externo `16.dp` → `12.dp horizontal/vertical` (inset da bottom nav mantido). Comentário Spec B T10 atualizado (Android-first: sem painel-wrapper — cartões já têm fundo/borda próprios).
+- `app/src/test/java/com/iurispraecepta/herolog/ui/tavern/TavernScreenScreenshotTest.kt`: `TavernWrapper` espelha o novo container (sem painel interno, padding 12dp); KDoc atualizado.
+- 6 baselines Roborazzi da taverna regravados (só esses mudaram, confirmado via `git status`).
+
+**Resumo:**
+- Nenhum conflito com os blocos do dia (ficha #48, renomeios "HABILIDADES"/"Equipamentos"/"HERÓI"): regiões do patch estavam intactas; checagem prévia em modo plano antes de aplicar.
+- Sem mudança de lógica — só remoção de wrapper visual.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (XML bruto, modo verify): `TavernScreenScreenshotTest` 6/6, `NavigationConfigTest` 18/18, `BottomNavDiagnosticTest` 12/12 — 0 falhas/erros.
+- Visual em device/emulador: PENDENTE — Bruno valida em emulador.
+
+**Pendências (acordo com o Bruno):**
+- Remover imports mortos em `TavernScreenScreenshotTest.kt` (`clip`, `border`, `RoundedCornerShape`, `Color` — únicos usos eram no painel interno) **só depois da validação em emulador**.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+
+## [2026-10-16] Bloco: validação final — imports, baselines e pré-existentes
+
+**Arquivos alterados:**
+- 4 baselines da ficha regravados (`character_screen_{equipped,zeroed,no_title,long_name}.png` — só esses mudaram, confirmado via `git status`)
+- 6 baselines da taverna (regravados no bloco do patch; inalterados aqui)
+
+**Resumo:**
+- Bruno validou a Taverna sem painel em emulador (aprovado) → imports mortos removidos no bloco do patch, sem mudança de comportamento nem de PNGs.
+- `CharacterScreenScreenshotTest` 4/4 falhou em modo verify explícito: pixel diff de ~605px concentrado no ícone de streak (x 102–129, y 1156–1195). Causa: baselines obsoletos desde `69d3c21` (variantes da vela com traço 2/gota/fumaça), posteriores aos baselines (`161e5d4`). Lado correto = render atual: `StreakIcon` com `isLit = streak > 0`, teste usa streak 12 → vela acesa, conforme KDoc do `StreakIcon` (acesa quando `streak > 0`). Regravados; sem mudança de código-fonte.
+- Nota de processo: o run inicial `--tests "*Character*"` (sem flag Roborazzi) passou 4/4; a divergência só apareceu com `-Proborazzi.test.verify=true` explícito. A validação nominal abaixo é toda em modo verify.
+- Falhas pré-existentes, fora do escopo, **não regravadas** (nenhum arquivo-fonte desses testes/abas foi tocado neste diff — `git diff --name-only` comprova; os testes renderizam os composables isolados): HabitsScreen 8/8 (ícone zap→repeat em `68031cc` após baselines `db8fcb0`), ScoreColorHabits (restyle dos rituais após `ad01c64`), History 18/18 (remoção do QuestPanel `48c5e3d` + realinhamento `aa5cf76` + marco roxo `cd507b0` após baselines `85b0a04`), ModeHelpBlocks (baselines ausentes no repo). Ficam para os donos dos blocos, por AGENTS.md §6.9 (pixel diff não diz qual lado está certo).
+
+**Validação (modo verify explícito, XML bruto em `app/build/test-results/testDebugUnitTest/`):**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- Entorno dos blocos, 0 falhas/erros: `TavernScreenScreenshotTest` 6/6, `CharacterScreenScreenshotTest` 4/4, `NavigationConfigTest` 18/18, `BottomNavDiagnosticTest` 12/12, lote Foco (completion/flow/mode/tab/timer/orb) verde, `DailiesScreenScreenshotTest` 10/10, `TodosScreenScreenshotTest` 14/14, `SkillsScreenScreenshotTest` 4/4, `InventoryScreenScreenshotTest` 2/2, lote final (Incursion/TimerSettings/SkillSelector/TitleEquip/ItemInspect/LevelUp/DailyReport/ModeStatus) 45 testes 0 falhas, `HeroLogViewModelTest` 70/70, `TavernLogicTest` 32/32, `CharacterViewLogicTest` 21/21.
+- Visual em device/emulador (taverna): VALIDADO pelo Bruno.
+
+**Desvios de escopo aprovados:**
+- Re-gravação dos 4 baselines da ficha (pré-existentes obsoletos, justificada acima) — fora do escopo estrito da issue #48, mas necessária para fechar a validação do bloco.

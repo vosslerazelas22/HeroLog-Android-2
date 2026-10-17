@@ -900,9 +900,10 @@ class MainActivity : ComponentActivity() {
                             }
                             "logs" -> LogsScreen(logs = heroLogViewModel.systemLogs.collectAsState().value)
                             "guide" -> GuideScreen()
-                            // Spec B (T10): a Taverna é o hub/home do app. O painel-wrapper é o
-                            // porte de `bg-quest-panel border border-white/10 rounded-lg p-3`
-                            // (App.tsx:2391); o rolagem/inset seguem o padrão das demais abas.
+                            // Spec B (T10): a Taverna é o hub/home do app. Android-first: sem painel-wrapper
+                            // (o antigo `QuestPanel` + borda + padding 12dp empilhava 3 retângulos e
+                            // desperdiçava ~29dp por lado). Os cartões da `TavernScreen` já têm
+                            // fundo/borda próprios e ficam direto sobre o fundo da tela.
                             "tavern" -> {
                                 val state = characterState
                                 if (state == null) {
@@ -914,30 +915,21 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .verticalScroll(rememberScrollState())
-                                            .padding(16.dp)
+                                            .padding(horizontal = 12.dp, vertical = 12.dp)
                                             .padding(bottom = LocalBottomBarInset.current)
                                     ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(QuestPanel)
-                                                .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(8.dp))
-                                                .padding(12.dp)
-                                        ) {
-                                            TavernScreen(
-                                                charName = state.charName,
-                                                charClass = state.charClass,
-                                                combatLevel = state.combatLevel,
-                                                combatXP = state.combatXP,
-                                                streak = state.streak,
-                                                bestStreak = state.bestStreak,
-                                                totalMinutes = state.totalMinutes,
-                                                gold = state.gold,
-                                                recentActivity = state.recentActivity,
-                                                onNavigate = { activeTab = it }
-                                            )
-                                        }
+                                        TavernScreen(
+                                            charName = state.charName,
+                                            charClass = state.charClass,
+                                            combatLevel = state.combatLevel,
+                                            combatXP = state.combatXP,
+                                            streak = state.streak,
+                                            bestStreak = state.bestStreak,
+                                            totalMinutes = state.totalMinutes,
+                                            gold = state.gold,
+                                            recentActivity = state.recentActivity,
+                                            onNavigate = { activeTab = it }
+                                        )
                                     }
                                 }
                             }

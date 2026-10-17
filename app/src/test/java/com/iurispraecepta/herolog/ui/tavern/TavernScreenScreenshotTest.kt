@@ -1,15 +1,11 @@
 package com.iurispraecepta.herolog.ui.tavern
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -37,8 +33,8 @@ import java.util.TimeZone
  * Screenshots da tela Taverna (Spec B T8) nos viewports 375x667 e 390x844.
  *
  * Cenários: **vazio** (TAV-8), **4 itens** (TAV-7) e **nome longo** (TAV-2, 1 linha com
- * ellipsis). O wrapper reproduz o painel do `MainActivity` (QuestPanel, borda White10 1dp,
- * cantos 8dp, padding 12dp).
+ * ellipsis). O wrapper reproduz o container do `MainActivity` (sem painel interno; padding
+ * 12dp direto sobre o fundo).
  *
  * Regra AGENTS.md §6.10: tema escuro explícito + fundo `QuestPanel` no root — sem isso os
  * stubs saem invisíveis no PNG do Robolectric.
@@ -114,29 +110,20 @@ class TavernScreenScreenshotTest {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(QuestPanel)
-                    .padding(16.dp)
+                    .padding(12.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(QuestPanel)
-                        .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(8.dp))
-                        .padding(12.dp)
-                ) {
-                    TavernScreen(
-                        charName = charName,
-                        charClass = charClass,
-                        combatLevel = 3,
-                        combatXP = 150,
-                        streak = 1,
-                        bestStreak = 12,
-                        totalMinutes = 125,
-                        gold = 1234,
-                        recentActivity = recentActivity,
-                        onNavigate = {}
-                    )
-                }
+                TavernScreen(
+                    charName = charName,
+                    charClass = charClass,
+                    combatLevel = 3,
+                    combatXP = 150,
+                    streak = 1,
+                    bestStreak = 12,
+                    totalMinutes = 125,
+                    gold = 1234,
+                    recentActivity = recentActivity,
+                    onNavigate = {}
+                )
             }
         }
     }
