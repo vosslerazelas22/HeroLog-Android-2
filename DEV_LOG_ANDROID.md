@@ -7244,3 +7244,41 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Nenhum.
 
+## [2026-10-16] Bloco: renomear subaba "Mochila & Equipamentos" → "Equipamentos"
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/navigation/HeroLogBottomNav.kt` (1 linha: label do `SubTabOption("inventory", ...)` em `SUB_TABS["character"]`)
+
+**Resumo:**
+- Pedido do Bruno: a subaba do inventário passa a se chamar apenas "Equipamentos".
+- Escopo mínimo: só o label da subaba. `MODULE_TITLES["character"]` ("HERÓI & EQUIPAMENTOS", título do sheet) e o estado vazio do inventário ("Mochila vazia...", `InventoryScreen.kt:196`) foram mantidos — não fazem parte da subaba.
+- Nenhum teste referencia o rótulo (só `value`/tamanhos em `NavigationConfigTest`); nenhum baseline Roborazzi renderiza o sheet de sub-abas (`BottomNavDiagnosticTest` só cobre os 5 rótulos da barra).
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (XML bruto): `NavigationConfigTest` 18/18, `BottomNavDiagnosticTest` 12/12 — 0 falhas/erros.
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+
+## [2026-10-16] Bloco: renomear "Grimório" → "Habilidades" e "Herói & Equipamentos" → "Herói"
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/tavern/TavernScreen.kt` (1 linha: `Shortcut` de skills `title = "GRIMÓRIO DE SKILLS"` → `"HABILIDADES"`, `TavernScreen.kt:622`)
+- `app/src/main/java/com/iurispraecepta/herolog/ui/navigation/HeroLogBottomNav.kt` (2 linhas: `SubTabOption("skills", ...)` `"Grimório de Habilidades"` → `"Habilidades"`; `MODULE_TITLES["character"]` `"HERÓI & EQUIPAMENTOS"` → `"HERÓI"`)
+- `app/src/test/java/com/iurispraecepta/herolog/ui/tavern/TavernScreenScreenshotTest.kt` (2 linhas: asserts `onNodeWithText` atualizados para `"HABILIDADES"`)
+- 6 baselines Roborazzi da taverna regravados (`tavern_screen_{vazio,4itens,nome_longo}_{375x667,390x844}.png` — só esses mudaram, confirmado via `git status`)
+
+**Resumo:**
+- Pedido do Bruno, 3 renomeações. Mantidos: descrições dos atalhos, `NAV_ITEMS` ("Herói" já era assim) e estado vazio do inventário ("Mochila vazia...").
+- `MODULE_TITLES["character"]` alimenta o título do sheet do módulo (`HeroLogBottomNav.kt:321`, com `.uppercase()`); nenhum teste o referencia.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (XML bruto, modo verify): `TavernScreenScreenshotTest` 6/6, `NavigationConfigTest` 18/18, `BottomNavDiagnosticTest` 12/12 — 0 falhas/erros.
+- Visual em device/emulador: PENDENTE.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
+

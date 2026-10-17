@@ -209,7 +209,7 @@ class TavernScreenScreenshotTest {
                 recentActivity = emptyList()
             )
         }
-        composeTestRule.onNodeWithText("GRIMÓRIO DE SKILLS").assertExists()
+        composeTestRule.onNodeWithText("HABILIDADES").assertExists()
         composeTestRule.onRoot()
             .captureRoboImage(filePath = "src/test/screenshots/tavern_screen_vazio_375x667.png")
     }
@@ -224,7 +224,7 @@ class TavernScreenScreenshotTest {
                 recentActivity = feedQuatroItens
             )
         }
-        composeTestRule.onNodeWithText("GRIMÓRIO DE SKILLS").assertExists()
+        composeTestRule.onNodeWithText("HABILIDADES").assertExists()
         composeTestRule.onRoot()
             .captureRoboImage(filePath = "src/test/screenshots/tavern_screen_4itens_375x667.png")
     }

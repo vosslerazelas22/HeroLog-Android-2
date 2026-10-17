@@ -129,7 +129,7 @@ fun getActiveModule(tab: String): String = when {
 
 val MODULE_TITLES: Map<String, String> = mapOf(
     "rituals" to "RITUAIS",
-    "character" to "HERÓI & EQUIPAMENTOS",
+    "character" to "HERÓI",
     "kingdom" to "O REINO DE MYSTARA"
 )
 
@@ -143,8 +143,8 @@ val SUB_TABS: Map<String, List<SubTabOption>> = mapOf(
     ),
     "character" to listOf(
         SubTabOption("character", "Ficha do Herói", R.drawable.lucide_ic_shield_user, Sky400),
-        SubTabOption("inventory", "Mochila & Equipamentos", R.drawable.lucide_ic_backpack, Rose400),
-        SubTabOption("skills", "Grimório de Habilidades", R.drawable.lucide_ic_book_open, Emerald400)
+        SubTabOption("inventory", "Equipamentos", R.drawable.lucide_ic_backpack, Rose400),
+        SubTabOption("skills", "Habilidades", R.drawable.lucide_ic_book_open, Emerald400)
     ),
     "kingdom" to listOf(
         SubTabOption("shop", "Bazar de Mystara", R.drawable.lucide_ic_coins, Yellow400),

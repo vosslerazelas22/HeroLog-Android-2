@@ -619,7 +619,7 @@ private val Shortcuts = listOf(
     Shortcut(
         iconRes = LucideR.drawable.lucide_ic_book_open,
         iconTint = TavernSky400,
-        title = "GRIMÓRIO DE SKILLS",
+        title = "HABILIDADES",
         pressedTitleColor = TavernSky300,
         description = "Progresso de estudo e maestria em disciplinas",
         destination = "skills"
