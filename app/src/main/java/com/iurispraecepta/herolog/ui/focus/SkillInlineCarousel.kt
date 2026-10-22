@@ -155,7 +155,11 @@ fun SkillInlineCarousel(
             Icon(
                 painter = painterResource(R.drawable.lucide_ic_chevron_left),
                 contentDescription = "Habilidade anterior",
-                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B).copy(alpha = 0.2f),
+                tint = when {
+                    disabled -> Color(0xFF52525B).copy(alpha = 0.2f)
+                    canNavigate -> champagne.copy(alpha = 0.6f)
+                    else -> Color(0xFF52525B)
+                },
             )
         }
 
@@ -242,7 +246,11 @@ fun SkillInlineCarousel(
             Icon(
                 painter = painterResource(R.drawable.lucide_ic_chevron_right),
                 contentDescription = "Próxima habilidade",
-                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B).copy(alpha = 0.2f),
+                tint = when {
+                    disabled -> Color(0xFF52525B).copy(alpha = 0.2f)
+                    canNavigate -> champagne.copy(alpha = 0.6f)
+                    else -> Color(0xFF52525B)
+                },
             )
         }
     }
