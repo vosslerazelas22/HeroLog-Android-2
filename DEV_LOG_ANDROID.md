@@ -7430,3 +7430,20 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-22] Bloco: SkillInlineCarousel — esmaecimento do estado desabilitado (PR #52)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/focus/SkillInlineCarousel.kt` (+12/−2): setas (`chevron_left`/`chevron_right`) com tint `#52525B` + `alpha 0.2` quando `disabled` (antes caíam no tint sólido `#52525B`); conteúdo central (emoji + nome da skill) com `.alpha(0.6f)` quando `disabled`; estados habilitados inalterados (`canNavigate` → champagne `alpha 0.6`; lista com ≤ 1 skill → `#52525B` sólido). A lógica de índice/clique/swipe (`canNavigate`) já respeitava `!disabled` e não mudou.
+
+**Resumo:**
+- Paridade com `opacity-20` (setas) e `opacity-60` (centro) do `SkillInlineCarousel.tsx`. No call site principal o `disabled` vem de `focusState.isRunning` (`MainActivity.kt:1469`), que **permanece `true` durante a pausa** da sessão de trabalho — o carrossel segue esmaecido e não interativo enquanto rodando, inclusive pausado. Preparo (`isBreakPrep`, `:1123`) e pausa ativa (`isBreakActive`, `:1210`) passam `disabled = false` e continuam interativos; o branch de sessão rodando inline (`:1298`) também passa `true`.
+- Mudança exclusivamente visual: lógica, gestos, SFX e navegação intocados.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (suíte completa, XML bruto em `app/build/test-results/testDebugUnitTest/`): **131 classes / 1010 testes, 0 falhas, 0 erros, 0 skipped**.
+- Visual em emulador: **confirmado** em 390×844 e 375×667.
+
+**Desvios de escopo aprovados:**
+- Nenhum.
