@@ -1,5 +1,8 @@
 package com.iurispraecepta.herolog
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -9,6 +12,7 @@ import com.iurispraecepta.herolog.model.InventoryItem
 import com.iurispraecepta.herolog.model.Rarity
 import com.iurispraecepta.herolog.ui.inventory.InventoryScreen
 import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -62,7 +66,10 @@ class InventoryScreenScreenshotTest {
         )
 
         composeTestRule.setContent {
-            HeroLogTheme {
+            // darkTheme fixo + fundo QuestPanel: o app real roda em tema escuro; em
+            // claro os cards champagne/creme saem praticamente invisíveis (AGENTS.md §6.10).
+            HeroLogTheme(darkTheme = true) {
+              Box(modifier = Modifier.background(QuestPanel)) {
                 InventoryScreen(
                     inventory = sampleItems,
                     inspectingItem = null,
@@ -72,6 +79,7 @@ class InventoryScreenScreenshotTest {
                     onSellItem = {},
                     onDiscardItem = {}
                 )
+              }
             }
         }
 
@@ -81,7 +89,10 @@ class InventoryScreenScreenshotTest {
     @Test
     fun inventoryScreen_empty_screenshot() {
         composeTestRule.setContent {
-            HeroLogTheme {
+            // darkTheme fixo + fundo QuestPanel: o app real roda em tema escuro; em
+            // claro os cards champagne/creme saem praticamente invisíveis (AGENTS.md §6.10).
+            HeroLogTheme(darkTheme = true) {
+              Box(modifier = Modifier.background(QuestPanel)) {
                 InventoryScreen(
                     inventory = emptyList(),
                     inspectingItem = null,
@@ -91,6 +102,7 @@ class InventoryScreenScreenshotTest {
                     onSellItem = {},
                     onDiscardItem = {}
                 )
+              }
             }
         }
 
