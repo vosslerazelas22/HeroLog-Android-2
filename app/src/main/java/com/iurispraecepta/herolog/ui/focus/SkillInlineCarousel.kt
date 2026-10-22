@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -154,13 +155,14 @@ fun SkillInlineCarousel(
             Icon(
                 painter = painterResource(R.drawable.lucide_ic_chevron_left),
                 contentDescription = "Habilidade anterior",
-                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B),
+                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B).copy(alpha = 0.2f),
             )
         }
 
         Column(
             modifier = Modifier
                 .weight(1f)
+                .alpha(if (disabled) 0.6f else 1f)
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(enabled = !disabled) { onOpenSkillsManager?.invoke() }
                 .padding(vertical = 4.dp, horizontal = 8.dp),
@@ -240,7 +242,7 @@ fun SkillInlineCarousel(
             Icon(
                 painter = painterResource(R.drawable.lucide_ic_chevron_right),
                 contentDescription = "Próxima habilidade",
-                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B),
+                tint = if (canNavigate) champagne.copy(alpha = 0.6f) else Color(0xFF52525B).copy(alpha = 0.2f),
             )
         }
     }
