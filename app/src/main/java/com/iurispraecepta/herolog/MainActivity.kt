@@ -688,59 +688,28 @@ class MainActivity : ComponentActivity() {
                                         Text("Carregando inventario...", color = Amber400)
                                     }
                                 } else {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(Color(0xFF1C1917).copy(alpha = 0.5f))
-                                            .border(1.dp, Color(0x1AF59E0B).copy(alpha = 0.15f), RoundedCornerShape(8.dp))
-                                            .padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                                    ) {
-                                        // Header "EQUIPAMENTOS"
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 10.dp)
-                                                .border(1.dp, Color(0x1AF59E0B).copy(alpha = 0.1f)),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.lucide_ic_coins),
-                                                contentDescription = null,
-                                                tint = Champagne500,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Text(
-                                                text = "EQUIPAMENTOS",
-                                                fontFamily = Cinzel,
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 12.sp,
-                                                color = Champagne400,
-                                                letterSpacing = 1.sp,
-                                                modifier = Modifier.padding(start = 6.dp)
-                                            )
+                                    // Sem wrapper: a aba herda o `containerColor` do Scaffold
+                                    // (igual à ficha do herói, issue #48). O header
+                                    // "EQUIPAMENTOS" e o padding lateral passaram a
+                                    // dentro de `InventoryScreen`.
+                                    InventoryScreen(
+                                        inventory = state.inventory,
+                                        inspectingItem = inspectingItem,
+                                        onInspectItem = { item -> inspectingItem = item },
+                                        onCloseInspection = { inspectingItem = null },
+                                        onEquipItem = { item, slotIdx ->
+                                            heroLogViewModel.equipItem(item, slotIdx)
+                                            inspectingItem = null
+                                        },
+                                        onSellItem = { item ->
+                                            heroLogViewModel.sellItem(item)
+                                            inspectingItem = null
+                                        },
+                                        onDiscardItem = { item ->
+                                            heroLogViewModel.discardItem(item)
+                                            inspectingItem = null
                                         }
-
-                                        InventoryScreen(
-                                            inventory = state.inventory,
-                                            inspectingItem = inspectingItem,
-                                            onInspectItem = { item -> inspectingItem = item },
-                                            onCloseInspection = { inspectingItem = null },
-                                            onEquipItem = { item, slotIdx ->
-                                                heroLogViewModel.equipItem(item, slotIdx)
-                                                inspectingItem = null
-                                            },
-                                            onSellItem = { item ->
-                                                heroLogViewModel.sellItem(item)
-                                                inspectingItem = null
-                                            },
-                                            onDiscardItem = { item ->
-                                                heroLogViewModel.discardItem(item)
-                                                inspectingItem = null
-                                            }
-                                        )
-                                    }
+                                    )
                                 }
                             }
                             "habits" -> {
