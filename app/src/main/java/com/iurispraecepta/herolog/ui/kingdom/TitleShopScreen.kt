@@ -72,7 +72,8 @@ private val Amber400 = Color(0xFFFBBF24) // amber-400 exato — cor do header in
 private val Cyan400 = Color(0xFF38BDF8)
 
 /**
- * Sub-aba "Selos & Títulos Reais" do Bazar — porte de `TitleShop.tsx` (`src/modules/kingdom/`).
+ * Sub-aba "Títulos" do Bazar (rótulo abreviado na issue #50; na fonte "Selos & Títulos
+ * Reais") — porte de `TitleShop.tsx` (`src/modules/kingdom/`).
  *
  * Substitui o placeholder temporário deixado em `ShopScreen.kt` (Bloco E) na sub-aba `titles`
  * do `shopSubTab`. **Não confundir com `TitleSelectorScreen.kt`** (rota `activeTab === 'titles'`
