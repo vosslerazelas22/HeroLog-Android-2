@@ -7495,3 +7495,20 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Tradução de nomes/efeitos do catálogo além do layout (aprovada por Bruno).
 - `requirementText` e `dropChanceText` mantidos em inglês por falta de tradução definida.
+
+## [2026-10-24] Bloco: pin de `androidx.fragment` 1.8.5 (corrige `InvalidFragmentVersionForActivityResult` no release)
+
+**Arquivos alterados:**
+- `gradle/libs.versions.toml`: nova versão `fragment = "1.8.5"` e nova library `androidx-fragment-ktx` (`androidx.fragment:fragment-ktx`, `version.ref = "fragment"`).
+- `app/build.gradle.kts`: `implementation(libs.androidx.fragment.ktx)` no bloco `dependencies`.
+
+**Resumo:**
+- Diagnóstico confirmado por Bruno: `play-services-basement:18.9.0` e `play-services-base:18.9.0` (via Firebase) declaram `androidx.fragment:fragment:1.1.0` e nada mais elevava essa versão — resolução em `1.1.0` é o que dispara `InvalidFragmentVersionForActivityResult` no release.
+- Correção: forçar `androidx.fragment` 1.8.5 via `fragment-ktx` direto (constraint de versão resolve o `fragment` transitivo para `1.8.5`).
+- Verificação de resolução: `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` mostra `androidx.fragment:fragment:1.1.0 -> 1.8.5`.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (suíte completa, XML bruto em `app/build/test-results/testDebugUnitTest/`): **132 arquivos / 1012 testes, 0 falhas, 0 erros, 0 skipped**.
+- `releaseRuntimeClasspath`: `androidx.fragment:fragment` resolve para `1.8.5`.
+- Correção de runtime em device/release: **PENDENTE** (Bruno) — confirmar que o crash `InvalidFragmentVersionForActivityResult` não reproduz mais no build release.
