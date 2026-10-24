@@ -7447,3 +7447,27 @@ linha 2 com a barra em altura total.
 
 **Desvios de escopo aprovados:**
 - Nenhum.
+
+## [2026-10-22] Bloco: Bazar de Mystara — redesign visual V2 + rename sub-aba "Títulos" (PR #54)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/ShopScreen.kt` (reescrito, +454/−336 no bloco todo): conteúdo promovido da opção **V2** da exploração visual (issue #50) — mesmo nome/assinatura pública; V1/V2/V3 + Debug apagados no fechamento da exploração. Header centralizado com divisor (estrutura `HistoryHeader` das Crônicas Diárias); sub-abas em container boxeado `Stone950/40` + borda `Amber500/10` no estilo `HistoryViewModeToggle` (caixa 4dp, Cinzel Bold 10sp, padding v4/h12, `animateColorAsState` em bg/borda/texto); paleta champagne fixa do Reino (sem `ModeTheme`); `LocalBottomBarInset` no scroll; label da sub-aba `titles` abreviado para **"Títulos"** (proveniência "Selos & Títulos Reais" preservada em KDoc). Pills das sub-abas com altura igual via `heightIn(min = 40.dp)` em cada botão (mesmo padrão do `RaidModeButton`) + `Alignment.CenterVertically` no `Row` — corrige pill menor que a célula e texto deslocado na aba "Títulos" (labels com nº de linhas diferente: 2×1). 3 `@Preview` (com dados gold=250, ouro zero, escudo "Já ativo").
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleShopScreen.kt` (+2/−1, só KDoc): cabeçalho da função atualizado para citar o rótulo abreviado "Títulos" e a fonte "Selos & Títulos Reais". Conteúdo intocado.
+- `app/src/test/java/com/iurispraecepta/herolog/ShopScreenToggleTest.kt` (novo, Robolectric): (a) `subTabButtons_equalHeight_bothPillsFillCell` — os dois pills ≥ 40dp e com alturas iguais (tags `shop_subtab_items`/`shop_subtab_titles`); (b) `subTabLabel_titulos_renamedFromSelosETitulosReais` — "TÍTULOS" presente e "SELOS & TÍTULOS REAIS" ausente.
+
+**Resumo:**
+- Skill de exploração visual da tela (issue #50): 3 opções + seletor temporário no aparelho; **Bruno aprovou a V2** e pediu dois ajustes pós-promoção: (1) renomear a sub-aba para "Títulos"; (2) corrigir alinhamento/pill da sub-aba. Ambos aplicados neste bloco.
+- **`Alignment.Stretch` descartado**: não existe nesta versão do Compose (`Alignment$Vertical` só tem Top/CenterVertically/Bottom — verificado via `javap` no cache do Gradle); a correção adotada é `heightIn(min = 40.dp)` + `CenterVertically`.
+- **Comportamento intacto:** `shopSubTab` remember com default `"items"`; `canAfford = gold >= price`; badge "Já ativo" para escudo equipado; gate de StreakShield por UI inalterado; aba Títulos delega ao `TitleShopScreen` intocado; catálogo estático de 9 itens (`ShopCatalog.ITEMS`); nenhuma mudança de lógica, persistência, navegação ou wiring da MainActivity (branch `"shop"` só chama `ShopScreen(...)`).
+- **Ajustes de estilo autorizados pelo mantenedor** (divergências conscientes do visual original aprovado na V2): header centralizado com divisor (padrão Crônicas); sub-abas no estilo `HistoryViewModeToggle` (caixa 4dp, padding v4/h12) em vez de pills 27dp das Crônicas; descrição do item sem truncamento.
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (suíte completa, XML bruto em `app/build/test-results/testDebugUnitTest/`): **132 classes / 1012 testes, 0 falhas, 0 erros, 0 skipped** (inclui os 2 testes novos).
+- `rg "ShopScreenV[123]|ShopScreenDebug" app/src` → vazio (opções e seletor removidos).
+- `git diff --stat`: só `ShopScreen.kt`, `TitleShopScreen.kt` (KDoc) e `ShopScreenToggleTest.kt`; `.opencode/skills/exploracao-visual-tela/` untracked é alheio.
+- Visual em device/emulador: **PENDENTE** (Bruno) — pill de "Títulos" preenchendo a célula, header centralizado, troca de sub-abas.
+
+**Desvios de escopo aprovados:**
+- Rename "Selos & Títulos Reais" → "Títulos" (aprovado por Bruno pós-promoção).
+- `heightIn(min = 40.dp)` + `CenterVertically` nas sub-abas (aprovado por Bruno; correção do item 2).
