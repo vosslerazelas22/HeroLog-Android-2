@@ -159,7 +159,7 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
     TitleItem(
         id = "VOIDWALKER", name = "Caminhante do Vazio", emoji = "🌌",
         category = TitleCategory.Epic, price = 50000,
-        perks = listOf("+20% de XP · Chance de drop de saques e títulos +50%"),
+        perks = listOf("+20% de XP · +50% de chance de obter saques e títulos"),
         visualStyle = EpicStyle
     ),
 
@@ -173,7 +173,7 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
     TitleItem(
         id = "TRANSCENDENT", name = "Transcendente", emoji = "♾️",
         category = TitleCategory.Legendary, price = 250000,
-        perks = listOf("+30% de XP · +20% de ouro · Taxas de drop de saques duplicadas"),
+        perks = listOf("+30% de XP · +20% de ouro · Chance de obtenção de saques em dobro"),
         visualStyle = LegendaryWatcherStyle
     ),
     TitleItem(
@@ -184,159 +184,157 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
     ),
 
     // ============ ACHIEVEMENT (marcos de conquista) — 18 títulos ============
-    // Nota: nomes e perks destes títulos estão em inglês no arquivo fonte original — mantido
-    // literalmente, não traduzido, diferente das outras categorias.
     TitleItem(
-        id = "IRON_WILL", name = "IRON WILL", emoji = "🔥",
+        id = "IRON_WILL", name = "Vontade de Ferro", emoji = "🔥",
         category = TitleCategory.Achievement,
-        perks = listOf("+5% XP from all sessions"),
+        perks = listOf("+5% de XP em todas as sessões"),
         requirementText = "30-Day streak",
         checkUnlocked = { state -> state.bestStreak >= 30 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "DIAMOND_MIND", name = "DIAMOND MIND", emoji = "💎",
+        id = "DIAMOND_MIND", name = "Mente de Diamante", emoji = "💎",
         category = TitleCategory.Achievement,
-        perks = listOf("+8% XP · +5% gold earned"),
+        perks = listOf("+8% de XP · +5% de ouro obtido"),
         requirementText = "60-Day streak",
         checkUnlocked = { state -> state.bestStreak >= 60 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "THE_CENTURY", name = "THE CENTURY", emoji = "💯",
+        id = "THE_CENTURY", name = "O Centenário", emoji = "💯",
         category = TitleCategory.Achievement,
-        perks = listOf("+12% XP · +8% gold earned"),
+        perks = listOf("+12% de XP · +8% de ouro obtido"),
         requirementText = "100-Day streak",
         checkUnlocked = { state -> state.bestStreak >= 100 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "A_FULL_YEAR", name = "A FULL YEAR", emoji = "☀️",
+        id = "A_FULL_YEAR", name = "Um Ano Inteiro", emoji = "☀️",
         category = TitleCategory.Achievement,
-        perks = listOf("+25% XP · +15% gold earned"),
+        perks = listOf("+25% de XP · +15% de ouro obtido"),
         requirementText = "365-Day streak",
         checkUnlocked = { state -> state.bestStreak >= 365 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "CENTURION", name = "CENTURION", emoji = "⚔️",
+        id = "CENTURION", name = "Centurião", emoji = "⚔️",
         category = TitleCategory.Achievement,
-        perks = listOf("+5% XP from all sessions"),
+        perks = listOf("+5% de XP em todas as sessões"),
         requirementText = "100 sessions",
         checkUnlocked = { state -> state.totalSessions >= 100 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "THE_OBSESSED", name = "THE OBSESSED", emoji = "💫",
+        id = "THE_OBSESSED", name = "O Obcecado", emoji = "💫",
         category = TitleCategory.Achievement,
-        perks = listOf("+15% XP · +10% gold earned"),
+        perks = listOf("+15% de XP · +10% de ouro obtido"),
         requirementText = "1,000 sessions",
         checkUnlocked = { state -> state.totalSessions >= 1000 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "IMMORTAL_SCHOLAR", name = "IMMORTAL SCHOLAR", emoji = "🏛️",
+        id = "IMMORTAL_SCHOLAR", name = "Erudito Imortal", emoji = "🏛️",
         category = TitleCategory.Achievement,
-        perks = listOf("+25% XP · +20% gold · Loot rates +50%"),
+        perks = listOf("+25% de XP · +20% de ouro · +50% de chance de obtenção de saques"),
         requirementText = "2,500 sessions",
         checkUnlocked = { state -> state.totalSessions >= 2500 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "DEATH_PROOF", name = "DEATH-PROOF", emoji = "💀",
+        id = "DEATH_PROOF", name = "Imune à Morte", emoji = "💀",
         category = TitleCategory.Achievement,
-        perks = listOf("+25% XP in Wilderness · Can never die in Wilderness"),
+        perks = listOf("+25% de XP na Terra Selvagem · Imunidade à morte na Terra Selvagem"),
         requirementText = "Survive 50 Wilderness",
         checkUnlocked = { state -> state.wildernessWins >= 50 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "DUNGEON_LORD", name = "DUNGEON LORD", emoji = "🏰",
+        id = "DUNGEON_LORD", name = "Senhor das Masmorras", emoji = "🏰",
         category = TitleCategory.Achievement,
-        perks = listOf("+15% XP inside dungeons"),
+        perks = listOf("+15% de XP nas masmorras"),
         requirementText = "Clear 10 dungeons",
         checkUnlocked = { state -> state.dungeonProgress >= 10 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "RAID_VETERAN", name = "RAID VETERAN", emoji = "🔱",
+        id = "RAID_VETERAN", name = "Veterano das Incursões", emoji = "🔱",
         category = TitleCategory.Achievement,
-        perks = listOf("+25% XP in dungeons · +20% dungeon gold rewards"),
+        perks = listOf("+25% de XP nas masmorras · +20% de ouro nas recompensas de masmorra"),
         requirementText = "Clear 25 dungeons",
         checkUnlocked = { state -> state.dungeonProgress >= 25 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "LEGEND_ACH", name = "LEGEND", emoji = "👑",
+        id = "LEGEND_ACH", name = "Lenda", emoji = "👑",
         category = TitleCategory.Achievement,
-        perks = listOf("+10% XP from all sessions"),
+        perks = listOf("+10% de XP em todas as sessões"),
         requirementText = "Level 99 in any skill",
         checkUnlocked = { state -> state.skills.any { it.level >= 99 } },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "PANTHEON", name = "PANTHEON", emoji = "🌠",
+        id = "PANTHEON", name = "Panteão", emoji = "🌠",
         category = TitleCategory.Achievement,
-        perks = listOf("+20% XP · Prestige XP bonuses 30% stronger"),
+        perks = listOf("+20% de XP · Bônus de XP de Prestígio 30% mais fortes"),
         requirementText = "Level 99 in 5 skills",
         checkUnlocked = { state -> state.skills.count { it.level >= 99 } >= 5 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "MANIAC", name = "MANIAC", emoji = "⚡",
+        id = "MANIAC", name = "Maníaco", emoji = "⚡",
         category = TitleCategory.Achievement,
-        perks = listOf("+10% XP · Multiplier events last 30% longer"),
+        perks = listOf("+10% de XP · Eventos multiplicadores duram 30% mais"),
         requirementText = "50-Session combo",
         checkUnlocked = { state -> state.combo >= 50 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "IN_THE_ZONE", name = "IN THE ZONE", emoji = "🌀",
+        id = "IN_THE_ZONE", name = "No Ritmo", emoji = "🌀",
         category = TitleCategory.Achievement,
-        perks = listOf("+5% XP · Multiplier events last 20% longer"),
+        perks = listOf("+5% de XP · Eventos multiplicadores duram 20% mais"),
         requirementText = "30-Session combo",
         checkUnlocked = { state -> state.combo >= 30 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "MARATHONER", name = "MARATHONER", emoji = "🏃",
+        id = "MARATHONER", name = "Maratonista", emoji = "🏃",
         category = TitleCategory.Achievement,
-        perks = listOf("+15% XP for sessions longer than 60 minutes"),
+        perks = listOf("+15% de XP em sessões com mais de 60 minutos"),
         requirementText = "10 sessions of 90+ min",
         checkUnlocked = { state -> state.history.count { it.duration >= 90 } >= 10 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "XP_GOD", name = "XP GOD", emoji = "💥",
+        id = "XP_GOD", name = "Deus do XP", emoji = "💥",
         category = TitleCategory.Achievement,
-        perks = listOf("+20% XP · +10% gold earned"),
+        perks = listOf("+20% de XP · +10% de ouro obtido"),
         requirementText = "5,000,000 total XP",
         checkUnlocked = { state -> state.totalXP >= 5000000 },
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "NOCTURNAL", name = "NOCTURNAL", emoji = "🌙",
+        id = "NOCTURNAL", name = "Noturno", emoji = "🌙",
         category = TitleCategory.Achievement,
-        perks = listOf("+15% XP · Loot & title drop rates +30%"),
+        perks = listOf("+15% de XP · +30% de chance de obter saques e títulos"),
         requirementText = "500 hours studied",
         checkUnlocked = { state -> state.totalMinutes >= 30000 }, // 500 horas * 60 min
         visualStyle = AchievementStyle
     ),
     TitleItem(
-        id = "ASCENDED", name = "ASCENDED", emoji = "♾️",
+        id = "ASCENDED", name = "Ascendido", emoji = "♾️",
         category = TitleCategory.Achievement,
-        perks = listOf("+10% XP · Prestige XP bonuses 50% stronger"),
+        perks = listOf("+10% de XP · Bônus de XP de Prestígio 50% mais fortes"),
         requirementText = "Prestige 10 times",
         checkUnlocked = { state -> state.skills.sumOf { it.prestige ?: 0 } >= 10 },
         visualStyle = AchievementStyle
     ),
 
     // ============ DROP (títulos raros de loot) — 7 títulos ============
-    // Nota: nomes e dropChanceText em inglês no arquivo fonte original — mantido literalmente.
+    // Nota: dropChanceText permanece em inglês (sem tradução definida).
     TitleItem(
-        id = "BLESSED", name = "BLESSED", emoji = "🌸",
+        id = "BLESSED", name = "Abençoado", emoji = "🌸",
         category = TitleCategory.Drop,
-        perks = listOf("+8% XP · +10% gold from all sources"),
+        perks = listOf("+8% de XP · +10% de ouro de todas as fontes"),
         dropChanceText = "ULTRA-RARE SESSION DROP",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFF92400E).copy(alpha = 0.35f),
@@ -346,9 +344,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "SHADOW", name = "SHADOW", emoji = "🌑",
+        id = "SHADOW", name = "Sombra", emoji = "🌑",
         category = TitleCategory.Drop,
-        perks = listOf("+10% XP · Loot & title drop rates +75%"),
+        perks = listOf("+10% de XP · +75% de chance de obter saques e títulos"),
         dropChanceText = "ULTRA-RARE SESSION DROP",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFF1E293B).copy(alpha = 0.70f),
@@ -358,9 +356,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "THE_FORSAKEN", name = "THE FORSAKEN", emoji = "🔮",
+        id = "THE_FORSAKEN", name = "O Abandonado", emoji = "🔮",
         category = TitleCategory.Drop,
-        perks = listOf("+15% Wilderness XP · Can never die in the Wilderness"),
+        perks = listOf("+15% de XP na Terra Selvagem · Imunidade à morte na Terra Selvagem"),
         dropChanceText = "EXTREMELY RARE SESSION DROP",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFF581C87).copy(alpha = 0.50f),
@@ -370,9 +368,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "CELESTIAL", name = "CELESTIAL", emoji = "✨",
+        id = "CELESTIAL", name = "Celestial", emoji = "✨",
         category = TitleCategory.Drop,
-        perks = listOf("+20% XP · +15% gold · Loot rates doubled"),
+        perks = listOf("+20% de XP · +15% de ouro · Chance de obtenção de saques em dobro"),
         dropChanceText = "RAREST OF ALL DROP TITLES",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFFEAB308).copy(alpha = 0.40f),
@@ -382,9 +380,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "THUNDERSTRUCK", name = "THUNDERSTRUCK", emoji = "⚡",
+        id = "THUNDERSTRUCK", name = "Atingido pelo Trovão", emoji = "⚡",
         category = TitleCategory.Drop,
-        perks = listOf("+25% Wilderness XP · Can never die · +10% gold"),
+        perks = listOf("+25% de XP na Terra Selvagem · Imunidade à morte · +10% de ouro"),
         dropChanceText = "RARE WILDERNESS-ONLY DROP",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFFF59E0B).copy(alpha = 0.30f),
@@ -394,9 +392,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "HAUNTED", name = "HAUNTED", emoji = "👻",
+        id = "HAUNTED", name = "Assombrado", emoji = "👻",
         category = TitleCategory.Drop,
-        perks = listOf("+10% XP · +20% gold from all sources"),
+        perks = listOf("+10% de XP · +20% de ouro de todas as fontes"),
         dropChanceText = "RARE WILDERNESS-ONLY DROP",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFFA855F7).copy(alpha = 0.30f),
@@ -406,9 +404,9 @@ val TITLE_CATALOG: List<TitleItem> = listOf(
         )
     ),
     TitleItem(
-        id = "BLOOD_FORGED", name = "BLOOD-FORGED", emoji = "🩸",
+        id = "BLOOD_FORGED", name = "Forjado em Sangue", emoji = "🩸",
         category = TitleCategory.Drop,
-        perks = listOf("+20% XP in dungeons · +20% dungeon gold rewards"),
+        perks = listOf("+20% de XP nas masmorras · +20% de ouro nas recompensas de masmorra"),
         dropChanceText = "DUNGEON LOOT ONLY",
         visualStyle = TitleVisualStyle(
             borderColor = Color(0xFF4C0519), // sólido, sem alpha — igual ao React
