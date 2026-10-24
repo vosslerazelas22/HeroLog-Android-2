@@ -7471,3 +7471,27 @@ linha 2 com a barra em altura total.
 **Desvios de escopo aprovados:**
 - Rename "Selos & Títulos Reais" → "Títulos" (aprovado por Bruno pós-promoção).
 - `heightIn(min = 40.dp)` + `CenterVertically` nas sub-abas (aprovado por Bruno; correção do item 2).
+
+## [2026-10-24] Bloco: Loja de Títulos — redesign visual V2 + traduções do catálogo (issue #51, PR #55)
+
+**Arquivos alterados:**
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleShopScreen.kt` (reescrito): conteúdo promovido da opção **V2** da exploração visual da issue #51 — livro-caixa denso em 1 coluna; medalhão de emoji, espinha lateral na cor da raridade, nome/perks/requisito no centro e ação com alvo de 48dp; intro em Inter 11sp `RitualTextSecondary`; headers de seção com ícone Lucide `award` e tints dourado/violeta/verde; `LocalBottomBarInset` preservado; 3 `@Preview` (com dados, conta nova e tudo adquirido).
+- `app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/TitleShopCardLogic.kt` (novo, 152 linhas): metadados de seção/subgrupo, ícones/tints, `NumberFormat` pt-BR, `isTitleOwned`, `isTitleAchievementUnlocked`, `resolveTitleShopAction` e `resolveTitleShopFooter`.
+- `app/src/main/java/com/iurispraecepta/herolog/data/TitleCatalog.kt`: nomes e efeitos de conquistas (18) e espólio (7) traduzidos; efeitos de Caminhante do Vazio e Transcendente alinhados à tabela aprovada.
+
+**Resumo:**
+- V2 promovida a `TitleShopScreen` oficial, mantendo nome/assinatura pública. V1/V3 e seletor debug foram descartados durante a exploração e não fazem parte do diff final.
+- Comportamento preservado: posse, conquista desbloqueada/bloqueada, preço/`canAfford`, perks opcionais, rodapé, ações e bottom inset. Nenhuma chamada de lógica nova.
+- Copy final: intro, "Títulos à Venda", "Títulos de Conquista", "Títulos de Espólio", faixas de preço em pt-BR, sublimes de bônus, "Já adquirido" e "Espólio raro"; "Adquirido", "Comprar", "Resgatar" e "Bloqueado" mantidos.
+- Ícones: as 3 seções usam o mesmo Lucide `award`, diferenciadas apenas pelo tint (`Amber500`, `Purple400`, `Emerald400`).
+- `requirementText` e `dropChanceText` permanecem em inglês (não vieram nas tabelas de tradução).
+
+**Validação:**
+- `assembleDebug`: BUILD SUCCESSFUL.
+- `testDebugUnitTest` (suíte completa, XML bruto em `app/build/test-results/testDebugUnitTest/`): **132 arquivos / 1012 testes, 0 falhas, 0 erros, 0 skipped**.
+- `git diff --check`: sem erros.
+- Visual em device/emulador: **PENDENTE** (Bruno) — livro-caixa, ícones por seção e estados de ação.
+
+**Desvios de escopo aprovados:**
+- Tradução de nomes/efeitos do catálogo além do layout (aprovada por Bruno).
+- `requirementText` e `dropChanceText` mantidos em inglês por falta de tradução definida.
