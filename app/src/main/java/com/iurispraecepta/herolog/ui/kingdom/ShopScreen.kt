@@ -1,28 +1,27 @@
 // app/src/main/java/com/iurispraecepta/herolog/ui/kingdom/ShopScreen.kt
 package com.iurispraecepta.herolog.ui.kingdom
 
-import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
-import androidx.compose.foundation.layout.PaddingValues
-
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -37,48 +36,62 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.iurispraecepta.herolog.data.createInitialCharacterState
 import com.iurispraecepta.herolog.logic.kingdom.ShopCatalog
 import com.iurispraecepta.herolog.logic.kingdom.ShopCatalogEntry
 import com.iurispraecepta.herolog.model.BuffType
 import com.iurispraecepta.herolog.model.CharacterState
 import com.iurispraecepta.herolog.model.InventoryItem
+import com.iurispraecepta.herolog.ui.navigation.LocalBottomBarInset
+import com.iurispraecepta.herolog.ui.theme.Amber100
+import com.iurispraecepta.herolog.ui.theme.Amber200
 import com.iurispraecepta.herolog.ui.theme.Amber500
+import com.iurispraecepta.herolog.ui.theme.Champagne300
+import com.iurispraecepta.herolog.ui.theme.Champagne400
+import com.iurispraecepta.herolog.ui.theme.Champagne500
 import com.iurispraecepta.herolog.ui.theme.Cinzel
+import com.iurispraecepta.herolog.ui.theme.HeroLogTheme
 import com.iurispraecepta.herolog.ui.theme.JetBrainsMono
-import com.iurispraecepta.herolog.ui.theme.Stone400
+import com.iurispraecepta.herolog.ui.theme.QuestPanel
+import com.iurispraecepta.herolog.ui.theme.Stone500
 import com.iurispraecepta.herolog.ui.theme.Stone800
 import com.iurispraecepta.herolog.ui.theme.Stone950
 
-// ─── Cores sem equivalente nomeado no tema global (mesmo padrão de GuideScreen.kt/HistoryScreen.kt) ───
-private val Champagne300 = Color(0xFFF5DFA0)
-private val Champagne400 = Color(0xFFE5C158)
-private val Champagne500 = Color(0xFFD4AF37)
-private val Amber200 = Color(0xFFFDE68A)
-private val Amber100Half = Color(0xFFFEF3C7) // amber-100, usado com alpha p/ desc
-private val Stone500 = Color(0xFF78716C) // stone-500 exato (não-confundir com Stone400)
-
 /**
- * Tela do Bazar de Mystara — porte do bloco `activeTab === 'shop'` de `App.tsx` (Bloco E).
+ * Tela do Bazar de Mystara — porte do bloco `activeTab === 'shop'` de `App.tsx` (Bloco E),
+ * com layout redesenhado na exploração visual da issue #50 (opção V2 escolhida por Bruno).
  *
- * Estrutura fiel à fonte: cabeçalho com título + sub-toggle interno entre "Consumíveis &
- * Equipamentos" (`ShopTab.tsx`, este arquivo) e "Selos & Títulos Reais" (`TitleShop.tsx`).
- * `shopSubTab` é estado local efêmero (`remember`), default "items" — mesmo tratamento já
- * aprovado pro `questsSubTab` de Missões (Bloco I): sobrevive à navegação dentro da sessão,
- * reseta ao trocar de módulo/reabrir o app, igual ao `useState<'items'|'titles'>('items')`
+ * Estrutura fiel à fonte no comportamento: cabeçalho com título + sub-toggle interno entre
+ * "Consumíveis & Equipamentos" (`ShopTab.tsx`, este arquivo) e "Títulos" (rótulo abreviado
+ * por decisão de produto na issue #50; na fonte "Selos & Títulos Reais" — delegado ao
+ * [TitleShopScreen] inalterado). `shopSubTab` é estado local
+ * efêmero (`remember`), default "items" — mesmo tratamento do `useState<'items'|'titles'>`
  * real em `App.tsx`.
  *
- * **Pendência conhecida, não um bug**: a sub-aba "Selos & Títulos Reais" ainda não tem
- * `TitleShopScreen.kt` (Bloco C do módulo Reino, ainda não feito) — mostra um placeholder
- * temporário até esse Bloco fechar. Trocar por `TitleShopScreen(...)` real quando existir.
+ * Condições de comportamento idênticas à versão anterior (Bloco E): `canAfford = gold >= price`
+ * controla cor do preço/botão e o `clickable` da compra; `isHoldingShield` (StreakShield já no
+ * inventário) troca o botão pelo badge "Já ativo" — gate visual só na UI, como na fonte.
+ *
+ * **Divergências visuais conscientes (issue #50)**:
+ * - Cabeçalho centralizado com divisor, na estrutura do `HistoryHeader` das Crônicas Diárias
+ *   (antes: alinhado à esquerda, sem divisor);
+ * - Sub-abas no estilo `HistoryViewModeToggle` (container boxeado + `animateColorAsState`
+ *   em bg/borda/texto, Cinzel Bold 10sp) — antes: botões 9sp sem animação;
+ * - Lista em linhas full-width com divisores finos (sem cards), emoji circular 40dp,
+ *   descrição sempre expandida sem ellipsis;
+ * - Alvo de toque do botão de compra em `heightIn(min = 48.dp)`.
  *
  * Segue a mesma simplificação já estabelecida em `GuideScreen.kt`: sem o painel externo
- * bordado com sombra (`bg-quest-panel`/shadow) da fonte — só o cabeçalho + conteúdo, já que o
- * `Scaffold`/sheet de navegação do Android já fornece o contorno visual equivalente.
+ * bordado com sombra da fonte — só o cabeçalho + conteúdo, já que o `Scaffold`/sheet de
+ * navegação do Android já fornece o contorno visual equivalente.
  */
 @Composable
 fun ShopScreen(
@@ -99,57 +112,86 @@ fun ShopScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ═══ CABEÇALHO (vem do wrapper em App.tsx) ═══
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Filled.MonetizationOn,
-                contentDescription = null,
-                tint = Champagne500,
-                modifier = Modifier.height(16.dp).width(16.dp)
+        // ═══ CABEÇALHO centralizado + divisor (mesma estrutura do HistoryHeader
+        //     da aba Crônicas Diárias) ═══
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 34.dp)
+                    .padding(bottom = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MonetizationOn,
+                        contentDescription = null,
+                        tint = Champagne500,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "BAZAR DE MYSTARA",
+                        fontFamily = Cinzel,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        letterSpacing = 0.05.em,
+                        color = Champagne400
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Amber500.copy(alpha = 0.10f))
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "BAZAR DE MYSTARA",
-                fontFamily = Cinzel,
-                fontWeight = FontWeight.Black,
-                fontSize = 12.sp,
-                letterSpacing = 0.05.em,
-                color = Champagne400
-            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // ═══ SUB-TOGGLE: Consumíveis & Equipamentos / Selos & Títulos Reais ═══
+        // Sub-abas no estilo do HistoryViewModeToggle (Crônicas Diárias):
+        // container boxeado + botões com transição de cor animada.
+        // heightIn(min = 40.dp) nos botões (mesmo padrão do RaidModeButton):
+        // iguala a altura dos dois pills — "Consumíveis & Equipamentos" quebra
+        // em 2 linhas (38dp) e "Títulos" em 1 (23dp); sem o mínimo, o pill de
+        // Títulos ficava menor e alinhado ao topo enquanto o outro definia a
+        // altura da célula. CenterVertically cobre qualquer residual.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Stone950.copy(alpha = 0.40f), RoundedCornerShape(6.dp))
-                .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(6.dp))
+                .clip(RoundedCornerShape(4.dp))
+                .background(Stone950.copy(alpha = 0.4f))
+                .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(4.dp))
                 .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             ShopSubTabButton(
                 label = "Consumíveis & Equipamentos",
                 selected = shopSubTab == "items",
                 onClick = { shopSubTab = "items" },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).testTag("shop_subtab_items")
             )
             ShopSubTabButton(
-                label = "Selos & Títulos Reais",
+                label = "Títulos",
                 selected = shopSubTab == "titles",
                 onClick = { shopSubTab = "titles" },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f).testTag("shop_subtab_titles")
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
         if (shopSubTab == "items") {
-            ShopItemList(gold = gold, inventory = inventory, onBuyItem = onBuyItem)
+            ShopItemList(
+                gold = gold,
+                inventory = inventory,
+                onBuyItem = onBuyItem
+            )
         } else {
             TitleShopScreen(
                 state = state,
@@ -160,6 +202,11 @@ fun ShopScreen(
     }
 }
 
+/**
+ * Botão de sub-aba idêntico ao [com.iurispraecepta.herolog.ui.history.HistoryViewModeButton]
+ * (Crônicas Diárias): caixa 4dp, transição de cor animada em bg/borda/texto,
+ * Cinzel Bold 10sp caixa alta centralizada.
+ */
 @Composable
 private fun ShopSubTabButton(
     label: String,
@@ -167,36 +214,46 @@ private fun ShopSubTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) Champagne500.copy(alpha = 0.1f) else Color.Transparent,
+        label = "shop_sub_tab_bg"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) Champagne500.copy(alpha = 0.2f) else Color.Transparent,
+        label = "shop_sub_tab_border"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (selected) Champagne300 else Stone500,
+        label = "shop_sub_tab_text"
+    )
+
     Box(
         modifier = modifier
+            .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(
-                if (selected) Champagne500.copy(alpha = 0.10f) else Color.Transparent
-            )
-            .then(
-                if (selected) {
-                    Modifier.border(1.dp, Champagne500.copy(alpha = 0.20f), RoundedCornerShape(4.dp))
-                } else Modifier
-            )
+            .background(backgroundColor)
+            .border(1.dp, borderColor, RoundedCornerShape(4.dp))
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 6.dp),
+            .padding(vertical = 4.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label.uppercase(),
             fontFamily = Cinzel,
+            fontSize = 10.sp,
+            lineHeight = 15.sp,
             fontWeight = FontWeight.Bold,
-            fontSize = 9.sp,
-            letterSpacing = 0.06.em,
-            color = if (selected) Champagne300 else Stone400,
+            letterSpacing = 0.05.em,
+            color = textColor,
             textAlign = TextAlign.Center
         )
     }
 }
 
 /**
- * Porte de `ShopTab.tsx`. Recebe o catálogo diretamente de `ShopCatalog.ITEMS` (Bloco A) — não
- * há necessidade de passar o catálogo como parâmetro, é dado estático.
+ * Lista do catálogo de itens. Recebe o catálogo diretamente de `ShopCatalog.ITEMS` (Bloco A) —
+ * dado estático, não há estado vazio. Linhas full-width com divisores; descrição sempre
+ * exibida por completa (expande a linha).
  */
 @Composable
 private fun ShopItemList(
@@ -209,7 +266,6 @@ private fun ShopItemList(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = LocalBottomBarInset.current)
     ) {
         items(catalog) { entry ->
@@ -217,18 +273,24 @@ private fun ShopItemList(
             val isHoldingShield = entry.buff == BuffType.StreakShield &&
                 inventory.any { it.buff == BuffType.StreakShield }
 
-            ShopItemCard(
+            ShopItemRow(
                 entry = entry,
                 canAfford = canAfford,
                 isHoldingShield = isHoldingShield,
                 onBuy = { onBuyItem(entry) }
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Stone800.copy(alpha = 0.60f))
             )
         }
     }
 }
 
 @Composable
-private fun ShopItemCard(
+private fun ShopItemRow(
     entry: ShopCatalogEntry,
     canAfford: Boolean,
     isHoldingShield: Boolean,
@@ -238,48 +300,39 @@ private fun ShopItemCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Stone950.copy(alpha = 0.20f))
-            .border(
-                width = 1.dp,
-                color = if (canAfford) Amber500.copy(alpha = 0.10f) else Stone800,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.weight(1f, fill = false),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Amber500.copy(alpha = 0.05f))
+                .border(1.dp, Amber500.copy(alpha = 0.10f), CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Amber500.copy(alpha = 0.05f))
-                    .border(1.dp, Amber500.copy(alpha = 0.10f), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = entry.emoji, fontSize = 22.sp)
-            }
+            Text(text = entry.emoji, fontSize = 18.sp)
+        }
 
-            Column {
-                Text(
-                    text = entry.name,
-                    fontFamily = Cinzel,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = Amber200
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = entry.desc,
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                    color = Amber100Half.copy(alpha = 0.50f)
-                )
-            }
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = entry.name,
+                fontFamily = Cinzel,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Amber200,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = entry.desc,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+                color = Amber100.copy(alpha = 0.50f)
+            )
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -290,7 +343,7 @@ private fun ShopItemCard(
                     .clip(RoundedCornerShape(4.dp))
                     .background(Amber500.copy(alpha = 0.05f))
                     .border(1.dp, Amber500.copy(alpha = 0.20f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .padding(horizontal = 10.dp, vertical = 12.dp)
             ) {
                 Text(
                     text = "Já ativo",
@@ -304,7 +357,10 @@ private fun ShopItemCard(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(if (canAfford) Champagne500.copy(alpha = 0.10f) else Stone800.copy(alpha = 0.10f))
+                    .background(
+                        if (canAfford) Champagne500.copy(alpha = 0.10f)
+                        else Stone800.copy(alpha = 0.10f)
+                    )
                     .border(
                         width = 1.dp,
                         color = if (canAfford) Champagne500.copy(alpha = 0.40f) else Stone800,
@@ -313,9 +369,9 @@ private fun ShopItemCard(
                     .then(
                         if (canAfford) Modifier.clickable(onClick = onBuy) else Modifier
                     )
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "${entry.price} GP",
@@ -331,6 +387,68 @@ private fun ShopItemCard(
                     modifier = Modifier.size(14.dp)
                 )
             }
+        }
+    }
+}
+
+// ─── Previews (tema escuro + fundo QuestPanel — AGENTS.md §6.10) ───
+
+@Preview(name = "Bazar — com dados", showBackground = true, backgroundColor = 0xFF0B0915, heightDp = 800)
+@Composable
+private fun ShopScreenPreviewDados() {
+    HeroLogTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(QuestPanel)) {
+            ShopScreen(
+                gold = 250,
+                inventory = emptyList(),
+                state = createInitialCharacterState(),
+                onBuyItem = {},
+                onBuyTitle = { _, _ -> },
+                onClaimAchievementTitle = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "Bazar — ouro zero", showBackground = true, backgroundColor = 0xFF0B0915, heightDp = 800)
+@Composable
+private fun ShopScreenPreviewOuroZero() {
+    HeroLogTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(QuestPanel)) {
+            ShopScreen(
+                gold = 0,
+                inventory = emptyList(),
+                state = createInitialCharacterState(),
+                onBuyItem = {},
+                onBuyTitle = { _, _ -> },
+                onClaimAchievementTitle = {}
+            )
+        }
+    }
+}
+
+@Preview(name = "Bazar — Já ativo (shield)", showBackground = true, backgroundColor = 0xFF0B0915, heightDp = 800)
+@Composable
+private fun ShopScreenPreviewShield() {
+    HeroLogTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(QuestPanel)) {
+            ShopScreen(
+                gold = 1000,
+                inventory = listOf(
+                    InventoryItem(
+                        id = "StreakShield_preview",
+                        name = "Escudo do Santuário",
+                        emoji = "🛡️",
+                        buff = BuffType.StreakShield,
+                        price = 500,
+                        desc = "Protege e congela automaticamente sua série de dias se você esquecer de focar um dia."
+                    )
+                ),
+                state = createInitialCharacterState(),
+                onBuyItem = {},
+                onBuyTitle = { _, _ -> },
+                onClaimAchievementTitle = {}
+            )
         }
     }
 }
