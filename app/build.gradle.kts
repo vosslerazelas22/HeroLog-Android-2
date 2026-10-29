@@ -93,6 +93,7 @@ googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.W
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
 dependencies {
+  implementation(libs.androidx.core.splashscreen)
   implementation("com.composables:icons-lucide-android:2.2.1") {
     isTransitive = false
   }

@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -64,6 +65,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -154,6 +156,7 @@ import com.iurispraecepta.herolog.ui.kingdom.StatsScreen
 import com.iurispraecepta.herolog.ui.kingdom.AchievementsScreen
 import com.iurispraecepta.herolog.ui.kingdom.TitleSelectorScreen
 import com.iurispraecepta.herolog.ui.components.AppHeader
+import com.iurispraecepta.herolog.ui.splash.BrandSplash
 import com.iurispraecepta.herolog.ui.components.GeneralSettingsModal
 import com.iurispraecepta.herolog.ui.components.RestoreSaveDialog
 import com.iurispraecepta.herolog.ui.components.SaveImportResultDialog
@@ -216,6 +219,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         pendingShortcutAction.value = intent?.action
         enableEdgeToEdge(
@@ -348,6 +352,7 @@ class MainActivity : ComponentActivity() {
                 // se o dismiss deve sair do focus mode — um descanso em andamento
                 // (BREAK_RUNNING no Service) não deve ser abandonado pelo dismiss.
                 val breakTimerState by heroLogViewModel.breakTimerState.collectAsState()
+                var brandSplashVisible by rememberSaveable { mutableStateOf(true) }
 
                 // TalkBack: enquanto o overlay de celebração cobre a tela, o conteúdo
                 // por baixo (FocusModeScreen ou Scaffold) fica invisível para serviços
@@ -362,6 +367,8 @@ class MainActivity : ComponentActivity() {
 
                 // Durante o preaviso, volta ao Scaffold para exibir BreakPrepScreen.
                 // O overlay de celebração continua renderizado por cima nos dois ramos.
+                Box(modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize().then(if (brandSplashVisible) Modifier.semantics { invisibleToUser() } else Modifier)) {
                 if (isFocusMode && !breakTimerState.isBreakPrep && csForFullscreen != null) {
                     val selectedSkillIdx = focusState.config?.selectedSkillIdx ?: 0
                     val validSkillIdx = selectedSkillIdx.coerceIn(0, (csForFullscreen.skills.size - 1).coerceAtLeast(0))
@@ -995,6 +1002,11 @@ class MainActivity : ComponentActivity() {
                     onConfirmAggregated = { heroLogViewModel.confirmPendingCelebration() },
                     skills = characterState?.skills ?: emptyList()
                 )
+                }
+                if (brandSplashVisible) {
+                    BrandSplash(characterReady = characterState != null, onFinished = { brandSplashVisible = false })
+                }
+                }
             }
         }
     }
